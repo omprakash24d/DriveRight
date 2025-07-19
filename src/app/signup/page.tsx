@@ -19,7 +19,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { auth } from "@/lib/firebase";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile, type AuthError } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { createStudentUserInDb } from "@/services/studentsService";
 import { InputField } from "@/components/form/input-field";
@@ -27,7 +27,13 @@ import { InputField } from "@/components/form/input-field";
 const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   email: z.string().email("Please enter a valid email address."),
-  password: z.string().min(6, "Password must be at least 6 characters."),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters.")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter.")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter.")
+    .regex(/[0-9]/, "Password must contain at least one number.")
+    .regex(/[^a-zA-Z0-9]/, "Password must contain at least one special character."),
 });
 
 type SignupFormValues = z.infer<typeof signupSchema>;
@@ -59,15 +65,22 @@ export default function StudentSignupPage() {
             router.push('/dashboard');
             
         } catch (error: any) {
-            console.error("Signup error:", error);
-            const description = error.code === 'auth/email-already-in-use'
-                ? "This email is already registered. Please log in."
-                : "An error occurred during registration. Please try again.";
-            toast({
-                variant: "destructive",
-                title: "Signup Failed",
-                description,
-            });
+            const authError = error as AuthError;
+            console.error("Signup error:", authError);
+            
+            if (authError.code === 'auth/email-already-in-use') {
+                form.setError("email", {
+                    type: "manual",
+                    message: "This email is already registered. Please log in instead.",
+                });
+                form.setFocus("email");
+            } else {
+                 toast({
+                    variant: "destructive",
+                    title: "Signup Failed",
+                    description: "An unexpected error occurred. Please try again.",
+                });
+            }
         } finally {
             setIsLoading(false);
         }
@@ -109,6 +122,7 @@ export default function StudentSignupPage() {
                 label="Password"
                 type="password"
                 placeholder="••••••••"
+                description="8+ characters, with uppercase, lowercase, number, and special character."
                 isRequired
               />
               <Button type="submit" className="w-full" disabled={isLoading}>

@@ -46,7 +46,7 @@ export async function generateMetadata(): Promise<Metadata> {
         siteName: schoolName,
         images: [
           {
-            url: `${appBaseUrl}/images/og-image.webp`,
+            url: `${appBaseUrl}/images/1.jpeg`,
             width: 1200,
             height: 630,
             alt: `A student learning to drive with an instructor at ${schoolName}`,
@@ -59,7 +59,7 @@ export async function generateMetadata(): Promise<Metadata> {
         card: 'summary_large_image',
         title: `${schoolName} - Professional Driving School`,
         description: 'Learn to drive with the best instructors in Arwal, Bihar. Offering LMV, MCWG, and HMV courses.',
-        images: [`${appBaseUrl}/images/og-image.webp`],
+        images: [`${appBaseUrl}/images/1.jpeg`],
     },
     robots: {
       index: true,
@@ -106,7 +106,7 @@ export default async function RootLayout({
     email: settings.contactEmail,
     url: appBaseUrl,
     logo: `${appBaseUrl}/images/logo.jpg`,
-    image: `${appBaseUrl}/images/og-image.webp`,
+    image: `${appBaseUrl}/images/1.jpeg`,
     description: `Professional driving school offering HMV, LMV, and motorcycle training courses in ${settings.address}.`,
     hasOfferCatalog: {
         '@type': 'OfferCatalog',
