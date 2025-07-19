@@ -1,88 +1,112 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    // --- Helper Functions ---
+    function isAuthed() {
+      return request.auth != null;
+    }
 
-    // Helper function to check if a user is an admin
+    function isOwner(userId) {
+      return isAuthed() && request.auth.uid == userId;
+    }
+
+    // Securely checks if the authenticated user has an 'admin' custom claim.
+    // This is the recommended way to handle roles.
     function isAdmin() {
-      // Admins are defined in the site configuration document
-      return request.auth != null && request.auth.token.email in get(/databases/$(database)/documents/settings/siteConfiguration).data.adminEmails;
-    }
-
-    // Default deny all access unless explicitly allowed
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // User profiles can only be read/written by the owner
-    match /users/{userId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null;
-    }
-
-    // Enrolled courses can only be accessed by the user who owns them
-    match /users/{userId}/enrolledCourses/{courseId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // Publicly readable collections, but only writable by admins
-    match /courses/{courseId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    match /testimonials/{testimonialId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    match /trainingServices/{serviceId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-     match /onlineServices/{serviceId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    match /instructors/{instructorId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      return isAuthed() && request.auth.token.admin == true;
     }
     
-    // Public verification (read), but admin-only write access for certificates
-    match /certificates/{certificateId} {
-      allow get, list: if true; // Allows public read/query for verification
-      allow write, delete: if isAdmin();
-    }
-    
-    // Read-only for site settings by authenticated users, write-only for admins
+    // --- PUBLIC READ / ADMIN WRITE Collections ---
+    // These collections contain public-facing content that anyone can read.
+    // Only administrators are allowed to create, update, or delete documents.
     match /settings/siteConfiguration {
-        allow get: if request.auth != null;
-        allow write: if isAdmin();
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
-    // All other top-level collections are admin-only
-    match /students/{studentId} {
+    match /courses/{doc=**} {
+      allow get, list: if true;
+      allow write: if isAdmin();
+    }
+    match /instructors/{doc=**} {
+      allow get, list: if true;
+      allow write: if isAdmin();
+    }
+    match /testimonials/{doc=**} {
+      allow get, list: if true;
+      allow write: if isAdmin();
+    }
+    match /trainingServices/{doc=**} {
+      allow get, list: if true;
+      allow write: if isAdmin();
+    }
+    match /onlineServices/{doc=**} {
+      allow get, list: if true;
+      allow write: if isAdmin();
+    }
+    
+    // --- USER-SPECIFIC DATA ---
+    // The /users collection stores profile information for authenticated users.
+    match /users/{userId} {
+      // Users can read and write to their own top-level document.
+      allow read, write: if isOwner(userId);
+      
+      // Users can manage their own list of enrolled courses.
+      match /enrolledCourses/{courseId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+    
+    // --- PUBLIC WRITE-ONLY Collections (Forms) ---
+    // These collections are for public form submissions.
+    // Anyone can create a document, but only admins can read or modify them.
+    match /enrollments/{docId} {
+        allow create: if true;
+        allow read, update, delete: if isAdmin();
+    }
+    match /refresherRequests/{docId} {
+        allow create: if true;
+        allow read, update, delete: if isAdmin();
+    }
+    match /llInquiries/{docId} {
+        allow create: if true;
+        allow read, update, delete: if isAdmin();
+    }
+    match /licensePrintInquiries/{docId} {
+        allow create: if true;
+        allow read, update, delete: if isAdmin();
+    }
+
+    // --- ADMIN-MANAGED Collections ---
+    
+    // Admins have full access to these collections.
+    match /students/{doc=**} {
+        allow read, write: if isAdmin();
+    }
+    match /auditLogs/{doc=**} {
+        allow read, write: if isAdmin();
+    }
+    match /lessons/{doc=**} {
       allow read, write: if isAdmin();
     }
+
+    // --- MIXED PERMISSION Collections ---
+    
     match /testResults/{resultId} {
+      // Admins have full read/write access.
       allow read, write: if isAdmin();
+      
+      // Authenticated students can read any result document where their UID matches the studentId.
+      allow read: if isAuthed() && resource.data.studentId == request.auth.uid;
     }
-    match /enrollments/{enrollmentId} {
-      allow read, write: if isAdmin();
-    }
-    match /refresherRequests/{requestId} {
-      allow read, write: if isAdmin();
-    }
-    match /llInquiries/{inquiryId} {
-      allow read, write: if isAdmin();
-    }
-    match /licensePrintInquiries/{inquiryId} {
-      allow read, write: if isAdmin();
-    }
-    match /auditLogs/{logId} {
-      allow read, write: if isAdmin();
-    }
-    match /lessons/{lessonId} {
-      allow read, write: if isAdmin();
+
+    // Certificates can be READ by anyone (for public verification) but only WRITTEN by admins.
+    match /certificates/{doc=**} {
+        allow get, list: if true;
+        allow write: if isAdmin();
     }
   }
 }
