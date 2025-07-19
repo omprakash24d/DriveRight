@@ -1,19 +1,45 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { Module } from '@/services/coursesService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Video, FileText } from 'lucide-react';
+import { Video, FileText, VideoOff } from 'lucide-react';
 import Plyr from 'plyr-react';
 import 'plyr/dist/plyr.css';
+import { LessonButton } from './LessonButton';
+
+// Moved outside the component to prevent re-creation on every render
+const plyrOptions = {
+    controls: [
+        'play-large',
+        'play',
+        'progress',
+        'current-time',
+        'mute',
+        'volume',
+        'captions',
+        'settings',
+        'pip',
+        'fullscreen'
+    ],
+    // Removed 'as const' to fix the readonly array type error
+    settings: ['captions', 'quality', 'speed', 'loop'],
+    youtube: {
+        noCookie: true,
+        rel: 0,
+        showinfo: 0,
+        iv_load_policy: 3,
+        modestbranding: 1
+    }
+};
 
 export function CourseContentDisplay({ modules }: { modules: Module[] }) {
-    const firstVideoId = modules[0]?.lessons[0]?.videoUrl;
-    const [currentVideoId, setCurrentVideoId] = useState(firstVideoId);
+    const firstVideoId = modules[0]?.lessons[0]?.videoUrl || null;
+    const [currentVideoId, setCurrentVideoId] = useState<string | null>(firstVideoId);
 
-    if (modules.length === 0) {
+    if (!modules || modules.length === 0 || modules.every(m => !m.lessons || m.lessons.length === 0)) {
         return (
             <div className="text-center py-16">
                 <p className="text-muted-foreground text-lg">Course content is being prepared. Please check back soon!</p>
@@ -21,7 +47,7 @@ export function CourseContentDisplay({ modules }: { modules: Module[] }) {
         );
     }
 
-    const videoSrc = currentVideoId ? {
+    const videoSrc = useMemo(() => currentVideoId ? {
       type: 'video' as const,
       sources: [
         {
@@ -29,30 +55,7 @@ export function CourseContentDisplay({ modules }: { modules: Module[] }) {
           provider: 'youtube' as const,
         },
       ],
-    } : null;
-
-    const plyrOptions = {
-        controls: [
-            'play-large',
-            'play',
-            'progress',
-            'current-time',
-            'mute',
-            'volume',
-            'captions',
-            'settings',
-            'pip',
-            'fullscreen'
-        ],
-        settings: ['captions', 'quality', 'speed', 'loop'] as const,
-        youtube: {
-            noCookie: true,
-            rel: 0,
-            showinfo: 0,
-            iv_load_policy: 3,
-            modestbranding: 1
-        }
-    };
+    } : null, [currentVideoId]);
 
     return (
         <div className="grid lg:grid-cols-3 gap-8">
@@ -67,8 +70,10 @@ export function CourseContentDisplay({ modules }: { modules: Module[] }) {
                                     options={plyrOptions}
                                 />
                             ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
-                                    <p>Select a lesson to begin.</p>
+                                <div className="w-full h-full flex flex-col items-center justify-center bg-muted text-muted-foreground p-4 text-center">
+                                    <VideoOff className="h-12 w-12 mb-4" />
+                                    <p className="font-semibold">Video Unavailable</p>
+                                    <p className="text-sm">Please select a lesson from the curriculum to begin.</p>
                                 </div>
                             )}
                         </div>
@@ -87,27 +92,11 @@ export function CourseContentDisplay({ modules }: { modules: Module[] }) {
                                         <ul className="space-y-2 mt-2">
                                             {module.lessons.map(lesson => (
                                                 <li key={lesson.id}>
-                                                    <button onClick={() => setCurrentVideoId(lesson.videoUrl)} className="w-full text-left p-3 rounded-md hover:bg-muted transition-colors">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className={`p-2 rounded-full ${currentVideoId === lesson.videoUrl ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-                                                                <Video className="h-4 w-4" />
-                                                            </div>
-                                                            <div className="flex-1">
-                                                                <p className="font-medium">{lesson.title}</p>
-                                                                <p className="text-xs text-muted-foreground">{lesson.description}</p>
-                                                            </div>
-                                                        </div>
-                                                        {lesson.attachments && lesson.attachments.length > 0 && (
-                                                            <div className="pl-10 mt-2 space-y-1">
-                                                                {lesson.attachments.map(att => (
-                                                                    <a key={att.id} href={att.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline">
-                                                                        <FileText className="h-3 w-3"/>
-                                                                        <span>{att.name}</span>
-                                                                    </a>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                    </button>
+                                                   <LessonButton
+                                                        lesson={lesson}
+                                                        isActive={currentVideoId === lesson.videoUrl}
+                                                        onClick={() => setCurrentVideoId(lesson.videoUrl)}
+                                                    />
                                                 </li>
                                             ))}
                                         </ul>
