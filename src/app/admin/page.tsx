@@ -38,11 +38,11 @@ export default function AdminDashboard() {
   const [coursePopularityData, setCoursePopularityData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const { isLoading: isAuthLoading } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   
   useEffect(() => {
-    // Wait for auth to be ready before fetching data
-    if (isAuthLoading) {
+    // Wait for auth to be ready and user object to be available before fetching data
+    if (isAuthLoading || !user) {
       return;
     }
 
@@ -122,7 +122,7 @@ export default function AdminDashboard() {
       }
     }
     fetchData();
-  }, [isAuthLoading, toast]);
+  }, [isAuthLoading, user, toast]);
 
   return (
     <div className="space-y-6">

@@ -75,7 +75,7 @@ export default function LlExamPassPage() {
                 </div>
                 <CardTitle className="text-3xl mt-4">Thank You!</CardTitle>
                 <CardDescription>
-                    We have received your request. We will manually check your LL Exam Result and send the status to your registered email address shortly.
+                    We have received your request. Our Team Will check your LL Exam Result and send the status to your registered email address shortly.
                 </CardDescription>
             </CardHeader>
             <CardContent>
