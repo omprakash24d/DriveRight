@@ -24,9 +24,11 @@ async function verifyAdmin(token: string) {
 
 export async function updateCourseAction(id: string, token: string, data: Partial<Omit<Course, 'id'>>) {
     try {
-        await verifyAdmin(token);
+        await verifyAdmin(token); // Verify the user is an admin before proceeding
         await updateCourse(id, data);
         revalidatePath('/');
+        revalidatePath('/courses');
+        revalidatePath(`/courses/${id}`);
         revalidatePath('/admin/courses');
         return { success: true };
     } catch (error: any) {
