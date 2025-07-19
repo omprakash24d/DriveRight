@@ -313,15 +313,12 @@ export default function AdminEnrollmentsPage() {
                                     </div>
                                 </div>
                             </div>
+                            <DialogFooter>
+                                <Button size="sm" variant="outline" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => handleStatusChange(enrollment.id, 'Approved')}>Approve</Button>
+                                <Button variant="destructive" size="sm" onClick={() => handleStatusChange(enrollment.id, 'Declined')}>Decline</Button>
+                            </DialogFooter>
                         </DialogContent>
                         </Dialog>
-
-                        {enrollment.status === 'Pending' && (
-                        <>
-                            <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleStatusChange(enrollment.id, 'Approved')}>Approve</Button>
-                            <Button variant="destructive" size="sm" onClick={() => handleStatusChange(enrollment.id, 'Declined')}>Decline</Button>
-                        </>
-                        )}
                     </TableCell>
                     </TableRow>
                 ))

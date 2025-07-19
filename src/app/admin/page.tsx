@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format, subMonths } from 'date-fns';
 import { CoursePopularityChart } from "./_components/CoursePopularityChart";
 import { RecentActivityFeed } from "./_components/RecentActivityFeed";
+import { useAuth } from "@/context/AuthContext";
 
 const chartConfig = {
   enrollments: {
@@ -37,8 +38,14 @@ export default function AdminDashboard() {
   const [coursePopularityData, setCoursePopularityData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { isLoading: isAuthLoading } = useAuth();
   
   useEffect(() => {
+    // Wait for auth to be ready before fetching data
+    if (isAuthLoading) {
+      return;
+    }
+
     async function fetchData() {
       setIsLoading(true);
       try {
@@ -115,8 +122,7 @@ export default function AdminDashboard() {
       }
     }
     fetchData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toast]);
+  }, [isAuthLoading, toast]);
 
   return (
     <div className="space-y-6">
