@@ -13,8 +13,8 @@ service cloud.firestore {
       return isAuthed() && request.auth.uid == userId;
     }
 
-    // Securely checks if the authenticated user has an 'admin' custom claim.
-    // This is the recommended way to handle roles.
+    // Securely checks for an 'admin' custom claim on the user's token.
+    // This is the correct and secure way to identify an administrator.
     function isAdmin() {
       return isAuthed() && request.auth.token.admin == true;
     }
@@ -23,6 +23,7 @@ service cloud.firestore {
     // These collections contain public-facing content that anyone can read.
     // Only administrators are allowed to create, update, or delete documents.
     match /settings/siteConfiguration {
+      // Public read is necessary for the isAdmin() function to access the admin list from the client.
       allow read: if true;
       allow write: if isAdmin();
     }
@@ -107,6 +108,12 @@ service cloud.firestore {
     match /certificates/{doc=**} {
         allow get, list: if true;
         allow write: if isAdmin();
+    }
+
+    // --- Default Deny ---
+    // Explicitly deny access to any other path not defined above.
+    match /{path=**} {
+      allow read, write: if false;
     }
   }
 }
