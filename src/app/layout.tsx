@@ -11,6 +11,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { SiteWrapper } from "@/components/SiteWrapper";
 import { getSiteSettings } from "@/services/settingsService";
 import { AuthProvider } from "@/context/AuthContext";
+import { schoolConfig } from "@/lib/config";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -26,7 +27,7 @@ const dancingScript = Dancing_Script({
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings();
   const schoolName = settings.schoolName;
-  const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+  const appBaseUrl = schoolConfig.appBaseUrl;
 
 
   return {
@@ -82,7 +83,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const settings = await getSiteSettings();
-  const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+  const appBaseUrl = schoolConfig.appBaseUrl;
 
   const jsonLd = {
     '@context': 'https://schema.org',

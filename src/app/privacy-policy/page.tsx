@@ -1,6 +1,7 @@
 
 import { getSiteSettings } from "@/services/settingsService";
 import type { Metadata } from 'next';
+import { schoolConfig } from "@/lib/config";
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 
 export default async function PrivacyPolicyPage() {
     const settings = await getSiteSettings();
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+    const appUrl = schoolConfig.appBaseUrl;
 
     return (
         <div className="container mx-auto max-w-4xl px-4 md:px-6 py-12 md:py-16">

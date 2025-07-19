@@ -1,8 +1,9 @@
 import { type MetadataRoute } from 'next';
 import { getCourses } from '@/services/coursesService';
+import { schoolConfig } from '@/lib/config';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+  const appBaseUrl = schoolConfig.appBaseUrl;
 
   // Fetch dynamic routes
   const courses = await getCourses();

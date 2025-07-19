@@ -7,6 +7,7 @@ import { BookOpen, Star, Clock } from "lucide-react";
 import { CourseContentWrapper } from "./_components/CourseContentWrapper";
 import { getSiteSettings } from '@/services/settingsService';
 import { CourseEnrollButton } from '../_components/CourseEnrollButton';
+import { schoolConfig } from '@/lib/config';
 
 type Props = {
   params: { id: string }
@@ -18,6 +19,7 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const course = await getCourse(params.id);
   const settings = await getSiteSettings();
+  const appBaseUrl = schoolConfig.appBaseUrl;
 
   if (!course) {
     return {
@@ -35,7 +37,7 @@ export async function generateMetadata(
         title: course.title,
         description: course.description,
         type: 'article',
-        url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}/courses/${course.id}`,
+        url: `${appBaseUrl}/courses/${course.id}`,
         images: [...previousImages],
         siteName: settings.schoolName,
     },
@@ -44,15 +46,26 @@ export async function generateMetadata(
 
 
 export default async function CourseDetailPage({ params }: { params: { id: string } }) {
-    const course = await getCourse(params.id);
+    let course: Awaited<ReturnType<typeof getCourse>>;
+    let settings: Awaited<ReturnType<typeof getSiteSettings>>;
+
+    try {
+        [course, settings] = await Promise.all([
+            getCourse(params.id),
+            getSiteSettings()
+        ]);
+    } catch (error) {
+        console.error("Failed to fetch course data:", error);
+        // Render an error state or redirect
+        return <div>Error loading course. Please try again later.</div>;
+    }
 
     if (!course) {
         notFound();
     }
 
     const totalLessons = course.modules?.reduce((acc, module) => acc + module.lessons.length, 0) || 0;
-    const settings = await getSiteSettings();
-    const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+    const appBaseUrl = schoolConfig.appBaseUrl;
     
     const jsonLd = {
         '@context': 'https://schema.org',
@@ -80,15 +93,15 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
                             <p className="mt-4 text-lg text-muted-foreground">{course.description}</p>
                             <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-muted-foreground">
                                 <div className="flex items-center gap-2">
-                                    <BookOpen className="h-5 w-5" />
+                                    <BookOpen className="h-5 w-5" aria-hidden="true" />
                                     <span>{course.modules?.length || 0} Modules</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <Clock className="h-5 w-5" />
+                                    <Clock className="h-5 w-5" aria-hidden="true" />
                                     <span>{totalLessons} Lessons</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <Star className="h-5 w-5" />
+                                    <Star className="h-5 w-5" aria-hidden="true" />
                                     <span>Self-Paced Learning</span>
                                 </div>
                             </div>

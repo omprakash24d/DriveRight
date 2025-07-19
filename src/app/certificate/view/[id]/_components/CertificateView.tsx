@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useRef, useState, useEffect, useMemo, useCallback, memo } from 'react';
+import { useRef, useState, useMemo, useCallback, memo } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Download, Loader2, ImageIcon, Award } from 'lucide-react';
@@ -12,6 +12,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { schoolConfig } from '@/lib/config';
 
 interface CertificateViewProps {
     certificate: Certificate;
@@ -30,7 +31,7 @@ function CertificateViewComponent({ certificate, settings }: CertificateViewProp
                 return new URL(certificate.certificateUrl).hostname;
             } catch (e) {
                 console.error("Invalid certificate URL for domain extraction", e);
-                return typeof window !== 'undefined' ? window.location.hostname : '';
+                return schoolConfig.appBaseUrl.replace(/https?:\/\//, '');
             }
         }
         return '';
@@ -58,7 +59,7 @@ function CertificateViewComponent({ certificate, settings }: CertificateViewProp
                 useCORS: true, 
                 backgroundColor: '#ffffff',
                 allowTaint: true,
-                proxy: '/api/cors-proxy' // Added this line
+                proxy: '/api/cors-proxy'
             });
 
             if (formatType === 'pdf') {

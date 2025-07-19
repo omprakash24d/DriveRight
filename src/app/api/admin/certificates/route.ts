@@ -9,6 +9,7 @@ import { sendCertificateNotificationEmail } from '@/app/certificate/_lib/email-s
 import { addLog } from '@/services/auditLogService';
 import { getStudent } from '@/services/studentsService';
 import { getSiteSettings } from '@/services/settingsService';
+import { schoolConfig } from '@/lib/config';
 
 const CERTIFICATES_COLLECTION = 'certificates';
 
@@ -50,8 +51,7 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const certData = newCertificateSchema.parse(body);
 
-        const settings = await getSiteSettings();
-        const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.drivingschoolarwal.in';
+        const appBaseUrl = schoolConfig.appBaseUrl;
 
         const studentProfile = await getStudent(certData.studentId);
         
