@@ -18,18 +18,24 @@ const chartConfig: ChartConfig = {
   },
 };
 
+// Helper function to fetch data and log errors without crashing
+async function fetchDataSafe(fetcher: () => Promise<any[]>, name: string) {
+    try {
+        return await fetcher();
+    } catch (error) {
+        console.error(`Failed to fetch ${name} data on server:`, error);
+        return []; // Return empty array on failure
+    }
+}
+
 // This is now a Server Component, so we can fetch data directly and securely.
 export default async function AdminDashboard() {
   const [studentsData, enrollmentsData, resultsData, refresherRequestsData] = await Promise.all([
-    getStudents(),
-    getEnrollments(),
-    getResults(),
-    getRefresherRequests(),
-  ]).catch((error) => {
-      console.error("Failed to fetch dashboard data on server:", error);
-      // Return empty arrays on failure to prevent crashing the page
-      return [[], [], [], []];
-  });
+    fetchDataSafe(getStudents, 'students'),
+    fetchDataSafe(getEnrollments, 'enrollments'),
+    fetchDataSafe(getResults, 'results'),
+    fetchDataSafe(getRefresherRequests, 'refresher requests'),
+  ]);
 
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);

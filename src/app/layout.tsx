@@ -1,4 +1,3 @@
-
 import type { Metadata } from "next";
 import { Inter, Dancing_Script } from "next/font/google";
 import "./globals.css";
@@ -30,7 +29,6 @@ export async function generateMetadata(): Promise<Metadata> {
   const schoolName = settings.schoolName;
   const appBaseUrl = schoolConfig.appBaseUrl;
 
-
   return {
     metadataBase: new URL(appBaseUrl),
     title: {
@@ -42,26 +40,26 @@ export async function generateMetadata(): Promise<Metadata> {
     authors: [{ name: schoolName, url: appBaseUrl }],
     creator: schoolName,
     openGraph: {
-        title: `${schoolName} - Professional Driving School`,
-        description: `Your journey to safe and skilled driving starts here. Enroll online, check results, and get on the road safely with ${schoolName}.`,
-        url: appBaseUrl,
-        siteName: schoolName,
-        images: [
-          {
-            url: `${appBaseUrl}/images/1.jpeg`,
-            width: 1200,
-            height: 630,
-            alt: `A student learning to drive with an instructor at ${schoolName}`,
-          },
-        ],
-        locale: 'en_IN',
-        type: 'website',
+      title: `${schoolName} - Professional Driving School`,
+      description: `Your journey to safe and skilled driving starts here. Enroll online, check results, and get on the road safely with ${schoolName}.`,
+      url: appBaseUrl,
+      siteName: schoolName,
+      images: [
+        {
+          url: `${appBaseUrl}/images/1.jpeg`,
+          width: 1200,
+          height: 630,
+          alt: `A student learning to drive with an instructor at ${schoolName}`,
+        },
+      ],
+      locale: 'en_IN',
+      type: 'website',
     },
-     twitter: {
-        card: 'summary_large_image',
-        title: `${schoolName} - Professional Driving School`,
-        description: 'Learn to drive with the best instructors in Arwal, Bihar. Offering LMV, MCWG, and HMV courses.',
-        images: [`${appBaseUrl}/images/1.jpeg`],
+    twitter: {
+      card: 'summary_large_image',
+      title: `${schoolName} - Professional Driving School`,
+      description: 'Learn to drive with the best instructors in Arwal, Bihar. Offering LMV, MCWG, and HMV courses.',
+      images: [`${appBaseUrl}/images/1.jpeg`],
     },
     robots: {
       index: true,
@@ -77,7 +75,6 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -91,18 +88,18 @@ export default async function RootLayout({
     '@type': 'DrivingSchool',
     name: settings.schoolName,
     address: {
-        '@type': 'PostalAddress',
-        streetAddress: settings.address,
-        addressLocality: 'Arwal',
-        addressRegion: 'Bihar',
-        postalCode: '804401',
-        addressCountry: 'IN'
+      '@type': 'PostalAddress',
+      streetAddress: settings.address,
+      addressLocality: 'Arwal',
+      addressRegion: 'Bihar',
+      postalCode: '804401',
+      addressCountry: 'IN'
     },
     contactPoint: {
-        '@type': 'ContactPoint',
-        telephone: settings.phone,
-        contactType: 'Customer Service',
-        email: settings.contactEmail,
+      '@type': 'ContactPoint',
+      telephone: settings.phone,
+      contactType: 'Customer Service',
+      email: settings.contactEmail,
     },
     telephone: settings.phone,
     email: settings.contactEmail,
@@ -111,13 +108,13 @@ export default async function RootLayout({
     image: `${appBaseUrl}/images/1.jpeg`,
     description: `Professional driving school offering HMV, LMV, and motorcycle training courses in ${settings.address}.`,
     hasOfferCatalog: {
-        '@type': 'OfferCatalog',
-        name: 'Driving Courses',
-        itemListElement: [
-            { '@type': 'Offer', 'itemOffered': { '@type': 'Service', name: 'HMV Training' } },
-            { '@type': 'Offer', 'itemOffered': { '@type': 'Service', name: 'LMV Training' } },
-            { '@type': 'Offer', 'itemOffered': { '@type': 'Service', name: 'Motorcycle Training' } }
-        ]
+      '@type': 'OfferCatalog',
+      name: 'Driving Courses',
+      itemListElement: [
+        { '@type': 'Offer', 'itemOffered': { '@type': 'Service', name: 'HMV Training' } },
+        { '@type': 'Offer', 'itemOffered': { '@type': 'Service', name: 'LMV Training' } },
+        { '@type': 'Offer', 'itemOffered': { '@type': 'Service', name: 'Motorcycle Training' } }
+      ]
     },
     sameAs: [
       process.env.NEXT_PUBLIC_FACEBOOK_URL,
@@ -129,17 +126,17 @@ export default async function RootLayout({
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <head>
-         <link rel="preload" href={inter.style.fontFamily} as="font" type="font/woff2" crossOrigin="anonymous" />
-         <link rel="preload" href={dancingScript.style.fontFamily} as="font" type="font/woff2" crossOrigin="anonymous" />
-         {/* Google tag (gtag.js) */}
-        <Script async src="https://www.googletagmanager.com/gtag/js?id=G-84CLBTSFNW"></Script>
+        <link rel="preload" href={inter.style.fontFamily} as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="preload" href={dancingScript.style.fontFamily} as="font" type="font/woff2" crossOrigin="anonymous" />
+        {/* Google tag (gtag.js) */}
+        <Script async src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID}`}></Script>
         <Script id="google-analytics">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
 
-            gtag('config', 'G-84CLBTSFNW');
+            gtag('config', '${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID}');
           `}
         </Script>
       </head>
@@ -175,3 +172,4 @@ export default async function RootLayout({
     </html>
   );
 }
+
