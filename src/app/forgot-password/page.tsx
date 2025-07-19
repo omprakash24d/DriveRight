@@ -16,9 +16,9 @@ import {
 import { Form } from "@/components/ui/form";
 import { Car, Loader2, Send, MailCheck } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { auth } from "@/lib/firebase";
-import { sendPasswordResetEmail } from "firebase/auth";
+import { sendPasswordResetEmail, type AuthError } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { InputField } from "@/components/form/input-field";
 
@@ -40,23 +40,28 @@ export default function StudentForgotPasswordPage() {
         },
     });
 
+    useEffect(() => {
+        form.setFocus("email");
+    }, [form]);
+
     const onSubmit: SubmitHandler<ForgotPasswordFormValues> = async (data) => {
         setIsLoading(true);
         try {
             await sendPasswordResetEmail(auth, data.email);
             setIsSubmitted(true);
         } catch (error: any) {
-            console.error("Password reset error:", error);
+            const authError = error as AuthError;
+            console.error("Password reset error:", authError.code);
             // For security, we show a success message even if the user is not found.
             // This prevents attackers from guessing registered emails.
-            if (error.code === 'auth/user-not-found') {
+            if (authError.code === 'auth/user-not-found') {
                 setIsSubmitted(true);
             } else {
                 // For other errors (e.g., network issues, config problems), show an error toast.
                 toast({
                     variant: "destructive",
                     title: "Request Failed",
-                    description: "Could not send the password reset email. Please try again later or contact support.",
+                    description: "Could not send the password reset email. Please check your connection and try again.",
                 });
             }
         } finally {
@@ -81,7 +86,7 @@ export default function StudentForgotPasswordPage() {
             </CardHeader>
             <CardContent>
             {isSubmitted ? (
-                <div className="flex flex-col items-center text-center p-4">
+                <div className="flex flex-col items-center text-center p-4" aria-live="polite">
                     <MailCheck className="h-16 w-16 text-green-500 mb-4" />
                     <h3 className="text-xl font-semibold mb-2">Check Your Email</h3>
                     <p className="text-sm text-muted-foreground">
@@ -99,7 +104,11 @@ export default function StudentForgotPasswordPage() {
                   placeholder="student@example.com"
                   isRequired
                 />
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={isLoading || !form.formState.isDirty || !form.formState.isValid}
+                >
                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                     Send Reset Link
                 </Button>

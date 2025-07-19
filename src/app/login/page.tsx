@@ -17,9 +17,9 @@ import { Form } from "@/components/ui/form";
 import { Car, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { auth } from "@/lib/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, type AuthError } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { InputField } from "@/components/form/input-field";
 
@@ -42,6 +42,10 @@ export default function StudentLoginPage() {
             password: "",
         },
     });
+    
+    useEffect(() => {
+        form.setFocus("email");
+    }, [form]);
 
     const onSubmit: SubmitHandler<LoginFormValues> = async (data) => {
         setIsLoading(true);
@@ -49,13 +53,23 @@ export default function StudentLoginPage() {
             await signInWithEmailAndPassword(auth, data.email, data.password);
             toast({ title: "Login Successful", description: "Welcome back!" });
             router.push('/dashboard');
-        } catch (error) {
-            console.error("Login error:", error);
-            toast({
-                variant: "destructive",
-                title: "Login Failed",
-                description: "Invalid credentials. Please check your email and password.",
-            });
+        } catch (error: any) {
+            const authError = error as AuthError;
+            console.error("Login error:", authError.code);
+            
+            let errorMessage = "An unexpected error occurred. Please try again.";
+            if (authError.code === 'auth/invalid-credential' || authError.code === 'auth/wrong-password' || authError.code === 'auth/user-not-found') {
+                errorMessage = "Invalid credentials. Please check your email and password.";
+                form.setError("email", { type: "manual", message: " " }); // Add error to trigger invalid state
+                form.setError("password", { type: "manual", message: errorMessage });
+                form.setFocus("password");
+            } else {
+                 toast({
+                    variant: "destructive",
+                    title: "Login Failed",
+                    description: errorMessage,
+                });
+            }
         } finally {
             setIsLoading(false);
         }
@@ -97,7 +111,11 @@ export default function StudentLoginPage() {
                   Forgot Password?
                 </Link>
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isLoading || !form.formState.isDirty || !form.formState.isValid}
+              >
                  {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Sign In'}
               </Button>
             </form>

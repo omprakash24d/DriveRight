@@ -17,7 +17,7 @@ import { Form } from "@/components/ui/form";
 import { Car, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { auth } from "@/lib/firebase";
 import { createUserWithEmailAndPassword, updateProfile, type AuthError } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -52,6 +52,10 @@ export default function StudentSignupPage() {
         },
     });
 
+    useEffect(() => {
+        form.setFocus("name");
+    }, [form]);
+
     const onSubmit: SubmitHandler<SignupFormValues> = async (data) => {
         setIsLoading(true);
         try {
@@ -66,7 +70,7 @@ export default function StudentSignupPage() {
             
         } catch (error: any) {
             const authError = error as AuthError;
-            console.error("Signup error:", authError);
+            console.error("Signup error:", authError.code);
             
             if (authError.code === 'auth/email-already-in-use') {
                 form.setError("email", {
@@ -125,7 +129,11 @@ export default function StudentSignupPage() {
                 description="8+ characters, with uppercase, lowercase, number, and special character."
                 isRequired
               />
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isLoading || !form.formState.isDirty || !form.formState.isValid}
+              >
                  {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Create Account'}
               </Button>
             </form>
