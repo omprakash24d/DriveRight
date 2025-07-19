@@ -77,7 +77,7 @@ export default async function DisclaimerPage() {
                 <p className="leading-7 [&:not(:first-child)]:mt-6">If you have any questions about this Disclaimer, You can contact Us:</p>
                 <ul className="my-6 ml-6 list-disc [&>li]:mt-2">
                     <li>By email: <a href={`mailto:${settings.contactEmail}`} className="font-medium text-primary underline underline-offset-4">{settings.contactEmail}</a></li>
-                    <li>By visiting this page on our website: <a href="/contact" rel="external nofollow noopener" target="_blank" className="font-medium text-primary underline underline-offset-4">/contact</a></li>
+                    <li>By visiting this page on our website: <a href="/contact" rel="external nofollow noopener" target="_blank" className="font-medium text-primary underline underline-offset-4">Contact Us</a></li>
                     <li>By phone number: {settings.phone}</li>
                     <li>By mail: {settings.address}</li>
                 </ul>

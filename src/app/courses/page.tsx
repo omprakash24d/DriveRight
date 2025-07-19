@@ -3,8 +3,8 @@ import type { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCourses } from "@/services/coursesService";
 import { getSiteSettings } from '@/services/settingsService';
-import { Car, Bike, Truck, Route, PartyPopper } from "lucide-react";
-import * as icons from "lucide-react"
+import { Car, Bike, Truck, Route, PartyPopper, type LucideProps } from "lucide-react";
+import type { ElementType, ForwardRefExoticComponent, RefAttributes } from 'react';
 import { CourseEnrollButton } from './_components/CourseEnrollButton';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -14,6 +14,16 @@ export async function generateMetadata(): Promise<Metadata> {
         description: `Explore our comprehensive driving courses offered by ${settings.schoolName}, including LMV, MCWG, and HMV. Find the perfect program to start your driving journey in Arwal.`,
     };
 }
+
+// A robust icon map to safely handle dynamic icons
+const iconMap: { [key: string]: ElementType } = {
+  Car,
+  Bike,
+  Truck,
+  Route,
+  PartyPopper,
+};
+
 
 export default async function CoursesPage() {
   const courses = await getCourses();
@@ -57,15 +67,17 @@ export default async function CoursesPage() {
       </div>
 
       {courses.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
             {courses.map((course) => {
-                const IconComponent = icons[course.icon as keyof typeof icons] || Car;
+                const IconComponent = iconMap[course.icon] || Car;
                 const isFree = course.price.toLowerCase() === 'free';
+                const cardTitleId = `course-title-${course.id}`;
+
                 return (
-                    <Card key={course.id} className="flex flex-col hover:shadow-xl transition-shadow duration-300">
+                    <Card key={course.id} className="flex flex-col hover:shadow-xl transition-shadow duration-300" aria-labelledby={cardTitleId}>
                         <CardHeader className="items-center text-center">
-                            <IconComponent className="h-12 w-12 text-primary" />
-                            <CardTitle className="mt-4">{course.title}</CardTitle>
+                            <IconComponent className="h-12 w-12 text-primary" aria-hidden="true" />
+                            <CardTitle id={cardTitleId} className="mt-4">{course.title}</CardTitle>
                             <CardDescription className="text-2xl font-bold text-primary">
                                {isFree ? (
                                 <div className="flex items-center justify-center gap-2">
@@ -80,7 +92,7 @@ export default async function CoursesPage() {
                         <CardContent className="flex-grow">
                           <p className="text-muted-foreground text-center">{course.description}</p>
                         </CardContent>
-                        <CardFooter className="flex-col items-stretch gap-2">
+                        <CardFooter className="flex-col items-stretch gap-2 mt-auto">
                            <CourseEnrollButton course={course} />
                         </CardFooter>
                     </Card>
