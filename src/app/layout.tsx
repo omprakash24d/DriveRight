@@ -12,6 +12,7 @@ import { SiteWrapper } from "@/components/SiteWrapper";
 import { getSiteSettings } from "@/services/settingsService";
 import { AuthProvider } from "@/context/AuthContext";
 import { schoolConfig } from "@/lib/config";
+import Script from "next/script";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -130,6 +131,17 @@ export default async function RootLayout({
       <head>
          <link rel="preload" href={inter.style.fontFamily} as="font" type="font/woff2" crossOrigin="anonymous" />
          <link rel="preload" href={dancingScript.style.fontFamily} as="font" type="font/woff2" crossOrigin="anonymous" />
+         {/* Google tag (gtag.js) */}
+        <Script async src="https://www.googletagmanager.com/gtag/js?id=G-84CLBTSFNW"></Script>
+        <Script id="google-analytics">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-84CLBTSFNW');
+          `}
+        </Script>
       </head>
       <body
         className={cn(
