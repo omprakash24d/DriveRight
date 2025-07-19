@@ -1,0 +1,88 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if a user is an admin
+    function isAdmin() {
+      // Admins are defined in the site configuration document
+      return request.auth != null && request.auth.token.email in get(/databases/$(database)/documents/settings/siteConfiguration).data.adminEmails;
+    }
+
+    // Default deny all access unless explicitly allowed
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // User profiles can only be read/written by the owner
+    match /users/{userId} {
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null;
+    }
+
+    // Enrolled courses can only be accessed by the user who owns them
+    match /users/{userId}/enrolledCourses/{courseId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Publicly readable collections, but only writable by admins
+    match /courses/{courseId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /testimonials/{testimonialId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /trainingServices/{serviceId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+     match /onlineServices/{serviceId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /instructors/{instructorId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // Public verification (read), but admin-only write access for certificates
+    match /certificates/{certificateId} {
+      allow get, list: if true; // Allows public read/query for verification
+      allow write, delete: if isAdmin();
+    }
+    
+    // Read-only for site settings by authenticated users, write-only for admins
+    match /settings/siteConfiguration {
+        allow get: if request.auth != null;
+        allow write: if isAdmin();
+    }
+
+    // All other top-level collections are admin-only
+    match /students/{studentId} {
+      allow read, write: if isAdmin();
+    }
+    match /testResults/{resultId} {
+      allow read, write: if isAdmin();
+    }
+    match /enrollments/{enrollmentId} {
+      allow read, write: if isAdmin();
+    }
+    match /refresherRequests/{requestId} {
+      allow read, write: if isAdmin();
+    }
+    match /llInquiries/{inquiryId} {
+      allow read, write: if isAdmin();
+    }
+    match /licensePrintInquiries/{inquiryId} {
+      allow read, write: if isAdmin();
+    }
+    match /auditLogs/{logId} {
+      allow read, write: if isAdmin();
+    }
+    match /lessons/{lessonId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

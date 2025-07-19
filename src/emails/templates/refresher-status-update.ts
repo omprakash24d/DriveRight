@@ -1,0 +1,33 @@
+
+export const template = `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+    body { font-family: Arial, sans-serif; background-color: #f4f4f4; }
+    .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .header { color: #ffffff; padding: 20px; text-align: center; border-top-left-radius: 8px; border-top-right-radius: 8px; }
+    .content { padding: 30px; line-height: 1.6; }
+    .notes-box { background-color: #f9f9f9; border-left: 4px solid #cccccc; padding: 15px; margin-top: 20px; }
+    .footer { background-color: #eeeeee; color: #777777; padding: 15px; text-align: center; font-size: 12px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+    <div class="header" style="background-color: {{headerColor}};"><h1>{{headerTitle}}</h1></div>
+    <div class="content">
+        <h2 style="color: {{headerColor}};">Hi {{name}},</h2>
+        <p>This is an update regarding your refresher course request.</p>
+        <p><strong>{{message}}</strong></p>
+        <div class="notes-box">
+        <p><strong>Administrator Notes:</strong></p>
+        <p>{{notes}}</p>
+        </div>
+        <p>If you have any questions, please contact us.</p>
+        <p>Best regards,<br/>The {{schoolName}} Team</p>
+    </div>
+    <div class="footer"><p>This is an automated notification regarding your refresher course request.</p></div>
+    </div>
+</body>
+</html>
+`;

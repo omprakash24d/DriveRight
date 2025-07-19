@@ -1,0 +1,32 @@
+
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper function to check if the user is an admin
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email in ["omprakash24d@duck.com", "omprakash24d@gmail.com"];
+    }
+
+    // Allow public read for general site images
+    match /images/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Restrict access to enrollment documents
+    // Allow anyone to create (upload)
+    // Only allow admins to read, update, or delete
+    match /enrollments/{enrollmentId}/{allPaths=**} {
+      allow read, write: if isAdmin();
+      allow create: if true;
+    }
+    
+    // Restrict access to refresher course license uploads
+    match /refresher-licenses/{requestId}/{allPaths=**} {
+      allow read, write: if isAdmin();
+      allow create: if true;
+    }
+  }
+}

@@ -1,0 +1,30 @@
+
+export const template = `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+    body { font-family: Arial, sans-serif; }
+    .container { max-width: 600px; margin: 20px auto; }
+    .header { background-color: #007bff; color: #ffffff; padding: 20px; text-align: center; }
+    .content { padding: 30px; line-height: 1.6; }
+    .details { background-color: #f8f9fa; border-left: 4px solid #007bff; padding: 15px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+    <div class="header"><h1>New Driving License Print Request</h1></div>
+    <div class="content">
+        <h2>A user has submitted a request for their driving license.</h2>
+        <div class="details">
+        <p><strong>Name:</strong> {{name}}</p>
+        <p><strong>Email:</strong> {{email}}</p>
+        <p><strong>DL Number:</strong> {{dlNumber}}</p>
+        <p><strong>Date of Birth:</strong> {{dob}}</p>
+        </div>
+        <p>Please find the license document on the official portal and email it to the user. Then, update the status in the admin panel.</p>
+    </div>
+    </div>
+</body>
+</html>
+`;
