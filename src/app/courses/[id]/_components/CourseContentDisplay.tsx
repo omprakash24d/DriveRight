@@ -5,7 +5,7 @@ import { useState, useMemo } from 'react';
 import type { Module } from '@/services/coursesService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Video, FileText, VideoOff } from 'lucide-react';
+import { VideoOff } from 'lucide-react';
 import Plyr from 'plyr-react';
 import 'plyr/dist/plyr.css';
 import { LessonButton } from './LessonButton';
@@ -36,8 +36,8 @@ const plyrOptions = {
 };
 
 export function CourseContentDisplay({ modules }: { modules: Module[] }) {
-    const firstVideoId = modules[0]?.lessons[0]?.videoUrl || null;
-    const [currentVideoId, setCurrentVideoId] = useState<string | null>(firstVideoId);
+    const firstVideoUrl = modules?.[0]?.lessons?.[0]?.videoUrl || null;
+    const [currentVideoUrl, setCurrentVideoUrl] = useState<string | null>(firstVideoUrl);
 
     if (!modules || modules.length === 0 || modules.every(m => !m.lessons || m.lessons.length === 0)) {
         return (
@@ -47,15 +47,15 @@ export function CourseContentDisplay({ modules }: { modules: Module[] }) {
         );
     }
 
-    const videoSrc = useMemo(() => currentVideoId ? {
+    const videoSrc = useMemo(() => currentVideoUrl ? {
       type: 'video' as const,
       sources: [
         {
-          src: currentVideoId,
+          src: currentVideoUrl,
           provider: 'youtube' as const,
         },
       ],
-    } : null, [currentVideoId]);
+    } : null, [currentVideoUrl]);
 
     return (
         <div className="grid lg:grid-cols-3 gap-8">
@@ -65,7 +65,7 @@ export function CourseContentDisplay({ modules }: { modules: Module[] }) {
                         <div className="aspect-video bg-black rounded-lg overflow-hidden [&_.plyr]:h-full">
                             {videoSrc ? (
                                 <Plyr
-                                    key={currentVideoId}
+                                    key={currentVideoUrl}
                                     source={videoSrc}
                                     options={plyrOptions}
                                 />
@@ -94,8 +94,8 @@ export function CourseContentDisplay({ modules }: { modules: Module[] }) {
                                                 <li key={lesson.id}>
                                                    <LessonButton
                                                         lesson={lesson}
-                                                        isActive={currentVideoId === lesson.videoUrl}
-                                                        onClick={() => setCurrentVideoId(lesson.videoUrl)}
+                                                        isActive={currentVideoUrl === lesson.videoUrl}
+                                                        onClick={() => setCurrentVideoUrl(lesson.videoUrl)}
                                                     />
                                                 </li>
                                             ))}

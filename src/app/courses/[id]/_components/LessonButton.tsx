@@ -14,6 +14,7 @@ interface LessonButtonProps {
 export function LessonButton({ lesson, isActive, onClick }: LessonButtonProps) {
     return (
         <button
+            type="button"
             onClick={onClick}
             className="w-full text-left p-3 rounded-md hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-pressed={isActive}
