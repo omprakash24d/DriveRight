@@ -15,9 +15,11 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getCourse, updateCourse } from "@/services/coursesService";
+import { getCourse } from "@/services/coursesService";
 import { InputField } from "@/components/form/input-field";
 import { TextareaField } from "@/components/form/textarea-field";
+import { updateCourseAction } from "../../actions";
+import { useAuth } from "@/context/AuthContext";
 
 const attachmentSchema = z.object({
   id: z.string(),
@@ -58,6 +60,7 @@ export default function EditCoursePage() {
   const router = useRouter();
   const params = useParams();
   const courseId = params.id as string;
+  const { getIdToken } = useAuth();
 
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
@@ -104,11 +107,18 @@ export default function EditCoursePage() {
   const onSubmit: SubmitHandler<CourseFormValues> = async (data) => {
     setIsLoading(true);
     try {
-        await updateCourse(courseId, data);
-        toast({ title: "Course Updated Successfully" });
-        router.push("/admin/courses");
-    } catch (error) {
-        toast({ variant: "destructive", title: "Update Failed" });
+        const token = await getIdToken();
+        if (!token) throw new Error("Authentication error. Please log in again.");
+
+        const result = await updateCourseAction(courseId, token, data);
+        if (result.success) {
+            toast({ title: "Course Updated Successfully" });
+            router.push("/admin/courses");
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error: any) {
+        toast({ variant: "destructive", title: "Update Failed", description: error.message });
     } finally {
         setIsLoading(false);
     }

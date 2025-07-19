@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm, type SubmitHandler } from "react-hook-form";
@@ -68,7 +69,7 @@ export default function EditOnlineServicePage() {
         const token = await getIdToken();
         if (!token) throw new Error("Authentication token not available.");
 
-        const result = await updateOnlineServiceAction(serviceId, data);
+        const result = await updateOnlineServiceAction(serviceId, token, data);
         if (result.success) {
             toast({ title: "Service Updated Successfully" });
             router.push("/admin/online-services");

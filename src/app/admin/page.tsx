@@ -1,20 +1,14 @@
 
-"use client";
-
-import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Users, FileText, ClipboardCheck, Hourglass } from "lucide-react";
-import { getStudents, type Student } from "@/services/studentsService";
-import { getEnrollments, type Enrollment } from "@/services/enrollmentsService";
-import { getResults, type TestResult } from "@/services/resultsService";
-import { getRefresherRequests, type RefresherRequest } from "@/services/refresherRequestsService";
+import { getStudents } from "@/services/studentsService";
+import { getEnrollments } from "@/services/enrollmentsService";
+import { getResults } from "@/services/resultsService";
+import { getRefresherRequests } from "@/services/refresherRequestsService";
 import { EnrollmentChart } from "./_components/EnrollmentChart";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
 import { format, subMonths } from 'date-fns';
 import { CoursePopularityChart } from "./_components/CoursePopularityChart";
 import { RecentActivityFeed } from "./_components/RecentActivityFeed";
-import { useAuth } from "@/context/AuthContext";
 import type { ChartConfig } from "@/components/ui/chart";
 
 const chartConfig: ChartConfig = {
@@ -24,119 +18,68 @@ const chartConfig: ChartConfig = {
   },
 };
 
-interface DashboardStats {
-  totalStudents: number;
-  newEnrollmentsCount: number;
-  passedTestsCount: number;
-  totalPending: number;
-  pendingEnrollmentsCount: number;
-  pendingRefresherRequests: number;
-}
+// This is now a Server Component, so we can fetch data directly and securely.
+export default async function AdminDashboard() {
+  const [studentsData, enrollmentsData, resultsData, refresherRequestsData] = await Promise.all([
+    getStudents(),
+    getEnrollments(),
+    getResults(),
+    getRefresherRequests(),
+  ]).catch((error) => {
+      console.error("Failed to fetch dashboard data on server:", error);
+      // Return empty arrays on failure to prevent crashing the page
+      return [[], [], [], []];
+  });
 
-interface CoursePopularityData {
-    name: string;
-    value: number;
-    fill: string;
-}
-
-interface EnrollmentChartData {
-    month: string;
-    enrollments: number;
-}
-
-export default function AdminDashboard() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [enrollmentChartData, setEnrollmentChartData] = useState<EnrollmentChartData[]>([]);
-  const [coursePopularityData, setCoursePopularityData] = useState<CoursePopularityData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   
-  useEffect(() => {
-    // Wait for auth to be ready and user object to be available before fetching data
-    if (isAuthLoading || !user) {
-      return;
-    }
+  const newEnrollmentsCount = enrollmentsData.filter(e => e.createdAt.toDate() > thirtyDaysAgo).length;
+  const pendingEnrollmentsCount = enrollmentsData.filter(e => e.status === 'Pending').length;
+  const passedTestsCount = resultsData.filter(r => r.status === 'Pass').length;
+  const pendingRefresherRequests = refresherRequestsData.filter(r => r.status === 'Pending').length;
 
-    async function fetchData() {
-      setIsLoading(true);
-      try {
-        const [studentsData, enrollmentsData, resultsData, refresherRequestsData] = await Promise.all([
-          getStudents(),
-          getEnrollments(),
-          getResults(),
-          getRefresherRequests(),
-        ]);
-        
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        
-        const newEnrollmentsCount = enrollmentsData.filter(e => e.createdAt.toDate() > thirtyDaysAgo).length;
-        const pendingEnrollmentsCount = enrollmentsData.filter(e => e.status === 'Pending').length;
-        const passedTestsCount = resultsData.filter(r => r.status === 'Pass').length;
-        const pendingRefresherRequests = refresherRequestsData.filter(r => r.status === 'Pending').length;
-        
-        setStats({
-          totalStudents: studentsData.length,
-          newEnrollmentsCount,
-          passedTestsCount,
-          pendingEnrollmentsCount,
-          pendingRefresherRequests,
-          totalPending: pendingEnrollmentsCount + pendingRefresherRequests,
-        });
-        
-        // --- Process data for charts ---
-        // Enrollment Line Chart
-        const now = new Date();
-        const monthlyCounts = new Map<string, number>();
-        for (let i = 0; i < 6; i++) {
-            const monthDate = subMonths(now, i);
-            const monthKey = format(monthDate, 'yyyy-MM');
-            monthlyCounts.set(monthKey, 0);
-        }
-        enrollmentsData.forEach(e => {
-            const monthKey = format(e.createdAt.toDate(), 'yyyy-MM');
-            if (monthlyCounts.has(monthKey)) {
-                monthlyCounts.set(monthKey, monthlyCounts.get(monthKey)! + 1);
-            }
-        });
-        const dynamicChartData = Array.from(monthlyCounts.entries())
-            .map(([key, count]) => ({
-                month: format(new Date(key + '-02'), 'MMMM'),
-                enrollments: count
-            }))
-            .reverse();
-        setEnrollmentChartData(dynamicChartData);
+  const stats = {
+    totalStudents: studentsData.length,
+    newEnrollmentsCount,
+    passedTestsCount,
+    pendingEnrollmentsCount,
+    pendingRefresherRequests,
+    totalPending: pendingEnrollmentsCount + pendingRefresherRequests,
+  };
 
-        // Course Popularity Pie Chart
-        const courseCounts = enrollmentsData.reduce((acc, e) => {
-            const courseName = e.vehicleType.toUpperCase();
-            acc[courseName] = (acc[courseName] || 0) + 1;
-            return acc;
-        }, {} as Record<string, number>);
-
-        const popularityData = Object.entries(courseCounts).map(([name, value], index) => ({
-          name,
-          value,
-          fill: `hsl(var(--chart-${index + 1}))`
-        }));
-        setCoursePopularityData(popularityData);
-
-      } catch (error) {
-        console.error("Failed to fetch dashboard data:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Could not fetch dashboard data. Please check your permissions and try again.",
-        });
-      } finally {
-        setIsLoading(false);
+  // Process data for charts on the server
+  const now = new Date();
+  const monthlyCounts = new Map<string, number>();
+  for (let i = 0; i < 6; i++) {
+      const monthDate = subMonths(now, i);
+      const monthKey = format(monthDate, 'yyyy-MM');
+      monthlyCounts.set(monthKey, 0);
+  }
+  enrollmentsData.forEach(e => {
+      const monthKey = format(e.createdAt.toDate(), 'yyyy-MM');
+      if (monthlyCounts.has(monthKey)) {
+          monthlyCounts.set(monthKey, monthlyCounts.get(monthKey)! + 1);
       }
-    }
-    fetchData();
-  }, [isAuthLoading, user, toast]);
+  });
+  const enrollmentChartData = Array.from(monthlyCounts.entries())
+      .map(([key, count]) => ({
+          month: format(new Date(key + '-02'), 'MMMM'),
+          enrollments: count
+      }))
+      .reverse();
 
-  const memoizedStats = useMemo(() => stats, [stats]);
+  const courseCounts = enrollmentsData.reduce((acc, e) => {
+      const courseName = e.vehicleType.toUpperCase();
+      acc[courseName] = (acc[courseName] || 0) + 1;
+      return acc;
+  }, {} as Record<string, number>);
+
+  const coursePopularityData = Object.entries(courseCounts).map(([name, value], index) => ({
+    name,
+    value,
+    fill: `hsl(var(--chart-${index + 1}))`
+  }));
 
   return (
     <div className="space-y-6">
@@ -149,7 +92,7 @@ export default function AdminDashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {isLoading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{memoizedStats?.totalStudents}</div>}
+            <div className="text-2xl font-bold">{stats.totalStudents}</div>
             <p className="text-xs text-muted-foreground">All registered students</p>
           </CardContent>
         </Card>
@@ -159,7 +102,7 @@ export default function AdminDashboard() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-             {isLoading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">+{memoizedStats?.newEnrollmentsCount}</div>}
+            <div className="text-2xl font-bold">+{stats.newEnrollmentsCount}</div>
             <p className="text-xs text-muted-foreground">in the last 30 days</p>
           </CardContent>
         </Card>
@@ -169,7 +112,7 @@ export default function AdminDashboard() {
             <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-             {isLoading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{memoizedStats?.passedTestsCount}</div>}
+            <div className="text-2xl font-bold">{stats.passedTestsCount}</div>
             <p className="text-xs text-muted-foreground">Total tests passed</p>
           </CardContent>
         </Card>
@@ -179,8 +122,8 @@ export default function AdminDashboard() {
             <Hourglass className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {isLoading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{memoizedStats?.totalPending}</div>}
-            <p className="text-xs text-muted-foreground">{memoizedStats?.pendingEnrollmentsCount} enrollments, {memoizedStats?.pendingRefresherRequests} refreshers</p>
+            <div className="text-2xl font-bold">{stats.totalPending}</div>
+            <p className="text-xs text-muted-foreground">{stats.pendingEnrollmentsCount} enrollments, {stats.pendingRefresherRequests} refreshers</p>
           </CardContent>
         </Card>
       </div>

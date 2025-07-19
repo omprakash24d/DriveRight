@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { updateTrainingService as updateService, type TrainingService } from '@/services/quickServicesService';
+import { updateCourse, type Course } from '@/services/coursesService';
 import { getAdminApp } from '@/lib/firebase-admin';
 import { getAuth } from 'firebase-admin/auth';
 import { getSiteSettings } from '@/services/settingsService';
@@ -19,14 +19,15 @@ async function verifyAdmin(token: string) {
     if (!decodedToken.email || !settings.adminEmails.includes(decodedToken.email)) {
         throw new Error('Forbidden: User is not an admin.');
     }
+    return decodedToken.email;
 }
 
-export async function updateTrainingServiceAction(id: string, token: string, data: Partial<Omit<TrainingService, 'id'>>) {
+export async function updateCourseAction(id: string, token: string, data: Partial<Omit<Course, 'id'>>) {
     try {
         await verifyAdmin(token);
-        await updateService(id, data);
+        await updateCourse(id, data);
         revalidatePath('/');
-        revalidatePath('/admin/training-services');
+        revalidatePath('/admin/courses');
         return { success: true };
     } catch (error: any) {
         return { success: false, error: error.message };

@@ -77,7 +77,7 @@ export default function EditTrainingServicePage() {
             ...data,
             services: data.services.split('\n').map(s => s.trim()).filter(Boolean),
         }
-        const result = await updateTrainingServiceAction(serviceId, serviceData);
+        const result = await updateTrainingServiceAction(serviceId, token, serviceData);
         if (result.success) {
             toast({ title: "Service Updated Successfully" });
             router.push("/admin/training-services");
