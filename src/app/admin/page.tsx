@@ -1,13 +1,13 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Users, FileText, ClipboardCheck, Hourglass } from "lucide-react";
-import { getStudents } from "@/services/studentsService";
+import { getStudents, type Student } from "@/services/studentsService";
 import { getEnrollments, type Enrollment } from "@/services/enrollmentsService";
-import { getResults } from "@/services/resultsService";
-import { getRefresherRequests } from "@/services/refresherRequestsService";
+import { getResults, type TestResult } from "@/services/resultsService";
+import { getRefresherRequests, type RefresherRequest } from "@/services/refresherRequestsService";
 import { EnrollmentChart } from "./_components/EnrollmentChart";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
@@ -15,8 +15,9 @@ import { format, subMonths } from 'date-fns';
 import { CoursePopularityChart } from "./_components/CoursePopularityChart";
 import { RecentActivityFeed } from "./_components/RecentActivityFeed";
 import { useAuth } from "@/context/AuthContext";
+import type { ChartConfig } from "@/components/ui/chart";
 
-const chartConfig = {
+const chartConfig: ChartConfig = {
   enrollments: {
     label: "Enrollments",
     color: "hsl(var(--primary))",
@@ -32,10 +33,21 @@ interface DashboardStats {
   pendingRefresherRequests: number;
 }
 
+interface CoursePopularityData {
+    name: string;
+    value: number;
+    fill: string;
+}
+
+interface EnrollmentChartData {
+    month: string;
+    enrollments: number;
+}
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [enrollmentChartData, setEnrollmentChartData] = useState<any[]>([]);
-  const [coursePopularityData, setCoursePopularityData] = useState<any[]>([]);
+  const [enrollmentChartData, setEnrollmentChartData] = useState<EnrollmentChartData[]>([]);
+  const [coursePopularityData, setCoursePopularityData] = useState<CoursePopularityData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const { user, isLoading: isAuthLoading } = useAuth();
@@ -124,6 +136,8 @@ export default function AdminDashboard() {
     fetchData();
   }, [isAuthLoading, user, toast]);
 
+  const memoizedStats = useMemo(() => stats, [stats]);
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Dashboard</h1>
@@ -135,7 +149,7 @@ export default function AdminDashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {isLoading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{stats?.totalStudents}</div>}
+            {isLoading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{memoizedStats?.totalStudents}</div>}
             <p className="text-xs text-muted-foreground">All registered students</p>
           </CardContent>
         </Card>
@@ -145,7 +159,7 @@ export default function AdminDashboard() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-             {isLoading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">+{stats?.newEnrollmentsCount}</div>}
+             {isLoading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">+{memoizedStats?.newEnrollmentsCount}</div>}
             <p className="text-xs text-muted-foreground">in the last 30 days</p>
           </CardContent>
         </Card>
@@ -155,7 +169,7 @@ export default function AdminDashboard() {
             <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-             {isLoading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{stats?.passedTestsCount}</div>}
+             {isLoading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{memoizedStats?.passedTestsCount}</div>}
             <p className="text-xs text-muted-foreground">Total tests passed</p>
           </CardContent>
         </Card>
@@ -165,8 +179,8 @@ export default function AdminDashboard() {
             <Hourglass className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {isLoading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{stats?.totalPending}</div>}
-            <p className="text-xs text-muted-foreground">{stats?.pendingEnrollmentsCount} enrollments, {stats?.pendingRefresherRequests} refreshers</p>
+            {isLoading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{memoizedStats?.totalPending}</div>}
+            <p className="text-xs text-muted-foreground">{memoizedStats?.pendingEnrollmentsCount} enrollments, {memoizedStats?.pendingRefresherRequests} refreshers</p>
           </CardContent>
         </Card>
       </div>

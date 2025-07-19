@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
@@ -17,11 +18,18 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { AdminHeader } from "@/components/AdminHeader";
-import { Home, Users, FileText, Award, Route, Settings, LogOut, Car, History, CalendarDays, UserSquare, FileSearch, Star, Printer, ConciergeBell, FileCheck2 } from "lucide-react";
+import { Home, Users, FileText, Award, Route, Settings, LogOut, Car, History, CalendarDays, UserSquare, FileSearch, Star, Printer, ConciergeBell, FileCheck2, type LucideIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getSiteSettings } from '@/services/settingsService';
+import { getSiteSettings, type SiteSettings } from '@/services/settingsService';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const navItems = [
+interface NavItem {
+    href: string;
+    label: string;
+    icon: LucideIcon;
+}
+
+const navItems: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: Home },
   { href: "/admin/schedule", label: "Schedule", icon: CalendarDays },
   { href: "/admin/enrollments", label: "Enrollments", icon: FileText },
@@ -39,7 +47,7 @@ const navItems = [
   { href: "/admin/logs", label: "Audit Logs", icon: History },
 ];
 
-const settingsNav = [
+const settingsNav: NavItem[] = [
     { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
@@ -55,10 +63,21 @@ async function clearSessionCookie() {
   await fetch('/api/auth/session', { method: 'DELETE' });
 }
 
+function LoadingSkeleton() {
+    return (
+        <div className="flex h-screen w-full items-center justify-center bg-background">
+            <div className="flex flex-col items-center gap-4">
+                <Car className="h-12 w-12 animate-pulse text-primary" />
+                <p className="text-muted-foreground">Loading Admin Panel...</p>
+            </div>
+        </div>
+    );
+}
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isChecking, setIsChecking] = useState(true);
-    const [schoolName, setSchoolName] = useState("DriveRight");
+    const [settings, setSettings] = useState<SiteSettings | null>(null);
     const router = useRouter();
     const pathname = usePathname();
     const { toast } = useToast();
@@ -71,10 +90,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       const checkAuthAndPermissions = async () => {
         try {
-          const settings = await getSiteSettings();
+          const siteSettings = await getSiteSettings();
           if (isMounted) {
-            setSchoolName(settings.schoolName);
-            const adminEmails = settings.adminEmails;
+            setSettings(siteSettings);
+            const adminEmails = siteSettings.adminEmails;
 
             unsubscribe = onAuthStateChanged(auth, async (user) => {
               if (!isMounted) return;
@@ -85,7 +104,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   const token = await user.getIdToken();
                   await setSessionCookie(token);
                   if (isPublicPage) {
-                    router.push('/admin');
+                    const nextUrl = new URLSearchParams(window.location.search).get('next') || '/admin';
+                    router.push(nextUrl);
                   }
                 } else {
                   setIsAuthenticated(false);
@@ -103,7 +123,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 setIsAuthenticated(false);
                 await clearSessionCookie();
                 if (!isPublicPage) {
-                  router.push('/admin/login');
+                   const redirectUrl = `/admin/login?next=${encodeURIComponent(pathname)}`;
+                   router.push(redirectUrl);
                 }
               }
               setIsChecking(false);
@@ -133,23 +154,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           unsubscribe();
         }
       };
-    }, [isPublicPage, router, toast]);
+    }, [isPublicPage, router, toast, pathname]);
 
-    const handleSignOut = async () => {
+    const handleSignOut = useCallback(async () => {
         await signOut(auth);
         await clearSessionCookie();
         router.push('/admin/login');
-    };
+    }, [router]);
 
     if (isChecking && !isPublicPage) {
-        return (
-           <div className="flex h-screen w-full items-center justify-center bg-background">
-               <div className="flex flex-col items-center gap-4">
-                   <Car className="h-12 w-12 animate-pulse text-primary" />
-                   <p className="text-muted-foreground">Loading Admin Panel...</p>
-               </div>
-           </div>
-       );
+        return <LoadingSkeleton />;
     }
 
     if (isPublicPage) {
@@ -166,14 +180,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <SidebarHeader>
               <div className="flex items-center gap-2 p-2">
                   <Car className="h-8 w-8 text-primary" />
-                  <span className="font-bold text-lg group-data-[collapsible=icon]:hidden">{schoolName}</span>
+                  {settings ? (
+                    <span className="font-bold text-lg group-data-[collapsible=icon]:hidden">{settings.schoolName}</span>
+                  ) : (
+                    <Skeleton className="h-6 w-32 group-data-[collapsible=icon]:hidden" />
+                  )}
               </div>
             </SidebarHeader>
             <SidebarContent>
               <SidebarMenu>
                 {navItems.map((item) => (
                   <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton asChild tooltip={item.label}>
+                    <SidebarMenuButton asChild tooltip={item.label} isActive={pathname === item.href}>
                       <Link href={item.href}>
                         <item.icon />
                         <span>{item.label}</span>
@@ -187,7 +205,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                <SidebarMenu>
                 {settingsNav.map((item) => (
                      <SidebarMenuItem key={item.href}>
-                        <SidebarMenuButton asChild tooltip={item.label}>
+                        <SidebarMenuButton asChild tooltip={item.label} isActive={pathname.startsWith(item.href)}>
                         <Link href={item.href}>
                             <item.icon />
                             <span>{item.label}</span>
