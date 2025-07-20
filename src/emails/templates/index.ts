@@ -11,6 +11,7 @@ import { template as llInquiryStatusUpdate } from './ll-inquiry-status-update';
 import { template as refresherAdminNotification } from './refresher-admin-notification';
 import { template as refresherUserConfirmation } from './refresher-user-confirmation';
 import { template as refresherStatusUpdate } from './refresher-status-update';
+import { template as userDataExport } from './user-data-export';
 
 export const templates = {
   'certificate-notification': certificateNotification,
@@ -25,4 +26,5 @@ export const templates = {
   'refresher-admin-notification': refresherAdminNotification,
   'refresher-user-confirmation': refresherUserConfirmation,
   'refresher-status-update': refresherStatusUpdate,
+  'user-data-export': userDataExport,
 };

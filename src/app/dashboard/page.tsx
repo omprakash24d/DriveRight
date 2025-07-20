@@ -8,6 +8,7 @@ import { ProfileEditor } from './_components/ProfileEditor';
 import { UserActivity } from './_components/UserActivity';
 import { EnrolledCourses } from './_components/EnrolledCourses';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AccountManagement } from './_components/AccountManagement';
 
 export default function DashboardPage() {
   const { user, userProfile, isLoading: isAuthLoading } = useAuth();
@@ -48,8 +49,9 @@ export default function DashboardPage() {
           <EnrolledCourses userId={user.uid} />
           <UserActivity userId={user.uid} />
         </div>
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 space-y-8">
           <ProfileEditor user={user} />
+          <AccountManagement user={user} />
         </div>
       </div>
     </div>
