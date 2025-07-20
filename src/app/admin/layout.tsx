@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from "next/link";
@@ -85,71 +85,77 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const isPublicPage = useMemo(() => pathname === '/admin/login' || pathname === '/admin/forgot-password', [pathname]);
 
     useEffect(() => {
-      let isMounted = true;
-      let unsubscribe: (() => void) | undefined;
+        let isMounted = true;
+        let unsubscribe: (() => void) | undefined;
 
-      const checkAuthAndPermissions = async () => {
-        setIsChecking(true);
-        try {
-          const siteSettings = await getSiteSettings();
-          if (!isMounted) return;
+        const checkAuthAndPermissions = async () => {
+            setIsChecking(true);
+            try {
+                // Fetch settings once
+                const siteSettings = await getSiteSettings();
+                if (!isMounted) return;
+                setSettings(siteSettings);
 
-          setSettings(siteSettings);
-          const adminEmails = siteSettings.adminEmails;
+                unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
+                    if (!isMounted) return;
 
-          unsubscribe = onAuthStateChanged(auth, async (user) => {
-            if (!isMounted) return;
-
-            if (user && user.email && adminEmails.includes(user.email)) {
-              setIsAuthenticated(true);
-              const token = await user.getIdToken();
-              await setSessionCookie(token);
-              if (isPublicPage) {
-                const nextUrl = new URLSearchParams(window.location.search).get('next') || '/admin';
-                router.push(nextUrl);
-              }
-            } else {
-              setIsAuthenticated(false);
-              if (user) { // If user exists but is not an admin
-                await signOut(auth);
-                toast({
-                  variant: "destructive",
-                  title: "Unauthorized Access",
-                  description: "You are not authorized to access the admin panel.",
+                    if (user) {
+                        const tokenResult = await user.getIdTokenResult();
+                        // SECURE: Check for the admin custom claim
+                        if (tokenResult.claims.admin === true) {
+                            setIsAuthenticated(true);
+                            await setSessionCookie(tokenResult.token);
+                            if (isPublicPage) {
+                                const nextUrl = new URLSearchParams(window.location.search).get('next') || '/admin';
+                                router.push(nextUrl);
+                            }
+                        } else {
+                            // User is logged in but is not an admin
+                            setIsAuthenticated(false);
+                            await signOut(auth); // Sign them out
+                            toast({
+                                variant: "destructive",
+                                title: "Unauthorized Access",
+                                description: "You are not authorized to access the admin panel.",
+                            });
+                             if (!isPublicPage) {
+                                router.push(`/admin/login?next=${encodeURIComponent(pathname)}`);
+                            }
+                        }
+                    } else {
+                        // No user is logged in
+                        setIsAuthenticated(false);
+                        await clearSessionCookie();
+                        if (!isPublicPage) {
+                            router.push(`/admin/login?next=${encodeURIComponent(pathname)}`);
+                        }
+                    }
+                    setIsChecking(false);
                 });
-              }
-              await clearSessionCookie();
-              if (!isPublicPage) {
-                 const redirectUrl = `/admin/login?next=${encodeURIComponent(pathname)}`;
-                 router.push(redirectUrl);
-              }
+            } catch (error) {
+                if (isMounted) {
+                    console.error("Failed to fetch site settings or set up auth listener:", error);
+                    toast({
+                        variant: "destructive",
+                        title: "Initialization Error",
+                        description: "Could not verify admin permissions. Please check console.",
+                    });
+                    if (!isPublicPage) {
+                        router.push('/admin/login');
+                    }
+                    setIsChecking(false);
+                }
             }
-            setIsChecking(false);
-          });
-        } catch (error) {
-          if (isMounted) {
-            console.error("Failed to fetch site settings for auth check:", error);
-            toast({
-              variant: "destructive",
-              title: "Configuration Error",
-              description: "Could not verify admin permissions. Please check console.",
-            });
-            if (!isPublicPage) {
-              router.push('/admin/login');
+        };
+
+        checkAuthAndPermissions();
+
+        return () => {
+            isMounted = false;
+            if (unsubscribe) {
+                unsubscribe();
             }
-            setIsChecking(false);
-          }
-        }
-      };
-
-      checkAuthAndPermissions();
-
-      return () => {
-        isMounted = false;
-        if (unsubscribe) {
-          unsubscribe();
-        }
-      };
+        };
     }, [isPublicPage, router, toast, pathname]);
 
     const handleSignOut = useCallback(async () => {

@@ -8,7 +8,6 @@ import { Timestamp } from 'firebase-admin/firestore';
 import { sendCertificateNotificationEmail } from '@/app/certificate/_lib/email-service';
 import { addLog } from '@/services/auditLogService';
 import { getStudent } from '@/services/studentsService';
-import { getSiteSettings } from '@/services/settingsService';
 import { schoolConfig } from '@/lib/config';
 
 const CERTIFICATES_COLLECTION = 'certificates';
@@ -33,10 +32,8 @@ async function verifyAdmin(request: NextRequest) {
     const adminAuth = getAuth(adminApp);
     const decodedToken = await adminAuth.verifyIdToken(idToken);
     
-    const settings = await getSiteSettings();
-    const adminEmails = settings.adminEmails || [];
-
-    if (!decodedToken.email || !adminEmails.includes(decodedToken.email)) {
+    // SECURE: Check for the 'admin' custom claim.
+    if (decodedToken.admin !== true) {
         throw new Error('Forbidden: User is not an admin.');
     }
     
