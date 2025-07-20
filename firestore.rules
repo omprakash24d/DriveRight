@@ -13,8 +13,8 @@ service cloud.firestore {
       return isAuthed() && request.auth.uid == userId;
     }
 
-    // Securely checks for an 'admin' custom claim on the user's token.
-    // This is the correct and secure way to identify an administrator.
+    // Securely checks for an admin custom claim on the user's token.
+    // This is set on the server and cannot be spoofed by the client.
     function isAdmin() {
       return isAuthed() && request.auth.token.admin == true;
     }
@@ -23,28 +23,28 @@ service cloud.firestore {
     // These collections contain public-facing content that anyone can read.
     // Only administrators are allowed to create, update, or delete documents.
     match /settings/siteConfiguration {
-      // Public read is necessary for the isAdmin() function to access the admin list from the client.
-      allow read: if true;
+      // Public read is necessary for the site to function and for isAdmin() to work.
+      allow read: if true; 
       allow write: if isAdmin();
     }
 
-    match /courses/{doc=**} {
+    match /courses/{docId} {
       allow get, list: if true;
       allow write: if isAdmin();
     }
-    match /instructors/{doc=**} {
+    match /instructors/{docId} {
       allow get, list: if true;
       allow write: if isAdmin();
     }
-    match /testimonials/{doc=**} {
+    match /testimonials/{docId} {
       allow get, list: if true;
       allow write: if isAdmin();
     }
-    match /trainingServices/{doc=**} {
+    match /trainingServices/{docId} {
       allow get, list: if true;
       allow write: if isAdmin();
     }
-    match /onlineServices/{doc=**} {
+    match /onlineServices/{docId} {
       allow get, list: if true;
       allow write: if isAdmin();
     }
@@ -52,7 +52,7 @@ service cloud.firestore {
     // --- USER-SPECIFIC DATA ---
     // The /users collection stores profile information for authenticated users.
     match /users/{userId} {
-      // Users can read and write to their own top-level document.
+      // Users can read and write to their own profile document.
       allow read, write: if isOwner(userId);
       
       // Users can manage their own list of enrolled courses.
@@ -82,7 +82,6 @@ service cloud.firestore {
     }
 
     // --- ADMIN-MANAGED Collections ---
-    
     // Admins have full access to these collections.
     match /students/{doc=**} {
         allow read, write: if isAdmin();
@@ -105,15 +104,9 @@ service cloud.firestore {
     }
 
     // Certificates can be READ by anyone (for public verification) but only WRITTEN by admins.
-    match /certificates/{doc=**} {
+    match /certificates/{docId} {
         allow get, list: if true;
         allow write: if isAdmin();
-    }
-
-    // --- Default Deny ---
-    // Explicitly deny access to any other path not defined above.
-    match /{path=**} {
-      allow read, write: if false;
     }
   }
 }

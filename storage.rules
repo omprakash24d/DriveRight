@@ -4,29 +4,29 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     
-    // Helper function to check if the user is an admin
-    function isAdmin() {
-      return request.auth != null && request.auth.token.email in ["omprakash24d@duck.com", "omprakash24d@gmail.com"];
+    // --- Enrollment and Refresher Form Uploads ---
+    // This rule allows anyone to upload files for enrollment or refresher courses.
+    // It restricts file size to 10MB and only allows common document/image types.
+    // Importantly, it PREVENTS anyone from reading these files back. Only your
+    // server-side code with Admin SDK can access them.
+    match /enrollments/{uniqueId}/{fileName} {
+      allow create: if request.resource.size < 10 * 1024 * 1024
+                    && request.resource.contentType.matches('image/.*|application/pdf');
+      allow read, write, delete: if false; // Deny read, update, and delete for everyone
     }
 
-    // Allow public read for general site images
-    match /images/{allPaths=**} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // Restrict access to enrollment documents
-    // Allow anyone to create (upload)
-    // Only allow admins to read, update, or delete
-    match /enrollments/{enrollmentId}/{allPaths=**} {
-      allow read, write: if isAdmin();
-      allow create: if true;
+    match /refresher-requests/{refId}/{fileName} {
+      allow create: if request.resource.size < 10 * 1024 * 1024
+                    && request.resource.contentType.matches('image/.*|application/pdf');
+      allow read, write, delete: if false;
     }
     
-    // Restrict access to refresher course license uploads
-    match /refresher-licenses/{requestId}/{allPaths=**} {
-      allow read, write: if isAdmin();
-      allow create: if true;
+    // --- Default Deny ---
+    // By default, no other paths in Storage are accessible.
+    // This is a secure default. You can add more specific rules above this line
+    // if other parts of your app need storage access.
+    match /{allPaths=**} {
+      allow read, write: if false;
     }
   }
 }
