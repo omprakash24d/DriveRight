@@ -9,24 +9,54 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { ThemeToggle } from "./theme-toggle";
 import Link from "next/link";
 import { useEffect, useState, useMemo } from "react";
-import { getRecentNotifications } from "@/services/notificationsService";
 import type { Notification } from "@/services/notificationsService";
 import { Skeleton } from "./ui/skeleton";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, parseISO } from "date-fns";
+import { useAuth } from "@/context/AuthContext";
 
 function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { getIdToken } = useAuth();
 
   useEffect(() => {
     async function fetchNotifications() {
       setIsLoading(true);
-      const fetchedNotifications = await getRecentNotifications();
-      setNotifications(fetchedNotifications);
-      setIsLoading(false);
+      try {
+        const token = await getIdToken();
+        if (!token) {
+            // Can't fetch if not logged in.
+            setIsLoading(false);
+            return;
+        };
+
+        const response = await fetch('/api/admin/notifications', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch notifications');
+        }
+
+        const data: any[] = await response.json();
+
+        // The timestamp will be a string from the API, so we need to parse it back to a Date object.
+        const fetchedNotifications = data.map(n => ({
+            ...n,
+            timestamp: parseISO(n.timestamp)
+        }));
+
+        setNotifications(fetchedNotifications);
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      } finally {
+        setIsLoading(false);
+      }
     }
     fetchNotifications();
-  }, []);
+  }, [getIdToken]);
   
   const pendingCount = useMemo(() => {
     return notifications.filter(n => n.title.includes('Pending') || n.title.includes('New')).length;
