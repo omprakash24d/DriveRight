@@ -14,8 +14,7 @@ interface EnrollmentData {
     address: string;
     state: string;
     vehicleType: string;
-    photoCropped: string;
-    photoOriginal: string;
+    photoCroppedUrl: string; // Now a URL
 }
 
 interface AdminEmailParams {
@@ -50,14 +49,9 @@ const transporter = nodemailer.createTransport({
 
 const sanitize = (str: string) => (str ? str.replace(/<[^>]*>?/gm, '') : '');
 
-const dataUriToBuffer = (dataUri: string) => {
-    const base64 = dataUri.split(',')[1];
-    return Buffer.from(base64, 'base64');
-};
-
 export async function sendEnrollmentAdminEmail({ data, refId, idProofFile }: AdminEmailParams) {
     checkEmailConfig();
-    const { fullName, email, mobileNumber, dateOfBirth, address, state, vehicleType, photoCropped, photoOriginal } = data;
+    const { fullName, email, mobileNumber, dateOfBirth, address, state, vehicleType, photoCroppedUrl } = data;
 
     const attachments = [
         {
@@ -67,12 +61,7 @@ export async function sendEnrollmentAdminEmail({ data, refId, idProofFile }: Adm
         },
         {
             filename: `Photo_Cropped_${sanitize(fullName)}.jpg`,
-            content: dataUriToBuffer(photoCropped),
-            contentType: 'image/jpeg',
-        },
-        {
-            filename: `Photo_Original_${sanitize(fullName)}.jpg`,
-            content: dataUriToBuffer(photoOriginal),
+            path: photoCroppedUrl, // Use URL for linked attachment
             contentType: 'image/jpeg',
         }
     ];

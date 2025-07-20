@@ -1,6 +1,9 @@
 
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { storage } from "@/lib/firebase";
+import { ref, uploadBytes, getDownloadURL, uploadString } from "firebase/storage";
+import { nanoid } from "nanoid";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -22,9 +25,12 @@ export function generateAvatarColor(name: string) {
  * Resizes an image file on the client-side.
  * @param file The image file to resize.
  * @param maxSize The maximum width or height of the resized image.
- * @returns A promise that resolves with a Base64 encoded Data URI of the resized image.
+ * @param outputType The desired output format, 'dataUrl' or 'file'.
+ * @returns A promise that resolves with a Base64 encoded Data URI or a File object.
  */
-export function resizeImage(file: File, maxSize: number): Promise<string> {
+export function resizeImage(file: File, maxSize: number, outputType: 'dataUrl'): Promise<string>;
+export function resizeImage(file: File, maxSize: number, outputType: 'file'): Promise<File>;
+export function resizeImage(file: File, maxSize: number, outputType: 'dataUrl' | 'file'): Promise<string | File> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -55,11 +61,36 @@ export function resizeImage(file: File, maxSize: number): Promise<string> {
           return reject(new Error('Could not get canvas context'));
         }
         ctx.drawImage(img, 0, 0, width, height);
-        // Get the data-URL with the best quality for JPEG
-        resolve(canvas.toDataURL('image/jpeg', 0.9));
+        
+        if (outputType === 'dataUrl') {
+            resolve(canvas.toDataURL('image/jpeg', 0.9));
+        } else {
+            canvas.toBlob((blob) => {
+                if (!blob) {
+                    return reject(new Error('Canvas to Blob conversion failed'));
+                }
+                const newFile = new File([blob], file.name, {
+                    type: 'image/jpeg',
+                    lastModified: Date.now()
+                });
+                resolve(newFile);
+            }, 'image/jpeg', 0.9);
+        }
       };
       img.onerror = (error) => reject(error);
     };
     reader.onerror = (error) => reject(error);
   });
+}
+
+/**
+ * Uploads a file to Firebase Storage.
+ * @param file The file to upload.
+ * @param path The path in Firebase Storage where the file should be stored.
+ * @returns A promise that resolves with the public download URL of the uploaded file.
+ */
+export async function uploadFile(file: File, path: string): Promise<string> {
+    const storageRef = ref(storage, path);
+    const snapshot = await uploadBytes(storageRef, file);
+    return getDownloadURL(snapshot.ref);
 }

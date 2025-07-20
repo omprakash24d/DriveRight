@@ -16,7 +16,7 @@ export interface Student {
     email: string;
     phone: string;
     joined: Timestamp;
-    avatar?: string; // Base64 data URI
+    avatar?: string; // Now a URL
 }
 
 // For authenticated users
@@ -24,7 +24,7 @@ export interface UserProfile {
     uid: string;
     email: string | null;
     name: string | null;
-    avatar?: string; // Base64 data URI
+    avatar?: string; // Now a URL
     createdAt: Timestamp;
 }
 

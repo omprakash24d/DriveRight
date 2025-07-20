@@ -20,8 +20,8 @@ export interface Enrollment {
     documentId?: string;
     status: EnrollmentStatus;
     createdAt: Timestamp;
-    photoCroppedUrl?: string; 
-    idProofUrl?: string; 
+    photoCroppedUrl: string; // Now a URL
+    idProofUrl: string; // Now a URL
     adminRemarks?: string;
     paymentId?: string;
     orderId?: string;

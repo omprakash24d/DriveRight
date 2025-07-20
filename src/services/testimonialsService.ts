@@ -58,7 +58,7 @@ export async function getTestimonial(id: string): Promise<Testimonial | null> {
 }
 
 // Add a new testimonial to Firestore
-export async function addTestimonial(testimonialData: Omit<Testimonial, 'id' | 'avatar'>) {
+export async function addTestimonial(testimonialData: Omit<Testimonial, 'id'>) {
     if (!db.app) throw new Error("Firebase not initialized.");
     try {
         const docRef = await addDoc(collection(db, TESTIMONIALS_COLLECTION), testimonialData);
@@ -71,7 +71,7 @@ export async function addTestimonial(testimonialData: Omit<Testimonial, 'id' | '
 }
 
 // Update an existing testimonial in Firestore
-export async function updateTestimonial(id: string, testimonialData: Partial<Omit<Testimonial, 'id' | 'avatar'>>) {
+export async function updateTestimonial(id: string, testimonialData: Partial<Omit<Testimonial, 'id'>>) {
     if (!db.app) throw new Error("Firebase not initialized.");
     try {
         const docRef = doc(db, TESTIMONIALS_COLLECTION, id);

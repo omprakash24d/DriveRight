@@ -4,8 +4,8 @@ import { z } from 'zod';
 import { sendEnrollmentAdminEmail, sendEnrollmentConfirmationEmail } from '../_lib/email-service';
 import { logSubmission } from '@/app/contact/_lib/logging'; // Re-using contact form logger
 import { addDoc, collection, Timestamp } from 'firebase/firestore';
-import { db, storage } from '@/lib/firebase';
-import { ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { db } from '@/lib/firebase';
+import { uploadFile } from '@/lib/utils';
 import { nanoid } from 'nanoid';
 import { MAX_FILE_SIZE, ACCEPTED_DOCUMENT_TYPES } from '@/lib/constants';
 
@@ -21,27 +21,34 @@ const formSchema = z.object({
   vehicleType: z.enum(["hmv", "lmv", "mcwg", "lmv+mcwg", "others"]),
   documentId: z.string().optional(),
   idProof: z.custom<File>()
+    .refine((file) => !!file, "ID Proof is required.")
     .refine((file) => file?.size <= MAX_FILE_SIZE, `Max file size is 10MB.`)
     .refine((file) => ACCEPTED_DOCUMENT_TYPES.includes(file?.type), ".jpg, .jpeg, .png and .pdf files are accepted."),
-  photoCropped: z.string().startsWith('data:image/'),
-  photoOriginal: z.string().startsWith('data:image/'),
+  photoCropped: z.custom<File>().refine((file) => !!file, "Cropped photo is required."),
   paymentId: z.string().optional(),
   orderId: z.string().optional(),
   pricePaid: z.string().optional(),
 });
 
 
-async function uploadToStorage(dataUri: string, path: string): Promise<string> {
-    const storageRef = ref(storage, path);
-    const snapshot = await uploadString(storageRef, dataUri, 'data_url');
-    return getDownloadURL(snapshot.ref);
-}
-
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
-    const data = Object.fromEntries(formData.entries());
-    data.idProof = formData.get('idProof'); 
+    const data = {
+      fullName: formData.get('fullName'),
+      email: formData.get('email'),
+      mobileNumber: formData.get('mobileNumber'),
+      dateOfBirth: formData.get('dateOfBirth'),
+      state: formData.get('state'),
+      address: formData.get('address'),
+      vehicleType: formData.get('vehicleType'),
+      documentId: formData.get('documentId'),
+      idProof: formData.get('idProof'),
+      photoCropped: formData.get('photoCropped'),
+      paymentId: formData.get('paymentId'),
+      orderId: formData.get('orderId'),
+      pricePaid: formData.get('pricePaid'),
+    };
 
     const parsed = formSchema.safeParse(data);
 
@@ -59,17 +66,13 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ message: 'Server configuration error.' }, { status: 500 });
     }
 
-    const { idProof, photoCropped, photoOriginal, ...enrollmentData } = parsed.data;
+    const { idProof, photoCropped, ...enrollmentData } = parsed.data;
     const refId = `ENR-${Date.now()}`;
     const uniqueId = nanoid();
 
     // --- Upload images to Firebase Storage ---
-    const photoCroppedUrl = await uploadToStorage(photoCropped, `enrollments/${uniqueId}/photo_cropped.jpg`);
-    const idProofUrl = await uploadToStorage(
-        `data:${idProof.type};base64,${Buffer.from(await idProof.arrayBuffer()).toString('base64')}`,
-        `enrollments/${uniqueId}/id_proof.${idProof.name.split('.').pop()}`
-    );
-
+    const photoCroppedUrl = await uploadFile(photoCropped, `enrollments/${uniqueId}/photo_cropped.jpg`);
+    const idProofUrl = await uploadFile(idProof, `enrollments/${uniqueId}/id_proof.${idProof.name.split('.').pop()}`);
 
     // Add to firestore with public URLs
     await addDoc(collection(db, ENROLLMENTS_COLLECTION), {
@@ -84,7 +87,7 @@ export async function POST(req: NextRequest) {
     });
     
     const adminEmailPayload = {
-      data: parsed.data,
+      data: { ...parsed.data, photoCroppedUrl },
       refId,
       idProofFile: idProof,
     };

@@ -18,14 +18,14 @@ import { Input } from "@/components/ui/input";
 import { getInstructor, updateInstructor } from "@/services/instructorsService";
 import { InputField } from "@/components/form/input-field";
 import { TextareaField } from "@/components/form/textarea-field";
-import { resizeImage } from "@/lib/utils";
+import { resizeImage, uploadFile } from "@/lib/utils";
 
 const instructorSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   experience: z.string().min(1, "Experience is required."),
   specialties: z.string().min(1, "Specialties are required."),
   bio: z.string().min(10, "Bio must be at least 10 characters long."),
-  avatar: z.string().optional(),
+  avatar: z.string().optional(), // This will now be a URL
 });
 
 type InstructorFormValues = z.infer<typeof instructorSchema>;
@@ -38,12 +38,14 @@ export default function EditInstructorPage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+
 
   const form = useForm<InstructorFormValues>({
     resolver: zodResolver(instructorSchema),
   });
   
-  const avatarValue = form.watch('avatar');
+  const avatarUrlValue = form.watch('avatar');
 
   useEffect(() => {
     if (instructorId) {
@@ -80,8 +82,10 @@ export default function EditInstructorPage() {
     const file = e.target.files?.[0];
     if (file) {
       try {
-        const resizedDataUrl = await resizeImage(file, 256);
-        form.setValue('avatar', resizedDataUrl, { shouldValidate: true });
+        const resizedFile = await resizeImage(file, 256, 'file');
+        setImageFile(resizedFile as File);
+        // Display a preview
+        form.setValue('avatar', URL.createObjectURL(resizedFile), { shouldValidate: true });
       } catch (error) {
         toast({ variant: 'destructive', title: 'Image Error', description: 'Could not process the image.' });
       }
@@ -91,7 +95,14 @@ export default function EditInstructorPage() {
   const onSubmit: SubmitHandler<InstructorFormValues> = async (data) => {
     setIsLoading(true);
     try {
-        await updateInstructor(instructorId, data);
+        let avatarUrl = data.avatar;
+        if (imageFile) {
+            avatarUrl = await uploadFile(imageFile, `instructors/${instructorId}/avatar.jpg`);
+        }
+        
+        const finalData = { ...data, avatar: avatarUrl };
+
+        await updateInstructor(instructorId, finalData);
         toast({
             title: "Instructor Updated Successfully",
             description: `${data.name}'s details have been updated.`,
@@ -154,10 +165,10 @@ export default function EditInstructorPage() {
                 <TextareaField control={form.control} name="bio" label="Biography" placeholder="A short bio about the instructor..." rows={4} isRequired />
                 <div className="space-y-2">
                     <label className="text-sm font-medium">Photograph</label>
-                    {avatarValue ? (
+                    {avatarUrlValue ? (
                       <div className="flex items-center gap-4">
-                        <Image src={avatarValue} alt="Avatar preview" width={64} height={64} className="rounded-full" />
-                        <Button variant="outline" onClick={() => form.setValue('avatar', undefined)}>
+                        <Image src={avatarUrlValue} alt="Avatar preview" width={64} height={64} className="rounded-full object-cover" />
+                        <Button variant="outline" onClick={() => { form.setValue('avatar', ''); setImageFile(null); }}>
                           <X className="mr-2 h-4 w-4" /> Remove
                         </Button>
                       </div>

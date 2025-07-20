@@ -20,7 +20,6 @@ const testimonialSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   course: z.string().min(1, "Course is required."),
   quote: z.string().min(10, "Quote must be at least 10 characters long."),
-  avatar: z.any().optional(),
 });
 
 type TestimonialFormValues = z.infer<typeof testimonialSchema>;
@@ -42,8 +41,7 @@ export default function NewTestimonialPage() {
   const onSubmit: SubmitHandler<TestimonialFormValues> = async (data) => {
     setIsLoading(true);
     try {
-      const { avatar, ...testimonialData } = data;
-      await addTestimonial(testimonialData);
+      await addTestimonial(data);
       toast({
         title: "Testimonial Added Successfully",
         description: `A new testimonial from ${data.name} has been added.`,
@@ -84,7 +82,6 @@ export default function NewTestimonialPage() {
               <InputField control={form.control} name="name" label="Student Name" placeholder="e.g., Jane Doe" isRequired />
               <InputField control={form.control} name="course" label="Course Taken" placeholder="e.g., LMV License Course" isRequired />
               <TextareaField control={form.control} name="quote" label="Quote" placeholder="The instructors were amazing..." rows={5} isRequired />
-              <InputField control={form.control} name="avatar" label="Photograph (Not Implemented)" type="file" description="Image uploads are not yet supported." />
               <div className="flex justify-end">
                 <Button type="submit" disabled={isLoading}>
                   {isLoading ? (
