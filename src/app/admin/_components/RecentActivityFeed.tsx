@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getRecentNotifications, type Notification } from "@/services/notificationsService";
+import { getRecentNotificationsForAdmin, type Notification } from "@/services/notificationsService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileText, Route, Award, UserPlus, CheckCircle, Hourglass } from "lucide-react";
 import Link from "next/link";
@@ -36,8 +36,17 @@ export function RecentActivityFeed() {
         async function fetchData() {
             setIsLoading(true);
             try {
-                const data = await getRecentNotifications();
-                setNotifications(data);
+                // This function is now fetched from the client, but hits a secure API route
+                const response = await fetch('/api/admin/notifications');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch notifications');
+                }
+                const data: any[] = await response.json();
+                const processedNotifications = data.map(n => ({
+                    ...n,
+                    timestamp: new Date(n.timestamp) // Convert ISO string back to Date
+                }));
+                setNotifications(processedNotifications);
             } catch (error) {
                 console.error("Failed to load activity feed", error);
             } finally {

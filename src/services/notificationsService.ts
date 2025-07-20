@@ -3,14 +3,13 @@
 
 import { getAdminApp } from "@/lib/firebase-admin";
 import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
-import { collection, getDocs, query, orderBy, limit, Timestamp } from "firebase/firestore";
 
 export interface Notification {
     id: string;
     title: string;
     description: string;
     href: string;
-    timestamp: Date;
+    timestamp: Date; // Keep as Date object for server-side logic
 }
 
 // This function is now designed to run ONLY on the server via an API route.
