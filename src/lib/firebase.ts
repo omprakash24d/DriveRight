@@ -1,4 +1,3 @@
-
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
@@ -18,42 +17,25 @@ let auth: Auth;
 let db: Firestore;
 let storage: FirebaseStorage;
 
-let firebaseInitialized = false;
+// Check if all required environment variables are present.
+const isFirebaseConfigured = Object.values(firebaseConfig).every(value => value);
 
-// Only initialize Firebase if all config values are present
-if (Object.values(firebaseConfig).every(value => value)) {
-  try {
-    app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-    auth = getAuth(app);
-    db = getFirestore(app);
-    storage = getStorage(app);
-    firebaseInitialized = true;
-  } catch(e) {
-      console.error("Firebase initialization failed:", e);
-  }
-}
-
-if (!firebaseInitialized && typeof window !== 'undefined') {
-  console.error(
-    "********************************************************************************\n" +
-    "** FIREBASE IS NOT CONFIGURED!                                                  **\n" +
-    "** -----------------------------                                              **\n" +
-    "** Your Firebase configuration is missing or incomplete.                      **\n" +
-    "** Please copy `.env.example` to `.env` and add your project credentials.     **\n" +
-    "** The application will not function correctly until this is resolved.        **\n" +
-    "********************************************************************************"
+if (!isFirebaseConfigured) {
+  // Fail fast during build or server start if the configuration is incomplete.
+  throw new Error(
+    "Firebase is not configured. Please copy `.env.example` to `.env` and add your project credentials."
   );
 }
 
-// @ts-ignore
-if (!firebaseInitialized) {
-  // Provide dummy objects to prevent the app from crashing on import.
-  // Functions that use these will fail at runtime.
-  app = {} as FirebaseApp;
-  auth = {} as Auth;
-  db = {} as Firestore;
-  storage = {} as FirebaseStorage;
+try {
+  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+  auth = getAuth(app);
+  db = getFirestore(app);
+  storage = getStorage(app);
+} catch (e) {
+  console.error("Firebase initialization failed:", e);
+  // Re-throw the error to ensure the application does not start in a broken state.
+  throw new Error("Failed to initialize Firebase. The application cannot start.");
 }
-
 
 export { app, auth, db, storage };
