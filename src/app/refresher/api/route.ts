@@ -5,6 +5,7 @@ import { sendRefresherAdminEmail, sendRefresherConfirmationEmail } from '../_lib
 import { logSubmission } from '@/app/contact/_lib/logging';
 import { addDoc, collection, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { sanitize } from '@/lib/utils';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_DOCUMENT_TYPES = ["image/jpeg", "image/png", "application/pdf"];
@@ -41,7 +42,14 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ message: 'Server configuration error.' }, { status: 500 });
     }
 
-    const { licenseUpload, ...requestData } = parsed.data;
+    const { licenseUpload, ...unSanitizedRequestData } = parsed.data;
+
+    const requestData = {
+        ...unSanitizedRequestData,
+        name: sanitize(unSanitizedRequestData.name),
+        reason: sanitize(unSanitizedRequestData.reason),
+    };
+
     const refId = `RFR-${Date.now()}`;
 
     // Add to firestore
@@ -54,12 +62,12 @@ export async function POST(req: NextRequest) {
     });
     
     const adminEmailPayload = {
-        data: parsed.data,
+        data: { ...requestData, dob: requestData.dob }, // Ensure dob is a Date object for the emailer
         refId,
         file: licenseUpload,
     };
     const userEmailPayload = {
-        data: parsed.data,
+        data: requestData,
         refId,
     };
 

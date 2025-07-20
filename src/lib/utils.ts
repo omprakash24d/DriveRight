@@ -20,6 +20,13 @@ export function generateAvatarColor(name: string) {
   return `hsl(${h}, 80%, 90%)`;
 }
 
+/**
+ * Strips HTML tags from a string to prevent XSS attacks.
+ * @param str The input string.
+ * @returns The sanitized string.
+ */
+export const sanitize = (str: string) => (str ? str.replace(/<[^>]*>?/gm, '') : '');
+
 
 /**
  * Resizes an image file on the client-side.
@@ -30,7 +37,8 @@ export function generateAvatarColor(name: string) {
  */
 export function resizeImage(file: File, maxSize: number, outputType: 'dataUrl'): Promise<string>;
 export function resizeImage(file: File, maxSize: number, outputType: 'file'): Promise<File>;
-export function resizeImage(file: File, maxSize: number, outputType: 'dataUrl' | 'file'): Promise<string | File> {
+export function resizeImage(file: File, maxSize: number): Promise<string>; // Overload for default 'dataUrl'
+export function resizeImage(file: File, maxSize: number, outputType: 'dataUrl' | 'file' = 'dataUrl'): Promise<string | File> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { logSubmission } from '@/app/contact/_lib/logging';
 import { addLicensePrintInquiry } from '@/services/licensePrintInquiriesService';
 import { sendLicensePrintAdminEmail } from '@/app/license-print/_lib/email-service';
+import { sanitize } from '@/lib/utils';
 
 const licensePrintSchema = z.object({
   name: z.string().min(2),
@@ -24,20 +25,26 @@ export async function POST(req: NextRequest) {
       );
     }
     
-    await addLicensePrintInquiry(parsed.data);
+    const sanitizedData = {
+      ...parsed.data,
+      name: sanitize(parsed.data.name),
+      dlNumber: sanitize(parsed.data.dlNumber),
+    };
 
-    sendLicensePrintAdminEmail(parsed.data).catch(error => {
+    await addLicensePrintInquiry(sanitizedData);
+
+    sendLicensePrintAdminEmail(sanitizedData).catch(error => {
       logSubmission({
         level: 'error',
         message: 'Failed to send DL Print inquiry admin email.',
-        data: { dlNumber: parsed.data.dlNumber, error: error.message },
+        data: { dlNumber: sanitizedData.dlNumber, error: error.message },
       });
     });
 
     await logSubmission({
         level: 'info',
         message: 'New Driving License Print Request.',
-        data: { dlNumber: parsed.data.dlNumber },
+        data: { dlNumber: sanitizedData.dlNumber },
     });
 
     return NextResponse.json({ message: 'Inquiry submitted successfully.' }, { status: 200 });

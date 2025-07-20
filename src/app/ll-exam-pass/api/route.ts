@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { logSubmission } from '@/app/contact/_lib/logging';
 import { addLlInquiry } from '@/services/llInquiriesService';
 import { sendLlInquiryAdminEmail } from '../_lib/email-service';
+import { sanitize } from '@/lib/utils';
 
 const llInquirySchema = z.object({
   name: z.string().min(2),
@@ -26,21 +27,27 @@ export async function POST(req: NextRequest) {
       );
     }
     
-    await addLlInquiry(parsed.data);
+    const sanitizedData = {
+      ...parsed.data,
+      name: sanitize(parsed.data.name),
+      applicationNo: sanitize(parsed.data.applicationNo),
+    };
+    
+    await addLlInquiry(sanitizedData);
 
     // Send admin notification email, but don't block the user on it
-    sendLlInquiryAdminEmail(parsed.data).catch(error => {
+    sendLlInquiryAdminEmail(sanitizedData).catch(error => {
       logSubmission({
         level: 'error',
         message: 'Failed to send LL inquiry admin email.',
-        data: { appNo: parsed.data.applicationNo, error: error.message },
+        data: { appNo: sanitizedData.applicationNo, error: error.message },
       });
     });
 
     await logSubmission({
         level: 'info',
         message: 'LL Exam Result Inquiry.',
-        data: { appNo: parsed.data.applicationNo },
+        data: { appNo: sanitizedData.applicationNo },
     });
 
     return NextResponse.json({ message: 'Inquiry logged successfully.' }, { status: 200 });

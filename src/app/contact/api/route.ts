@@ -6,6 +6,7 @@ import { analyzeSubmission } from '../_ai/spam-filter';
 import { personalizeResponse } from '../_ai/personalize-response';
 import { logSubmission } from '../_lib/logging';
 import { sendAdminEmail, sendConfirmationEmail } from '../_lib/email-service';
+import { sanitize } from '@/lib/utils';
 
 // Zod schema for input validation
 const contactFormSchema = z.object({
@@ -74,6 +75,15 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+    
+    // Sanitize inputs
+    const sanitizedData = {
+        name: sanitize(parsed.data.name),
+        email: parsed.data.email, // Email is validated, not sanitized
+        message: sanitize(parsed.data.message),
+        honeypot: parsed.data.honeypot
+    };
+
 
     if (file && file.size > MAX_ATTACHMENT_SIZE) {
       return NextResponse.json(
@@ -82,7 +92,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { name, email, message, honeypot } = parsed.data;
+    const { name, email, message, honeypot } = sanitizedData;
 
     const spamAnalysis = await analyzeSubmission({
       ipAddress: ip,
@@ -107,7 +117,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const emailPayload = { data: parsed.data, file };
+    const emailPayload = { data: sanitizedData, file };
 
     // Send emails
     try {
@@ -133,13 +143,13 @@ export async function POST(req: NextRequest) {
        await logSubmission({
         level: 'info',
         message: 'Successfully sent auto-reply email to user.',
-        data: { email: parsed.data.email },
+        data: { email: sanitizedData.email },
       });
     } catch(error: any) {
        await logSubmission({
         level: 'warn',
         message: 'Failed to send auto-reply email to user.',
-        data: { email: parsed.data.email, error: error.message },
+        data: { email: sanitizedData.email, error: error.message },
       });
       // Do not re-throw, as the main submission was successful
     }

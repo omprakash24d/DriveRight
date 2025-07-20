@@ -5,7 +5,7 @@ import { sendEnrollmentAdminEmail, sendEnrollmentConfirmationEmail } from '../_l
 import { logSubmission } from '@/app/contact/_lib/logging'; // Re-using contact form logger
 import { addDoc, collection, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { uploadFile } from '@/lib/utils';
+import { uploadFile, sanitize } from '@/lib/utils';
 import { nanoid } from 'nanoid';
 import { MAX_FILE_SIZE, ACCEPTED_DOCUMENT_TYPES } from '@/lib/constants';
 
@@ -72,8 +72,17 @@ export async function POST(req: NextRequest) {
         await logSubmission({ level: 'error', message: 'SMTP environment variables are not set.', data: {} });
         return NextResponse.json({ message: 'Server is not configured correctly.' }, { status: 500 });
     }
+    
+    const { idProof, photoCropped, ...unSanitizedEnrollmentData } = parsed.data;
 
-    const { idProof, photoCropped, ...enrollmentData } = parsed.data;
+    // Sanitize text inputs before saving
+    const enrollmentData = {
+      ...unSanitizedEnrollmentData,
+      fullName: sanitize(unSanitizedEnrollmentData.fullName),
+      address: sanitize(unSanitizedEnrollmentData.address),
+      documentId: unSanitizedEnrollmentData.documentId ? sanitize(unSanitizedEnrollmentData.documentId) : undefined,
+    };
+
     const refId = `ENR-${Date.now()}`;
     const uniqueId = nanoid();
 
@@ -98,12 +107,12 @@ export async function POST(req: NextRequest) {
     });
     
     const adminEmailPayload = {
-      data: { ...parsed.data, photoCroppedUrl },
+      data: { ...enrollmentData, dateOfBirth: enrollmentData.dateOfBirth, photoCroppedUrl },
       refId,
       idProofFile: idProof,
     };
     const userEmailPayload = {
-      data: parsed.data,
+      data: enrollmentData,
       refId,
     }
 
