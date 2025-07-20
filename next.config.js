@@ -1,10 +1,8 @@
 // @ts-check
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const { config } = require('dotenv');
+import { config } from 'dotenv';
 
 // Load environment variables from .env file at the very beginning
-config();
+config({ path: './.env' });
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
