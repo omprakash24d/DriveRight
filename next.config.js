@@ -1,3 +1,9 @@
+// @ts-check
+import { config } from 'dotenv';
+
+// Load environment variables from .env file at the very beginning
+config();
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   /* config options here */
