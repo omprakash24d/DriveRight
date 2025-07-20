@@ -75,11 +75,11 @@ export default async function AdminDashboard() {
       }))
       .reverse();
 
-  const courseCounts = enrollmentsData.reduce((acc, e) => {
+  const courseCounts = enrollmentsData.reduce((acc: Record<string, number>, e) => {
       const courseName = e.vehicleType.toUpperCase();
       acc[courseName] = (acc[courseName] || 0) + 1;
       return acc;
-  }, {} as Record<string, number>);
+  }, {});
 
   const coursePopularityData = Object.entries(courseCounts).map(([name, value], index) => ({
     name,
