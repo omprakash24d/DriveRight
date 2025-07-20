@@ -1,11 +1,8 @@
 
 "use client";
 import { useEffect, useRef } from 'react';
-import { Html5QrcodeScanner, Html5Qrcode, type QrCodeSuccessCallback } from 'html5-qrcode';
+import { Html5Qrcode, type QrcodeSuccessCallback } from 'html5-qrcode';
 import { useToast } from '@/hooks/use-toast';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { CameraOff } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 interface QrScannerProps {
   onScanSuccess: (decodedText: string) => void;
@@ -19,7 +16,7 @@ export function QrScanner({ onScanSuccess }: QrScannerProps) {
     const scanner = new Html5Qrcode('reader');
     scannerRef.current = scanner;
 
-    const qrCodeSuccessCallback: QrCodeSuccessCallback = (decodedText, decodedResult) => {
+    const qrCodeSuccessCallback: QrcodeSuccessCallback = (decodedText, decodedResult) => {
         scanner.stop().then(() => {
             onScanSuccess(decodedText);
         }).catch(err => {

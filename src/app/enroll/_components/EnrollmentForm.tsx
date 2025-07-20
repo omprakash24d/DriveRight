@@ -170,7 +170,7 @@ export function EnrollmentFormComponent() {
     }
   }, [form, toast, selectedCourse]);
 
-  const handlePayment = async (formData: EnrollmentFormValues) => {
+  const handlePayment = useCallback(async (formData: EnrollmentFormValues) => {
     setIsLoading(true);
     try {
       if (!selectedCourse || !selectedCourse.price) throw new Error("Course price is not available.");
@@ -217,7 +217,7 @@ export function EnrollmentFormComponent() {
         toast({ variant: "destructive", title: "Payment Initialization Failed", description: error.message });
         setIsLoading(false);
     }
-  };
+  }, [selectedCourse, submitFormData, toast]);
 
   const onSubmit: SubmitHandler<EnrollmentFormValues> = useCallback(async (data) => {
     if (isFreeCourse) {
@@ -225,7 +225,7 @@ export function EnrollmentFormComponent() {
     } else {
       await handlePayment(data);
     }
-  }, [isFreeCourse, submitFormData]);
+  }, [isFreeCourse, submitFormData, handlePayment]);
 
 
   if (submissionResult?.success) {

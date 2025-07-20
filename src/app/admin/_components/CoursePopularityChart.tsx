@@ -18,6 +18,21 @@ interface CoursePopularityChartProps {
 }
 
 export function CoursePopularityChart({ data }: CoursePopularityChartProps) {
+    const chartConfig = useMemo(() => {
+        if (!data) return {};
+        return data.reduce((acc, item) => {
+            acc[item.name] = { label: item.name, color: item.fill };
+            return acc;
+        }, {} as ChartConfig);
+    }, [data]);
+
+    const cells = useMemo(() => {
+        if (!data) return [];
+        return data.map((entry) => (
+            <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+        ));
+    }, [data]);
+
     if (!data) {
         return <Skeleton className="h-[250px] w-full" />;
     }
@@ -29,19 +44,6 @@ export function CoursePopularityChart({ data }: CoursePopularityChartProps) {
             </div>
         );
     }
-    
-    const chartConfig = useMemo(() => {
-        return data.reduce((acc, item) => {
-            acc[item.name] = { label: item.name, color: item.fill };
-            return acc;
-        }, {} as ChartConfig);
-    }, [data]);
-
-    const cells = useMemo(() => {
-        return data.map((entry) => (
-            <Cell key={`cell-${entry.name}`} fill={entry.fill} />
-        ));
-    }, [data]);
 
     return (
         <ChartContainer 

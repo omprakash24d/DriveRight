@@ -30,7 +30,7 @@ export function Chatbot() {
         if(isOpen && messages.length === 0) {
             setMessages([{ role: 'model', content: "Hello! How can I help you with Driving School Arwal today?" }]);
         }
-    }, [isOpen]);
+    }, [isOpen, messages.length]);
 
 
     useEffect(() => {

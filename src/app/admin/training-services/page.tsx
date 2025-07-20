@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ElementType } from "react";
 import { 
     Trash2, Edit, PlusCircle, Car, ConciergeBell
 } from "lucide-react";
@@ -94,7 +94,7 @@ export default function AdminTrainingServicesPage() {
       <Card>
         <CardHeader>
           <CardTitle>Homepage Training Service Cards</CardTitle>
-          <CardDescription>Manage the service cards that appear on the homepage under the "Our Driving Services" section.</CardDescription>
+          <CardDescription>Manage the service cards that appear on the homepage under the &quot;Our Driving Services&quot; section.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -118,7 +118,7 @@ export default function AdminTrainingServicesPage() {
                 ))
               ) : services.length > 0 ? (
                 services.map((service) => {
-                    const IconComponent = icons[service.icon as keyof typeof icons] || Car;
+                    const IconComponent = (icons[service.icon as keyof typeof icons] || Car) as ElementType;
                     return (
                         <TableRow key={service.id}>
                         <TableCell>

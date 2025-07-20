@@ -80,6 +80,7 @@ export function DatePicker({ value, onChange, calendarProps, disabled, placehold
             <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
                     <Button
+                        type="button"
                         variant={"ghost"}
                         className="absolute inset-y-0 right-0 h-full px-3"
                         aria-label="Open calendar"
@@ -108,6 +109,7 @@ export function DatePicker({ value, onChange, calendarProps, disabled, placehold
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          type="button"
           variant={"outline"}
           className={cn(
             "w-full justify-start text-left font-normal",

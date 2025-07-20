@@ -4,6 +4,7 @@
 import React, { useState, useRef } from 'react';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
+import Image from "next/image";
 
 import {
   Dialog,
@@ -124,10 +125,12 @@ export function ImageCropDialog({ imageUrl, onCrop, onClose }: ImageCropDialogPr
               minHeight={100}
               aria-label="Image crop area"
             >
-              <img
+              <Image
                 ref={imgRef}
                 alt="Image to crop"
                 src={imageUrl}
+                width={500}
+                height={500}
                 style={{ transform: `scale(${debouncedScale}) rotate(${debouncedRotate}deg)` }}
                 onLoad={onImageLoad}
               />

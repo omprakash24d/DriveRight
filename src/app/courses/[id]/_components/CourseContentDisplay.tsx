@@ -10,7 +10,6 @@ import Plyr from 'plyr-react';
 import 'plyr/dist/plyr.css';
 import { LessonButton } from './LessonButton';
 
-// Moved outside the component to prevent re-creation on every render
 const plyrOptions = {
     controls: [
         'play-large',
@@ -24,7 +23,6 @@ const plyrOptions = {
         'pip',
         'fullscreen'
     ],
-    // Removed 'as const' to fix the readonly array type error
     settings: ['captions', 'quality', 'speed', 'loop'],
     youtube: {
         noCookie: true,
@@ -39,14 +37,6 @@ export function CourseContentDisplay({ modules }: { modules: Module[] }) {
     const firstVideoUrl = modules?.[0]?.lessons?.[0]?.videoUrl || null;
     const [currentVideoUrl, setCurrentVideoUrl] = useState<string | null>(firstVideoUrl);
 
-    if (!modules || modules.length === 0 || modules.every(m => !m.lessons || m.lessons.length === 0)) {
-        return (
-            <div className="text-center py-16">
-                <p className="text-muted-foreground text-lg">Course content is being prepared. Please check back soon!</p>
-            </div>
-        );
-    }
-
     const videoSrc = useMemo(() => currentVideoUrl ? {
       type: 'video' as const,
       sources: [
@@ -56,6 +46,14 @@ export function CourseContentDisplay({ modules }: { modules: Module[] }) {
         },
       ],
     } : null, [currentVideoUrl]);
+
+    if (!modules || modules.length === 0 || modules.every(m => !m.lessons || m.lessons.length === 0)) {
+        return (
+            <div className="text-center py-16">
+                <p className="text-muted-foreground text-lg">Course content is being prepared. Please check back soon!</p>
+            </div>
+        );
+    }
 
     return (
         <div className="grid lg:grid-cols-3 gap-8">

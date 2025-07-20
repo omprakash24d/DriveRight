@@ -36,7 +36,10 @@ export async function POST(req: NextRequest) {
     await addLlInquiry(sanitizedData);
 
     // Send admin notification email, but don't block the user on it
-    sendLlInquiryAdminEmail(sanitizedData).catch(error => {
+    sendLlInquiryAdminEmail({
+      ...sanitizedData,
+      mobileNo: sanitizedData.mobileNumber, // Ensure correct property name
+    }).catch(error => {
       logSubmission({
         level: 'error',
         message: 'Failed to send LL inquiry admin email.',

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, type ElementType } from "react";
 import { 
     Trash2, Edit, PlusCircle, FileCheck2
 } from "lucide-react";
@@ -93,7 +93,7 @@ export default function AdminOnlineServicesPage() {
       <Card>
         <CardHeader>
           <CardTitle>Homepage Online Tool Cards</CardTitle>
-          <CardDescription>Manage the online tool cards that appear on the homepage under the "Online Tools & Resources" section.</CardDescription>
+          <CardDescription>Manage the online tool cards that appear on the homepage under the &quot;Online Tools & Resources&quot; section.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table role="table">
@@ -117,7 +117,7 @@ export default function AdminOnlineServicesPage() {
                 ))
               ) : services.length > 0 ? (
                 services.map((service) => {
-                    const IconComponent = icons[service.icon as keyof typeof icons] || FileCheck2;
+                    const IconComponent = (icons[service.icon as keyof typeof icons] || FileCheck2) as ElementType;
                     return (
                         <TableRow key={service.id} role="row">
                         <TableCell role="cell">

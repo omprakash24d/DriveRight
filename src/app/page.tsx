@@ -1,8 +1,4 @@
 
-import type { Metadata } from 'next';
-import { getSiteSettings } from "@/services/settingsService";
-import { getTestimonials } from "@/services/testimonialsService";
-import { getTrainingServices, getOnlineServices } from "@/services/quickServicesService";
 import { HeroSection } from "./(home)/_components/HeroSection";
 import { WhyChooseUs } from "./(home)/_components/WhyChooseUs";
 import { GallerySection } from "./(home)/_components/GallerySection";
@@ -13,14 +9,11 @@ import { TestimonialsSection } from "./(home)/_components/TestimonialsSection";
 import { VideoSection } from "./(home)/_components/VideoSection";
 import { CtaSection } from "./(home)/_components/CtaSection";
 import { DeveloperNoteSection } from './(home)/_components/DeveloperNoteSection';
+import { getSiteSettings } from "@/services/settingsService";
+import { getTestimonials } from "@/services/testimonialsService";
+import { getTrainingServices, getOnlineServices } from "@/services/quickServicesService";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const settings = await getSiteSettings();
-  return {
-    title: `${settings.schoolName} - Driving School in Arwal, Bihar`,
-    description: `Welcome to ${settings.schoolName}, the leading driving school in Arwal for HMV, LMV, and motorcycle training. Enroll today to start your journey towards becoming a safe and confident driver.`,
-  };
-}
+// Note: Metadata is now handled in layout.tsx for a centralized approach
 
 export default async function Home() {
   const settings = await getSiteSettings();

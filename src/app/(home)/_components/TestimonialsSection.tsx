@@ -14,11 +14,10 @@ interface TestimonialsSectionProps {
 }
 
 export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) {
-  if (!testimonials || testimonials.length === 0) {
-    return null;
-  }
-  
   const testimonialCards = useMemo(() => {
+    if (!testimonials || testimonials.length === 0) {
+      return [];
+    }
     return testimonials.map((testimonial) => (
       <CarouselItem key={testimonial.id} className="basis-full md:basis-1/2 lg:basis-1/3">
         <div className="p-1 h-full">
@@ -45,6 +44,10 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
     ));
   }, [testimonials]);
   
+  if (!testimonials || testimonials.length === 0) {
+    return null;
+  }
+
   return (
     <section id="testimonials" className="w-full py-20 md:py-24 bg-secondary/50" role="region" aria-labelledby="testimonials-title">
       <div className="container mx-auto px-4 md:px-6">

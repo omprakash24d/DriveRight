@@ -12,7 +12,7 @@ interface LlInquiryData {
     applicationNo: string;
     dob: Date;
     mobileNo: string;
-    email: string; // Added for admin notification
+    email: string;
 }
 
 interface LlStatusUpdateData {
