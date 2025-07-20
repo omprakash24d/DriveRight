@@ -22,9 +22,9 @@ type DatePickerProps = {
     placeholder?: string;
     disabled?: boolean;
     inputType?: 'button' | 'text';
-} & React.HTMLAttributes<HTMLDivElement>
+}
 
-export function DatePicker({ value, onChange, calendarProps, disabled, placeholder, inputType = 'button', ...props }: DatePickerProps) {
+export function DatePicker({ value, onChange, calendarProps, disabled, placeholder, inputType = 'button' }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
   
   // --- Text Input Variant ---
@@ -69,7 +69,7 @@ export function DatePicker({ value, onChange, calendarProps, disabled, placehold
     }
     
     return (
-        <div className="relative" {...props}>
+        <div className="relative">
             <Input
                 value={inputValue}
                 onChange={handleInputChange}
@@ -116,7 +116,6 @@ export function DatePicker({ value, onChange, calendarProps, disabled, placehold
             !value && "text-muted-foreground"
           )}
           disabled={disabled}
-          {...props}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
           {value ? formatDate(value, "PPP") : <span>{placeholder || 'Pick a date'}</span>}
