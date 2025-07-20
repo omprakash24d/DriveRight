@@ -19,12 +19,12 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
       return [];
     }
     return testimonials.map((testimonial) => (
-      <CarouselItem key={testimonial.id} className="basis-full md:basis-1/2 lg:basis-1/3">
+      <CarouselItem key={testimonial.id} className="basis-full md:basis--1/2 lg:basis-1/3">
         <div className="p-1 h-full">
           <Card className="flex flex-col h-full text-left">
             <CardContent className="flex-grow p-6">
               <Quote className="h-8 w-8 text-primary/50 mb-4" />
-              <p className="text-muted-foreground">{testimonial.quote}</p>
+              <blockquote className="text-muted-foreground italic">"{testimonial.quote}"</blockquote>
             </CardContent>
             <CardFooter className="pt-6 flex items-center gap-4 border-t mt-auto">
                 <Avatar>
