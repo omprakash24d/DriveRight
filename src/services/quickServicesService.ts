@@ -68,7 +68,7 @@ export async function addTrainingService(serviceData: Omit<TrainingService, 'id'
     if (!db.app) throw new Error("Firebase not initialized.");
     try {
         const docRef = await addDoc(collection(db, TRAINING_SERVICES_COLLECTION), serviceData);
-        await addLog('Updated Site Settings', `Added Training Service: ${serviceData.title}`);
+        await addLog('Added Training Service', `Title: ${serviceData.title}`);
         return docRef.id;
     } catch (error) {
         console.error("Error adding training service: ", error);
@@ -81,7 +81,7 @@ export async function updateTrainingService(id: string, serviceData: Partial<Omi
     try {
         const docRef = doc(db, TRAINING_SERVICES_COLLECTION, id);
         await updateDoc(docRef, serviceData);
-        await addLog('Updated Site Settings', `Updated Training Service: ${serviceData.title}`);
+        await addLog('Updated Training Service', `ID: ${id}`);
     } catch (error) {
         console.error("Error updating training service: ", error);
         throw new Error("Could not update training service.");
@@ -95,7 +95,7 @@ export async function deleteTrainingService(id: string): Promise<void> {
         const docSnap = await getDoc(docRef);
         const title = docSnap.exists() ? docSnap.data().title : `ID: ${id}`;
         await deleteDoc(docRef);
-        await addLog('Updated Site Settings', `Deleted Training Service: ${title}`);
+        await addLog('Deleted Training Service', `Title: ${title}`);
     } catch (error) {
         console.error("Error deleting training service: ", error);
         throw new Error("Could not delete training service.");
@@ -164,7 +164,7 @@ export async function seedDefaultTrainingServices(): Promise<number> {
         });
 
         await Promise.all(addPromises);
-        await addLog('Updated Site Settings', `Seeded ${servicesToAdd.length} default training services.`);
+        await addLog('Added Training Service', `Seeded ${servicesToAdd.length} default training services.`);
         
         return servicesToAdd.length;
     } catch (error) {
@@ -215,7 +215,7 @@ export async function addOnlineService(serviceData: Omit<OnlineService, 'id'>) {
     if (!db.app) throw new Error("Firebase not initialized.");
     try {
         const docRef = await addDoc(collection(db, ONLINE_SERVICES_COLLECTION), serviceData);
-        await addLog('Updated Site Settings', `Added Online Service: ${serviceData.title}`);
+        await addLog('Added Online Service', `Title: ${serviceData.title}`);
         return docRef.id;
     } catch (error) {
         console.error("Error adding online service: ", error);
@@ -228,7 +228,7 @@ export async function updateOnlineService(id: string, serviceData: Partial<Omit<
     try {
         const docRef = doc(db, ONLINE_SERVICES_COLLECTION, id);
         await updateDoc(docRef, serviceData);
-        await addLog('Updated Site Settings', `Updated Online Service: ${serviceData.title}`);
+        await addLog('Updated Online Service', `ID: ${id}`);
     } catch (error) {
         console.error("Error updating online service: ", error);
         throw new Error("Could not update online service.");
@@ -242,7 +242,7 @@ export async function deleteOnlineService(id: string): Promise<void> {
         const docSnap = await getDoc(docRef);
         const title = docSnap.exists() ? docSnap.data().title : `ID: ${id}`;
         await deleteDoc(docRef);
-        await addLog('Updated Site Settings', `Deleted Online Service: ${title}`);
+        await addLog('Deleted Online Service', `Title: ${title}`);
     } catch (error) {
         console.error("Error deleting online service: ", error);
         throw new Error("Could not delete online service.");
@@ -300,7 +300,7 @@ export async function seedDefaultOnlineServices(): Promise<number> {
         });
 
         await Promise.all(addPromises);
-        await addLog('Updated Site Settings', `Seeded ${servicesToAdd.length} default online services.`);
+        await addLog('Added Online Service', `Seeded ${servicesToAdd.length} default online services.`);
         
         return servicesToAdd.length;
     } catch (error) {

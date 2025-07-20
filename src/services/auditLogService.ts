@@ -20,9 +20,15 @@ export type LogAction =
   // Refresher Requests
   'Updated Refresher Request Status' | 'Deleted Refresher Request' |
   // LL Inquiries
-  'Updated LL Inquiry' | 'Updated DL Inquiry' |
+  'Updated LL Inquiry' |
+  // DL Inquiries
+  'Updated DL Inquiry' |
   // Settings
-  'Updated Site Settings';
+  'Updated Site Settings' |
+  // Training Services
+  'Added Training Service' | 'Updated Training Service' | 'Deleted Training Service' |
+  // Online Services
+  'Added Online Service' | 'Updated Online Service' | 'Deleted Online Service';
 
 export interface AuditLog {
     id: string;
