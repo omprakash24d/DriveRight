@@ -2,9 +2,10 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode, useCallback } from 'react';
-import { onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth';
+import { onAuthStateChanged, signOut, type User as FirebaseUser } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { getUserProfile, type UserProfile } from '@/services/studentsService';
+import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -20,6 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   const fetchUserProfile = useCallback(async (firebaseUser: FirebaseUser | null) => {
     if (firebaseUser) {
@@ -29,6 +31,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUserProfile(null);
     }
   }, []);
+
+  const handleSignOut = useCallback(async () => {
+      await signOut(auth);
+      setUser(null);
+      setUserProfile(null);
+      router.push('/login');
+  }, [router]);
 
   useEffect(() => {
     if (!auth.app) {
@@ -46,16 +55,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, [fetchUserProfile]);
   
-  const getIdToken = async (): Promise<string | null> => {
+  const getIdToken = useCallback(async (): Promise<string | null> => {
       if (!user) return null;
       try {
-        // Force refresh the token to ensure it's not expired
+        // Force refresh the token to ensure it's not expired.
+        // Firebase automatically handles caching, so this is efficient.
         return await user.getIdToken(true);
-      } catch (error) {
-        console.error("Error getting ID token:", error);
+      } catch (error: any) {
+        console.error("Error getting or refreshing ID token:", error);
+        // If token refresh fails (e.g., user session is revoked),
+        // log the user out to prevent them from being in an invalid state.
+        if (error.code === 'auth/user-token-expired' || error.code === 'auth/invalid-user-token') {
+            await handleSignOut();
+        }
         return null;
       }
-  };
+  }, [user, handleSignOut]);
 
   const refreshUserProfile = useCallback(async () => {
     if (user) {

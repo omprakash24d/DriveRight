@@ -89,47 +89,43 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       let unsubscribe: (() => void) | undefined;
 
       const checkAuthAndPermissions = async () => {
+        setIsChecking(true);
         try {
           const siteSettings = await getSiteSettings();
-          if (isMounted) {
-            setSettings(siteSettings);
-            const adminEmails = siteSettings.adminEmails;
+          if (!isMounted) return;
 
-            unsubscribe = onAuthStateChanged(auth, async (user) => {
-              if (!isMounted) return;
+          setSettings(siteSettings);
+          const adminEmails = siteSettings.adminEmails;
 
-              if (user) {
-                if (user.email && adminEmails.includes(user.email)) {
-                  setIsAuthenticated(true);
-                  const token = await user.getIdToken();
-                  await setSessionCookie(token);
-                  if (isPublicPage) {
-                    const nextUrl = new URLSearchParams(window.location.search).get('next') || '/admin';
-                    router.push(nextUrl);
-                  }
-                } else {
-                  setIsAuthenticated(false);
-                  await signOut(auth); 
-                  if (!isPublicPage) {
-                    toast({
-                      variant: "destructive",
-                      title: "Unauthorized Access",
-                      description: "You are not authorized to access the admin panel.",
-                    });
-                    router.push('/admin/login');
-                  }
-                }
-              } else {
-                setIsAuthenticated(false);
-                await clearSessionCookie();
-                if (!isPublicPage) {
-                   const redirectUrl = `/admin/login?next=${encodeURIComponent(pathname)}`;
-                   router.push(redirectUrl);
-                }
+          unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (!isMounted) return;
+
+            if (user && user.email && adminEmails.includes(user.email)) {
+              setIsAuthenticated(true);
+              const token = await user.getIdToken();
+              await setSessionCookie(token);
+              if (isPublicPage) {
+                const nextUrl = new URLSearchParams(window.location.search).get('next') || '/admin';
+                router.push(nextUrl);
               }
-              setIsChecking(false);
-            });
-          }
+            } else {
+              setIsAuthenticated(false);
+              if (user) { // If user exists but is not an admin
+                await signOut(auth);
+                toast({
+                  variant: "destructive",
+                  title: "Unauthorized Access",
+                  description: "You are not authorized to access the admin panel.",
+                });
+              }
+              await clearSessionCookie();
+              if (!isPublicPage) {
+                 const redirectUrl = `/admin/login?next=${encodeURIComponent(pathname)}`;
+                 router.push(redirectUrl);
+              }
+            }
+            setIsChecking(false);
+          });
         } catch (error) {
           if (isMounted) {
             console.error("Failed to fetch site settings for auth check:", error);
@@ -138,10 +134,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               title: "Configuration Error",
               description: "Could not verify admin permissions. Please check console.",
             });
-            setIsChecking(false);
             if (!isPublicPage) {
               router.push('/admin/login');
             }
+            setIsChecking(false);
           }
         }
       };
@@ -171,7 +167,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
     
     if (!isAuthenticated) {
-        return null; 
+        return <LoadingSkeleton />; // Show loader during redirect to prevent flash of content
     }
 
     return (
