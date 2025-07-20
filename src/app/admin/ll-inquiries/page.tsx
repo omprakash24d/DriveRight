@@ -110,9 +110,14 @@ export default function LlInquiriesPage() {
     setIsExporting(true);
     
     const sanitizeForCsv = (field: any): string => {
-      const str = String(field ?? '');
+      let str = String(field ?? '');
+      // If the string contains a comma, newline, or double quote, wrap it in double quotes.
       if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-        return `"${str.replace(/"/g, '""')}"`;
+        str = `"${str.replace(/"/g, '""')}"`;
+      }
+      // Prepend a tab character to cells starting with characters that could be interpreted as formulas.
+      if (['=', '+', '-', '@'].includes(str[0])) {
+        str = `\t${str}`;
       }
       return str;
     };

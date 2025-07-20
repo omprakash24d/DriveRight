@@ -52,7 +52,8 @@ export async function POST(req: NextRequest) {
         ', '
       )}. Please ensure they are set in your .env.local file and restart the server.`;
       await logSubmission({ level: 'error', message: errorMessage, data: {} });
-      return NextResponse.json({ message: errorMessage }, { status: 500 });
+      // Return a generic error to the client
+      return NextResponse.json({ message: "Server is not configured correctly. Please contact support." }, { status: 500 });
     }
 
     const formData = await req.formData();
@@ -163,15 +164,9 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    let clientMessage = 'An internal server error occurred.';
-    if (error.code === 'EAUTH') {
-        clientMessage = 'Authentication error with email provider. Please double-check your SMTP credentials. If you are using Gmail, ensure you have set up and are using an "App Password".'
-    } else if (error.message) {
-        clientMessage = `Failed to send email. The mail server responded with: ${error.message}`;
-    }
-    
+    // Return a generic, safe error message to the client.
     return NextResponse.json(
-      { message: clientMessage },
+      { message: 'An internal server error occurred. Please try again later or contact support directly.' },
       { status: 500 }
     );
   }

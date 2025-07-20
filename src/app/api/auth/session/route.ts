@@ -23,6 +23,8 @@ export async function POST(req: NextRequest) {
 
     const adminApp = getAdminApp();
     if (!adminApp) {
+        // Log detailed error on server, return generic message
+        console.error('Session creation failed: Firebase Admin SDK not initialized.');
         return NextResponse.json({ error: 'Server configuration error.' }, { status: 500 });
     }
 

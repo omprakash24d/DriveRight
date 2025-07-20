@@ -11,7 +11,8 @@ import { MAX_FILE_SIZE, ACCEPTED_DOCUMENT_TYPES } from '@/lib/constants';
 
 const ENROLLMENTS_COLLECTION = 'enrollments';
 
-const formSchema = z.object({
+// Server-side schema for robust validation
+const formSchemaServer = z.object({
   fullName: z.string().min(2),
   email: z.string().email(),
   mobileNumber: z.string().min(10),
@@ -20,11 +21,12 @@ const formSchema = z.object({
   address: z.string().min(10),
   vehicleType: z.enum(["hmv", "lmv", "mcwg", "lmv+mcwg", "others"]),
   documentId: z.string().optional(),
-  idProof: z.custom<File>()
-    .refine((file) => !!file, "ID Proof is required.")
-    .refine((file) => file?.size <= MAX_FILE_SIZE, `Max file size is 10MB.`)
-    .refine((file) => ACCEPTED_DOCUMENT_TYPES.includes(file?.type), ".jpg, .jpeg, .png and .pdf files are accepted."),
-  photoCropped: z.custom<File>().refine((file) => !!file, "Cropped photo is required."),
+  idProof: z.instanceof(File)
+    .refine((file) => file.size > 0, "ID Proof is required.")
+    .refine((file) => file.size <= MAX_FILE_SIZE, `Max file size is ${MAX_FILE_SIZE / 1024 / 1024}MB.`)
+    .refine((file) => ACCEPTED_DOCUMENT_TYPES.includes(file.type), `Only ${ACCEPTED_DOCUMENT_TYPES.join(', ')} files are accepted.`),
+  // The client sends the cropped photo as a Base64 Data URL string
+  photoCropped: z.string().startsWith('data:image/', 'Cropped photo must be a valid data URL.'),
   paymentId: z.string().optional(),
   orderId: z.string().optional(),
   pricePaid: z.string().optional(),
@@ -34,6 +36,11 @@ const formSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
+    
+    // The client sends the original photo for cropping but we only need the cropped version on the server.
+    // We receive the cropped version as a data URL string.
+    const croppedPhotoDataUrl = formData.get('photoCropped') as string | null;
+    
     const data = {
       fullName: formData.get('fullName'),
       email: formData.get('email'),
@@ -44,16 +51,16 @@ export async function POST(req: NextRequest) {
       vehicleType: formData.get('vehicleType'),
       documentId: formData.get('documentId'),
       idProof: formData.get('idProof'),
-      photoCropped: formData.get('photoCropped'),
+      photoCropped: croppedPhotoDataUrl,
       paymentId: formData.get('paymentId'),
       orderId: formData.get('orderId'),
       pricePaid: formData.get('pricePaid'),
     };
 
-    const parsed = formSchema.safeParse(data);
+    const parsed = formSchemaServer.safeParse(data);
 
     if (!parsed.success) {
-      console.log(parsed.error.flatten().fieldErrors);
+      console.log("Server-side validation failed:", parsed.error.flatten().fieldErrors);
       return NextResponse.json(
         { message: 'Invalid input.', errors: parsed.error.flatten().fieldErrors },
         { status: 400 }
@@ -63,15 +70,19 @@ export async function POST(req: NextRequest) {
     const requiredEnvVars = ['SMTP_USER', 'SMTP_PASS', 'FROM_EMAIL', 'TO_EMAIL'];
     if (requiredEnvVars.some(v => !process.env[v])) {
         await logSubmission({ level: 'error', message: 'SMTP environment variables are not set.', data: {} });
-        return NextResponse.json({ message: 'Server configuration error.' }, { status: 500 });
+        return NextResponse.json({ message: 'Server is not configured correctly.' }, { status: 500 });
     }
 
     const { idProof, photoCropped, ...enrollmentData } = parsed.data;
     const refId = `ENR-${Date.now()}`;
     const uniqueId = nanoid();
 
+    // Convert the data URL to a Blob/File-like object for upload
+    const photoBlob = await (await fetch(photoCropped)).blob();
+    const photoFile = new File([photoBlob], 'photo_cropped.jpg', { type: 'image/jpeg' });
+
     // --- Upload images to Firebase Storage ---
-    const photoCroppedUrl = await uploadFile(photoCropped, `enrollments/${uniqueId}/photo_cropped.jpg`);
+    const photoCroppedUrl = await uploadFile(photoFile, `enrollments/${uniqueId}/photo_cropped.jpg`);
     const idProofUrl = await uploadFile(idProof, `enrollments/${uniqueId}/id_proof.${idProof.name.split('.').pop()}`);
 
     // Add to firestore with public URLs
@@ -115,6 +126,6 @@ export async function POST(req: NextRequest) {
       message: 'Error in /enroll/api',
       data: { errorMessage: error.message },
     });
-    return NextResponse.json({ message: 'An internal server error occurred.' }, { status: 500 });
+    return NextResponse.json({ message: 'An internal server error occurred. Please try again.' }, { status: 500 });
   }
 }
