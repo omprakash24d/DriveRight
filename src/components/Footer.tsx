@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { getSiteSettings } from "@/services/settingsService";
 import { Car, Facebook, Github, Twitter, Instagram, Linkedin } from "lucide-react";
+import { CurrentYear } from "./CurrentYear";
 
 export async function Footer() {
   const settings = await getSiteSettings();
@@ -97,7 +98,7 @@ export async function Footer() {
             <hr className="my-6 border-border sm:mx-auto lg:my-8" />
             <div className="sm:flex sm:items-center sm:justify-between">
                 <span className="text-sm text-muted-foreground text-center sm:text-left">
-                    © {new Date().getFullYear()} <Link href="/" className="hover:underline">{settings.schoolName}™</Link>. All Rights Reserved.
+                    © <CurrentYear /> <Link href="/" className="hover:underline">{settings.schoolName}™</Link>. All Rights Reserved.
                 </span>
                 <div className="flex mt-4 space-x-5 justify-center sm:mt-0">
                     {socialLinks.map((social, index) => (
