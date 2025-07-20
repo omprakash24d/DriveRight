@@ -1,14 +1,10 @@
-
 /**
  * @fileoverview A placeholder for a database logging service.
  *
  * This file demonstrates how you could integrate a database logging service
- * like Firestore, MongoDB, or a logging provider like Sentry.
- *
- * To implement this, you would:
- * 1. Add the necessary SDK (e.g., `firebase-admin` for Firestore).
- * 2. Initialize the connection to your database in a separate file.
- * 3. Replace the `console.log` in this file with a call to your database service.
+ * like Firestore, MongoDB, or a logging provider like Sentry. It has been
+
+ * updated to produce structured logs.
  */
 
 interface LogData {
@@ -18,8 +14,9 @@ interface LogData {
 }
 
 /**
- * Logs a message and associated data. In a real application, this function
- * would write to a database or a third-party logging service.
+ * Logs a message and associated data in a structured format. 
+ * In a real application, this function would write to a database or a 
+ * third-party logging service that ingests structured JSON.
  *
  * @param {LogData} logEntry - The log entry to record.
  */
@@ -41,8 +38,15 @@ export async function logSubmission(logEntry: LogData) {
   //   console.error("Failed to write to Firestore:", error);
   // }
   
-  const logOutput = `[${logEntry.level.toUpperCase()}] ${new Date().toISOString()} - ${logEntry.message} - ${JSON.stringify(logEntry.data)}`;
-  console.log(logOutput);
+  const logObject = {
+    timestamp: new Date().toISOString(),
+    level: logEntry.level,
+    message: logEntry.message,
+    ...logEntry.data
+  };
+
+  // Structured logging in a format easily parsable by logging services
+  console.log(JSON.stringify(logObject));
 
   // This function is async to simulate a real database call.
   return Promise.resolve();
