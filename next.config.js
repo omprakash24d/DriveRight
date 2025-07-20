@@ -1,5 +1,7 @@
 // @ts-check
-import { config } from 'dotenv';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const { config } = require('dotenv');
 
 // Load environment variables from .env file at the very beginning
 config();
