@@ -1,7 +1,7 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
-import { rateLimiter, RATE_LIMIT_COUNT } from '../_lib/rate-limiter';
+import { checkRateLimit } from '../_lib/rate-limiter';
 import { analyzeSubmission } from '../_ai/spam-filter';
 import { personalizeResponse } from '../_ai/personalize-response';
 import { logSubmission } from '../_lib/logging';
@@ -25,11 +25,11 @@ export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for') ?? 'unknown';
 
   try {
-    const currentUsage = rateLimiter.get(ip) || 0;
-    if (currentUsage >= RATE_LIMIT_COUNT) {
+    const isRateLimited = await checkRateLimit(ip);
+    if (isRateLimited) {
       await logSubmission({
         level: 'warn',
-        message: 'Rate limit exceeded',
+        message: 'Contact form rate limit exceeded',
         data: { ip, userAgent: req.headers.get('user-agent') },
       });
       return NextResponse.json(
@@ -37,7 +37,6 @@ export async function POST(req: NextRequest) {
         { status: 429 }
       );
     }
-    rateLimiter.set(ip, currentUsage + 1);
 
     const requiredEnvVars = [
       'SMTP_USER',

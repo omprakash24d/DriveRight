@@ -2,7 +2,7 @@
 import { chat } from '@/ai/flows/chatbot-flow';
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
-import { rateLimiter, RATE_LIMIT_COUNT } from '@/app/contact/_lib/rate-limiter';
+import { checkRateLimit } from '@/app/contact/_lib/rate-limiter';
 import { logSubmission } from '@/app/contact/_lib/logging';
 
 const ChatRequestSchema = z.object({
@@ -18,8 +18,8 @@ export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for') ?? 'unknown';
   
   try {
-    const currentUsage = rateLimiter.get(ip) || 0;
-    if (currentUsage >= RATE_LIMIT_COUNT) {
+    const isRateLimited = await checkRateLimit(ip);
+    if (isRateLimited) {
       await logSubmission({
         level: 'warn',
         message: 'Chatbot rate limit exceeded',
@@ -30,7 +30,6 @@ export async function POST(req: NextRequest) {
         { status: 429 }
       );
     }
-    rateLimiter.set(ip, currentUsage + 1);
 
     const body = await req.json();
     const parsed = ChatRequestSchema.safeParse(body);
