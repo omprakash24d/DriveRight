@@ -6,20 +6,23 @@ import { type Notification } from "@/services/notificationsService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileText, Route, Award, UserPlus, CheckCircle, Hourglass } from "lucide-react";
 import Link from "next/link";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, parseISO } from "date-fns";
 import { useAuth } from "@/context/AuthContext";
 
 const iconMap: Record<string, React.ElementType> = {
     'Enrollment': FileText,
     'Refresher': Route,
     'Result': Award,
-    'Student': UserPlus
+    'Student': UserPlus,
+    'DL Request': FileText,
+    'LL Inquiry': FileText,
 };
 const statusIconMap: Record<string, React.ElementType> = {
     'Approved': CheckCircle,
     'Pending': Hourglass,
     'New': Hourglass,
     'Pass': CheckCircle,
+    'Processed': CheckCircle,
 };
 const statusColorMap: Record<string, string> = {
     'Approved': 'text-green-500',
@@ -27,6 +30,9 @@ const statusColorMap: Record<string, string> = {
     'New': 'text-amber-500',
     'Pass': 'text-green-500',
     'Fail': 'text-destructive',
+    'Processed': 'text-green-500',
+    'Declined': 'text-destructive',
+    'Not Found': 'text-destructive',
 };
 
 export function RecentActivityFeed() {
@@ -50,7 +56,7 @@ export function RecentActivityFeed() {
                 const data: any[] = await response.json();
                 const processedNotifications = data.map(n => ({
                     ...n,
-                    timestamp: new Date(n.timestamp) // Convert ISO string back to Date
+                    timestamp: parseISO(n.timestamp) // Convert ISO string from API back to Date
                 }));
                 setNotifications(processedNotifications);
             } catch (error) {

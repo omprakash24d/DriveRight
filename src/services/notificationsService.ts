@@ -12,7 +12,7 @@ export interface Notification {
     timestamp: Date; // Keep as Date object for server-side logic
 }
 
-// This function is now designed to run ONLY on the server via an API route.
+// This function is designed to run ONLY on the server, called by the secure API route.
 export async function getRecentNotificationsForAdmin(): Promise<Notification[]> {
     const adminApp = getAdminApp();
     if (!adminApp) {

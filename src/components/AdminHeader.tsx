@@ -17,24 +17,18 @@ import { useAuth } from "@/context/AuthContext";
 function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { getIdToken } = useAuth();
+  const { user } = useAuth(); // We just need to know if a user is logged in
 
   useEffect(() => {
+    // Don't fetch if the user isn't loaded yet
+    if (!user) return;
+
     async function fetchNotifications() {
       setIsLoading(true);
       try {
-        const token = await getIdToken();
-        if (!token) {
-            // Can't fetch if not logged in.
-            setIsLoading(false);
-            return;
-        };
-
-        const response = await fetch('/api/admin/notifications', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        // The session cookie is sent automatically by the browser,
+        // and the middleware protects this route.
+        const response = await fetch('/api/admin/notifications');
         
         if (!response.ok) {
           throw new Error('Failed to fetch notifications');
@@ -42,10 +36,10 @@ function NotificationBell() {
 
         const data: any[] = await response.json();
 
-        // The timestamp will be a string from the API, so we need to parse it back to a Date object.
+        // The timestamp will be an ISO string from the API, so we parse it back to a Date object.
         const fetchedNotifications = data.map(n => ({
             ...n,
-            timestamp: parseISO(n.timestamp)
+            timestamp: parseISO(n.timestamp) 
         }));
 
         setNotifications(fetchedNotifications);
@@ -56,7 +50,7 @@ function NotificationBell() {
       }
     }
     fetchNotifications();
-  }, [getIdToken]);
+  }, [user]);
   
   const pendingCount = useMemo(() => {
     return notifications.filter(n => n.title.includes('Pending') || n.title.includes('New')).length;

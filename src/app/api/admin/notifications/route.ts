@@ -5,41 +5,18 @@ import { getAuth } from 'firebase-admin/auth';
 import { getRecentNotificationsForAdmin } from '@/services/notificationsService';
 import { cookies } from 'next/headers';
 
-async function verifyAdminSession() {
-    const sessionCookie = cookies().get('__session')?.value;
-    if (!sessionCookie) {
-        throw new Error('Unauthorized: No session cookie provided.');
-    }
-
-    const adminApp = getAdminApp();
-    if (!adminApp) {
-        throw new Error('Server configuration error.');
-    }
-    const adminAuth = getAuth(adminApp);
-    
-    try {
-        const decodedToken = await adminAuth.verifySessionCookie(sessionCookie, true);
-        if (decodedToken.admin !== true) {
-            throw new Error('Forbidden: User is not an admin.');
-        }
-        return decodedToken;
-    } catch (error) {
-        throw new Error('Unauthorized: Invalid session.');
-    }
-}
-
+// This function is implicitly protected by the middleware, which verifies the session cookie.
 export async function GET(request: NextRequest) {
     try {
-        await verifyAdminSession();
+        // The middleware has already verified the session cookie, so we can proceed.
         const notifications = await getRecentNotificationsForAdmin();
+        
+        // The `timestamp` field is a Date object. When we send it via JSON,
+        // it gets converted to an ISO string, which the client will parse back into a Date.
         return NextResponse.json(notifications);
     } catch (error: any) {
         console.error("Error in GET /api/admin/notifications:", error);
         
-        let status = 500;
-        if (error.message.startsWith('Unauthorized')) status = 401;
-        if (error.message.startsWith('Forbidden')) status = 403;
-
-        return NextResponse.json({ error: error.message || 'An unknown error occurred.' }, { status });
+        return NextResponse.json({ error: error.message || 'An unknown error occurred.' }, { status: 500 });
     }
 }
