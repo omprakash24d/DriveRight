@@ -59,10 +59,16 @@ export function AdminStudentsView({ initialStudents }: AdminStudentsViewProps) {
 
   // Helper to safely convert Firestore Timestamp-like objects to Date
   const toDate = (timestamp: Timestamp | { seconds: number; nanoseconds: number }): Date => {
-    if (timestamp instanceof Timestamp) {
-      return timestamp.toDate();
+    // If it's already a Timestamp object with a toDate method
+    if (timestamp && typeof (timestamp as Timestamp).toDate === 'function') {
+      return (timestamp as Timestamp).toDate();
     }
-    return new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
+    // If it's a serialized plain object
+    if (timestamp && typeof timestamp.seconds === 'number' && typeof timestamp.nanoseconds === 'number') {
+      return new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
+    }
+    // Fallback for any other case
+    return new Date();
   };
 
   return (

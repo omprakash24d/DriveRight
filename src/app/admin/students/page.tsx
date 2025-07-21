@@ -1,6 +1,7 @@
 
 import { getStudents, type Student } from "@/services/studentsService";
 import { AdminStudentsView } from "./_components/AdminStudentsView";
+import { Timestamp } from "firebase/firestore";
 
 // This page is now a Server Component that fetches data securely on the server.
 export default async function AdminStudentsPage() {
@@ -11,8 +12,8 @@ export default async function AdminStudentsPage() {
     const serializableStudents = students.map(student => ({
       ...student,
       joined: {
-        seconds: student.joined.seconds,
-        nanoseconds: student.joined.nanoseconds,
+        seconds: (student.joined as Timestamp).seconds,
+        nanoseconds: (student.joined as Timestamp).nanoseconds,
       }
     }));
     
