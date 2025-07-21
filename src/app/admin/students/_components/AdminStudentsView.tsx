@@ -30,6 +30,7 @@ import Link from "next/link";
 import { generateAvatarColor } from "@/lib/utils";
 import { deleteStudent, type Student } from "@/services/studentsService";
 import { format } from "date-fns";
+import type { Timestamp } from "firebase/firestore";
 
 interface AdminStudentsViewProps {
     initialStudents: Student[];
@@ -54,6 +55,14 @@ export function AdminStudentsView({ initialStudents }: AdminStudentsViewProps) {
         description: "Could not delete the student.",
       });
     }
+  };
+
+  // Helper to safely convert Firestore Timestamp-like objects to Date
+  const toDate = (timestamp: Timestamp | { seconds: number; nanoseconds: number }): Date => {
+    if (timestamp instanceof Timestamp) {
+      return timestamp.toDate();
+    }
+    return new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
   };
 
   return (
@@ -99,7 +108,7 @@ export function AdminStudentsView({ initialStudents }: AdminStudentsViewProps) {
                     </TableCell>
                     <TableCell>{student.email}</TableCell>
                     <TableCell>{student.phone}</TableCell>
-                    <TableCell>{format(student.joined.toDate(), 'PPP')}</TableCell>
+                    <TableCell>{format(toDate(student.joined), 'PPP')}</TableCell>
                     <TableCell className="text-right space-x-2">
                       <Button variant="outline" size="icon" asChild>
                         <Link href={`/admin/students/${student.id}/edit`}>

@@ -1,8 +1,20 @@
 
-import { getStudents } from "@/services/studentsService";
+import { getStudents, type Student } from "@/services/studentsService";
 import { AdminStudentsView } from "./_components/AdminStudentsView";
 
+// This page is now a Server Component that fetches data securely on the server.
 export default async function AdminStudentsPage() {
-    const students = await getStudents();
-    return <AdminStudentsView initialStudents={students} />;
+    const students: Student[] = await getStudents();
+
+    // Firestore Timestamps are not directly serializable for client components.
+    // We convert them to a plain object that can be safely passed as props.
+    const serializableStudents = students.map(student => ({
+      ...student,
+      joined: {
+        seconds: student.joined.seconds,
+        nanoseconds: student.joined.nanoseconds,
+      }
+    }));
+    
+    return <AdminStudentsView initialStudents={serializableStudents as unknown as Student[]} />;
 }

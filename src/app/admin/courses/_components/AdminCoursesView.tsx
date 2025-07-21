@@ -1,6 +1,7 @@
+
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Trash2, Edit, PlusCircle, Car } from "lucide-react";
 import * as icons from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
