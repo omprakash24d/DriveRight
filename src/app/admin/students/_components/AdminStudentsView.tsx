@@ -110,7 +110,7 @@ export function AdminStudentsView() {
                  ))
               ) : students && students.length > 0 ? (
                 students.map((student) => {
-                  const joinedDate = student.joined instanceof Timestamp ? student.joined.toDate() : (typeof student.joined === 'string' ? parseISO(student.joined) : null);
+                  const joinedDate = student.joined instanceof Date ? student.joined : null;
                   return (
                     <TableRow key={student.id}>
                       <TableCell className="flex items-center gap-4 font-medium">
