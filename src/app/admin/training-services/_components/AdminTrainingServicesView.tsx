@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useState, useCallback, type ElementType } from "react";
+import { useCallback, type ElementType } from "react";
 import { 
-    Trash2, Edit, PlusCircle, Car, ConciergeBell
+    Trash2, Edit, PlusCircle, ConciergeBell
 } from "lucide-react";
 import * as icons from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -30,19 +30,20 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { deleteTrainingService, type TrainingService } from "@/services/quickServicesService";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useRealtimeData } from "@/hooks/use-realtime-data";
+import { collection, query } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
-interface AdminTrainingServicesViewProps {
-  initialServices: TrainingService[];
-}
-
-export function AdminTrainingServicesView({ initialServices }: AdminTrainingServicesViewProps) {
-  const [services, setServices] = useState<TrainingService[]>(initialServices);
+export function AdminTrainingServicesView() {
+  const { data: services, loading, error } = useRealtimeData<TrainingService>(
+    query(collection(db, "trainingServices"))
+  );
   const { toast } = useToast();
 
   const handleDelete = useCallback(async (serviceId: string) => {
     try {
         await deleteTrainingService(serviceId);
-        setServices(currentServices => currentServices.filter((service) => service.id !== serviceId));
         toast({
             title: "Service Deleted",
             description: "The service has been successfully removed.",
@@ -55,6 +56,10 @@ export function AdminTrainingServicesView({ initialServices }: AdminTrainingServ
         });
     }
   }, [toast]);
+  
+  if (error) {
+    return <p className="text-destructive">Error loading training services: {error}</p>;
+  }
 
   return (
     <>
@@ -88,9 +93,18 @@ export function AdminTrainingServicesView({ initialServices }: AdminTrainingServ
               </TableRow>
             </TableHeader>
             <TableBody>
-              {services.length > 0 ? (
+              {loading ? (
+                Array.from({ length: 3 }).map((_, index) => (
+                    <TableRow key={index}>
+                        <TableCell><Skeleton className="h-6 w-6" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-48" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-72" /></TableCell>
+                        <TableCell className="text-right"><div className="flex gap-2 justify-end"><Skeleton className="h-8 w-8" /><Skeleton className="h-8 w-8" /></div></TableCell>
+                    </TableRow>
+                ))
+              ) : services && services.length > 0 ? (
                 services.map((service) => {
-                    const IconComponent = (icons as Record<string, React.ElementType>)[service.icon] || ConciergeBell;
+                    const IconComponent = (icons[service.icon as keyof typeof icons] || ConciergeBell) as ElementType;
                     return (
                         <TableRow key={service.id}>
                         <TableCell>

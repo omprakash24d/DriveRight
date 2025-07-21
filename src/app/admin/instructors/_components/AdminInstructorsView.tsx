@@ -30,28 +30,32 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { generateAvatarColor } from "@/lib/utils";
 import { deleteInstructor, type Instructor } from "@/services/instructorsService";
+import { useRealtimeData } from "@/hooks/use-realtime-data";
+import { collection, query, orderBy } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface DisplayInstructor extends Omit<Instructor, 'specialties'> {
     specialties: string[];
 }
 
-interface AdminInstructorsViewProps {
-    initialInstructors: Instructor[];
-}
-
-export function AdminInstructorsView({ initialInstructors }: AdminInstructorsViewProps) {
-  const displayInstructors = useMemo(() => initialInstructors.map(i => ({
-    ...i,
-    specialties: i.specialties.split(',').map(s => s.trim()).filter(Boolean)
-  })), [initialInstructors]);
-
-  const [instructors, setInstructors] = useState<DisplayInstructor[]>(displayInstructors);
+export function AdminInstructorsView() {
+  const { data: instructors, loading, error } = useRealtimeData<Instructor>(
+    query(collection(db, "instructors"), orderBy("name"))
+  );
   const { toast } = useToast();
+
+  const displayInstructors = useMemo(() => {
+    if (!instructors) return [];
+    return instructors.map(i => ({
+      ...i,
+      specialties: i.specialties.split(',').map(s => s.trim()).filter(Boolean)
+    }))
+  }, [instructors]);
 
   const handleDelete = async (instructorId: string) => {
     try {
         await deleteInstructor(instructorId);
-        setInstructors(instructors.filter((instructor) => instructor.id !== instructorId));
         toast({
             title: "Instructor Deleted",
             description: "The instructor record has been successfully removed.",
@@ -64,6 +68,10 @@ export function AdminInstructorsView({ initialInstructors }: AdminInstructorsVie
         });
     }
   };
+  
+  if (error) {
+    return <p className="text-destructive">Error loading instructors: {error}</p>;
+  }
   
   return (
     <>
@@ -93,8 +101,23 @@ export function AdminInstructorsView({ initialInstructors }: AdminInstructorsVie
               </TableRow>
             </TableHeader>
             <TableBody>
-              {instructors.length > 0 ? (
-                instructors.map((instructor) => (
+              {loading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell className="flex items-center gap-4">
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                      <Skeleton className="h-4 w-32" />
+                    </TableCell>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-32" /></TableCell>
+                    <TableCell className="text-right space-x-2">
+                      <Skeleton className="h-8 w-8 inline-block" />
+                      <Skeleton className="h-8 w-8 inline-block" />
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : displayInstructors.length > 0 ? (
+                displayInstructors.map((instructor) => (
                     <TableRow key={instructor.id}>
                     <TableCell className="flex items-center gap-4 font-medium">
                         <Avatar>

@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Trash2, Edit, PlusCircle, Car } from "lucide-react";
+import { Trash2, Edit, PlusCircle, Car, type LucideIcon } from "lucide-react";
 import * as icons from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -28,19 +28,21 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { deleteCourse, type Course } from "@/services/coursesService";
+import { useRealtimeData } from "@/hooks/use-realtime-data";
+import { collection, query, orderBy } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { Skeleton } from "@/components/ui/skeleton";
 
-interface AdminCoursesViewProps {
-  initialCourses: Course[];
-}
-
-export function AdminCoursesView({ initialCourses }: AdminCoursesViewProps) {
-  const [courses, setCourses] = useState<Course[]>(initialCourses);
+export function AdminCoursesView() {
+  const { data: courses, loading, error } = useRealtimeData<Course>(
+    query(collection(db, "courses"), orderBy("title"))
+  );
   const { toast } = useToast();
 
   const handleDelete = async (courseId: string) => {
     try {
       await deleteCourse(courseId);
-      setCourses(courses.filter((course) => course.id !== courseId));
+      // UI will update automatically via the real-time listener
       toast({
         title: "Course Deleted",
         description: "The course has been successfully removed.",
@@ -53,6 +55,10 @@ export function AdminCoursesView({ initialCourses }: AdminCoursesViewProps) {
       });
     }
   };
+
+  if (error) {
+    return <p className="text-destructive">Error loading courses: {error}</p>;
+  }
 
   return (
     <>
@@ -83,9 +89,22 @@ export function AdminCoursesView({ initialCourses }: AdminCoursesViewProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {courses.length > 0 ? (
+              {loading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton className="h-6 w-6" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-48" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                    <TableCell className="text-right space-x-2">
+                      <Skeleton className="h-8 w-8 inline-block" />
+                      <Skeleton className="h-8 w-8 inline-block" />
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : courses && courses.length > 0 ? (
                 courses.map((course) => {
-                  const IconComponent = (icons as Record<string, React.ElementType>)[course.icon] || Car;
+                  const IconComponent = (icons as Record<string, LucideIcon>)[course.icon] || Car;
                   return (
                     <TableRow key={course.id}>
                       <TableCell>

@@ -1,8 +1,7 @@
 
-import { getTestimonials } from "@/services/testimonialsService";
+"use client";
 import { AdminTestimonialsView } from "./_components/AdminTestimonialsView";
 
-export default async function AdminTestimonialsPage() {
-    const testimonials = await getTestimonials();
-    return <AdminTestimonialsView initialTestimonials={testimonials} />;
+export default function AdminTestimonialsPage() {
+    return <AdminTestimonialsView />;
 }

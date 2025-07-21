@@ -31,20 +31,19 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { deleteOnlineService, type OnlineService } from "@/services/quickServicesService";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRealtimeData } from "@/hooks/use-realtime-data";
+import { collection, query } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
-interface AdminOnlineServicesViewProps {
-  initialServices: OnlineService[];
-}
-
-export function AdminOnlineServicesView({ initialServices }: AdminOnlineServicesViewProps) {
-  const [services, setServices] = useState<OnlineService[]>(initialServices);
-  const [isLoading] = useState(false); // Can be used for delete operations
+export function AdminOnlineServicesView() {
+  const { data: services, loading, error } = useRealtimeData<OnlineService>(
+    query(collection(db, "onlineServices"))
+  );
   const { toast } = useToast();
 
   const handleDelete = useCallback(async (serviceId: string) => {
     try {
         await deleteOnlineService(serviceId);
-        setServices(currentServices => currentServices.filter((service) => service.id !== serviceId));
         toast({
             title: "Service Deleted",
             description: "The online service has been successfully removed.",
@@ -57,6 +56,10 @@ export function AdminOnlineServicesView({ initialServices }: AdminOnlineServices
         });
     }
   }, [toast]);
+
+  if (error) {
+    return <p className="text-destructive">Error loading online services: {error}</p>;
+  }
 
   return (
     <>
@@ -90,7 +93,7 @@ export function AdminOnlineServicesView({ initialServices }: AdminOnlineServices
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
+              {loading ? (
                 Array.from({ length: 4 }).map((_, index) => (
                     <TableRow key={index} role="row">
                         <TableCell role="cell"><Skeleton className="h-6 w-6" /></TableCell>
@@ -99,7 +102,7 @@ export function AdminOnlineServicesView({ initialServices }: AdminOnlineServices
                         <TableCell className="text-right" role="cell"><div className="flex gap-2 justify-end"><Skeleton className="h-8 w-8" /><Skeleton className="h-8 w-8" /></div></TableCell>
                     </TableRow>
                 ))
-              ) : services.length > 0 ? (
+              ) : services && services.length > 0 ? (
                 services.map((service) => {
                     const IconComponent = (icons[service.icon as keyof typeof icons] || FileCheck2) as ElementType;
                     return (

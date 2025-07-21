@@ -1,19 +1,10 @@
 
 "use client";
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Trash2, Edit, User, MessageSquarePlus } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useRealtimeData } from "@/hooks/use-realtime-data";
+import { collection, query } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,23 +16,32 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
-import Link from "next/link";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { generateAvatarColor } from "@/lib/utils";
 import { deleteTestimonial, type Testimonial } from "@/services/testimonialsService";
+import { MessageSquarePlus, Trash2, Edit, User } from "lucide-react";
+import Link from "next/link";
 
-interface AdminTestimonialsViewProps {
-    initialTestimonials: Testimonial[];
-}
-
-export function AdminTestimonialsView({ initialTestimonials }: AdminTestimonialsViewProps) {
-  const [testimonials, setTestimonials] = useState<Testimonial[]>(initialTestimonials);
+export function AdminTestimonialsView() {
+  const { data: testimonials, loading, error } = useRealtimeData<Testimonial>(
+    query(collection(db, "testimonials"))
+  );
   const { toast } = useToast();
 
   const handleDelete = async (testimonialId: string) => {
     try {
         await deleteTestimonial(testimonialId);
-        setTestimonials(testimonials.filter((testimonial) => testimonial.id !== testimonialId));
         toast({
             title: "Testimonial Deleted",
             description: "The testimonial has been successfully removed.",
@@ -54,6 +54,10 @@ export function AdminTestimonialsView({ initialTestimonials }: AdminTestimonials
         });
     }
   };
+  
+  if (error) {
+    return <p className="text-destructive">Error loading testimonials: {error}</p>;
+  }
   
   return (
     <>
@@ -83,7 +87,22 @@ export function AdminTestimonialsView({ initialTestimonials }: AdminTestimonials
               </TableRow>
             </TableHeader>
             <TableBody>
-             {testimonials.length > 0 ? (
+             {loading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                    <TableRow key={i}>
+                        <TableCell className="flex items-center gap-4">
+                            <Skeleton className="h-10 w-10 rounded-full" />
+                            <Skeleton className="h-4 w-32" />
+                        </TableCell>
+                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-48" /></TableCell>
+                        <TableCell className="text-right space-x-2">
+                            <Skeleton className="h-8 w-8 inline-block" />
+                            <Skeleton className="h-8 w-8 inline-block" />
+                        </TableCell>
+                    </TableRow>
+                ))
+             ) : testimonials && testimonials.length > 0 ? (
                 testimonials.map((testimonial) => (
                     <TableRow key={testimonial.id}>
                     <TableCell className="flex items-center gap-4 font-medium">
