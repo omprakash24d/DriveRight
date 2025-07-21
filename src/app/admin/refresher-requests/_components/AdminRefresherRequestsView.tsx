@@ -62,7 +62,7 @@ import {
 import { format, isValid, parseISO } from "date-fns";
 import { Lightbulb, Loader2, Mail, Sparkles, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 // Helper function to safely parse dates from various formats
 const parseDate = (date: any): Date => {
@@ -111,14 +111,7 @@ export function AdminRefresherRequestsView({
   const [suggestion, setSuggestion] =
     useState<SuggestRefresherPlanOutput | null>(null);
 
-  // Fetch data if not provided via server-side rendering
-  useEffect(() => {
-    if (initialRequests.length === 0) {
-      fetchRequests();
-    }
-  }, [initialRequests.length]);
-
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await fetch("/api/admin/refresher-requests");
@@ -136,7 +129,14 @@ export function AdminRefresherRequestsView({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
+
+  // Fetch data if not provided via server-side rendering
+  useEffect(() => {
+    if (initialRequests.length === 0) {
+      fetchRequests();
+    }
+  }, [initialRequests.length, fetchRequests]);
 
   const handleOpenDialog = (request: any) => {
     setCurrentRequest(request);
@@ -319,7 +319,7 @@ export function AdminRefresherRequestsView({
                               <Card>
                                 <CardHeader className="pb-2">
                                   <CardTitle className="text-lg">
-                                    Applicant's Reason
+                                    Applicant&apos;s Reason
                                   </CardTitle>
                                 </CardHeader>
                                 <CardContent>
@@ -334,7 +334,7 @@ export function AdminRefresherRequestsView({
                                     AI Lesson Plan
                                   </CardTitle>
                                   <CardDescription>
-                                    Suggest a plan based on the applicant's
+                                    Suggest a plan based on the applicant&apos;s
                                     reason.
                                   </CardDescription>
                                 </CardHeader>

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
 import { ErrorService } from '@/lib/error-service';
+import React, { useEffect, useRef } from 'react';
 
 interface PerformanceMetrics {
   component: string;
@@ -76,7 +76,7 @@ export function withPerformanceMonitoring<P extends object>(
   WrappedComponent: React.ComponentType<P>,
   componentName?: string
 ): React.FC<P> {
-  const PerformanceMonitoredComponent: React.FC<P> = (props) => {
+  const PerformanceMonitoredComponent: React.FC<P> = (props: P) => {
     const name = componentName || WrappedComponent.displayName || WrappedComponent.name || 'Unknown';
     const { startRenderMeasurement, endRenderMeasurement } = usePerformanceMonitoring(name);
 
@@ -85,7 +85,7 @@ export function withPerformanceMonitoring<P extends object>(
       endRenderMeasurement();
     });
 
-    return <WrappedComponent {...props} />;
+    return React.createElement(WrappedComponent, props);
   };
   
   PerformanceMonitoredComponent.displayName = `withPerformanceMonitoring(${componentName || WrappedComponent.displayName || WrappedComponent.name})`;

@@ -1,6 +1,6 @@
 // @ts-check
-import { withSentryConfig } from "@sentry/nextjs";
 import { config } from "dotenv";
+import { withSentryConfig } from "@sentry/nextjs";
 
 // Load environment variables from .env file at the very beginning
 config({ path: "./.env" });
@@ -44,14 +44,9 @@ const nextConfig = {
     ],
   },
 
-  // Sentry configuration
-  sentry: {
-    // Suppresses source map uploading logs during build
-    silent: true,
-    // Disables the automatic instrumentation for API routes
-    autoInstrumentServerFunctions: false,
-    // Disables the automatic instrumentation for middleware
-    autoInstrumentMiddleware: false,
+  // Enable experimental instrumentation hook for Sentry
+  experimental: {
+    instrumentationHook: true,
   },
 };
 
@@ -76,3 +71,10 @@ const sentryWebpackPluginOptions = {
 
 // Make sure to wrap your config with withSentryConfig
 export default withSentryConfig(nextConfig, sentryWebpackPluginOptions);
+
+
+// Injected content via Sentry wizard below
+// Injected content via Sentry wizard below
+
+// The following block is redundant and causes duplicate identifier errors.
+// Please use only one Sentry configuration wrapper (the ES module export above).

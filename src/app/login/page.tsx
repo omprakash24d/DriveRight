@@ -129,7 +129,7 @@ export default function StudentLoginPage() {
         </CardContent>
         <CardFooter className="flex justify-center text-sm">
           <p className="text-muted-foreground">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/signup" className="underline hover:text-primary">
               Sign Up
             </Link>

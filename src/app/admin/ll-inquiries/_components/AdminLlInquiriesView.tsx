@@ -38,7 +38,7 @@ import {
 } from "@/services/llInquiriesService";
 import { format, isValid, parseISO } from "date-fns";
 import { Download, FileSearch, Loader2, Search, Send } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 // Helper function to safely parse dates from various formats
 const parseDate = (date: any): Date => {
@@ -86,14 +86,7 @@ export function AdminLlInquiriesView({
   const [statusFilter, setStatusFilter] = useState("All");
   const [isExporting, setIsExporting] = useState(false);
 
-  // Fetch data if not provided via server-side rendering
-  useEffect(() => {
-    if (initialInquiries.length === 0) {
-      fetchInquiries();
-    }
-  }, [initialInquiries.length]);
-
-  const fetchInquiries = async () => {
+  const fetchInquiries = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await fetch("/api/admin/ll-inquiries");
@@ -110,7 +103,14 @@ export function AdminLlInquiriesView({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
+
+  // Fetch data if not provided via server-side rendering
+  useEffect(() => {
+    if (initialInquiries.length === 0) {
+      fetchInquiries();
+    }
+  }, [initialInquiries.length, fetchInquiries]);
 
   const filteredInquiries = useMemo(() => {
     return inquiries.filter((inquiry) => {

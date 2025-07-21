@@ -88,7 +88,7 @@ export default function StudentForgotPasswordPage() {
                             <MailCheck className="mb-4 h-16 w-16 text-green-500" />
                             <h3 className="mb-2 text-xl font-semibold">Check Your Email</h3>
                             <p className="text-sm text-muted-foreground">
-                                If an account with that email exists, we've sent instructions to reset your password.
+                                If an account with that email exists, we&apos;ve sent instructions to reset your password.
                             </p>
                         </div>
                     ) : (

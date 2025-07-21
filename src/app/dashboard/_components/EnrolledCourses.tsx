@@ -91,7 +91,7 @@ export function EnrolledCourses({ userId }: EnrolledCoursesProps) {
             </div>
             <CardTitle className="mt-4">No Courses Yet</CardTitle>
             <CardDescription>
-              You haven't enrolled in any courses yet.
+              You haven&apos;t enrolled in any courses yet.
             </CardDescription>
           </CardHeader>
           <CardContent>

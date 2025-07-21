@@ -334,8 +334,8 @@ export function AdminEnrollmentsView({
                               Enrollment Details for {enrollment.fullName}
                             </DialogTitle>
                             <DialogDescription>
-                              Review the applicant's information before making a
-                              decision.
+                              Review the applicant&apos;s information before
+                              making a decision.
                             </DialogDescription>
                           </DialogHeader>
                           <div className="grid md:grid-cols-2 gap-6 py-4">
@@ -467,9 +467,9 @@ export function AdminEnrollmentsView({
                                       </div>
                                     </div>
                                     <p className="text-muted-foreground mt-4">
-                                      The applicant's full documents are also
-                                      attached to the notification email. Use
-                                      the button below to quickly find it in
+                                      The applicant&apos;s full documents are
+                                      also attached to the notification email.
+                                      Use the button below to quickly find it in
                                       your Gmail inbox.
                                     </p>
                                     <Button asChild className="mt-4 w-full">

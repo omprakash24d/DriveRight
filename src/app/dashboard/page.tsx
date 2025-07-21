@@ -41,7 +41,7 @@ export default function DashboardPage() {
     <div className="container mx-auto px-4 md:px-6 py-12 md:py-16">
       <div className="mb-12">
         <h1 className="text-4xl font-bold tracking-tight">Welcome, {userProfile?.name || user.displayName || 'Student'}!</h1>
-        <p className="text-muted-foreground mt-2">Here's an overview of your learning journey with Driving School Arwal.</p>
+        <p className="text-muted-foreground mt-2">Here&apos;s an overview of your learning journey with Driving School Arwal.</p>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">

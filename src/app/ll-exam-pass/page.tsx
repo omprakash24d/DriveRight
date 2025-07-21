@@ -115,7 +115,7 @@ export default function LlExamPassPage() {
           <CardHeader>
             <CardTitle className="text-3xl">Check LL Exam Result</CardTitle>
             <CardDescription>
-              Enter your details below to request your Learner's License exam status.
+              Enter your details below to request your Learner&apos;s License exam status.
             </CardDescription>
           </CardHeader>
           <CardContent>
