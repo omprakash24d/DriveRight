@@ -104,7 +104,7 @@ export async function seedDefaultTestimonials(): Promise<number> {
     if (!db.app) throw new Error("Firebase not initialized.");
     const defaultTestimonials: Omit<Testimonial, 'id'>[] = [
       {
-        name: "Om Prakash",
+        name: "Rohan Kumar",
         course: "LMV License Course",
         quote: "The instructors at Driving School Arwal are incredibly patient and knowledgeable. They teach from the basics and never get frustrated. I felt comfortable behind the wheel and passed my test on the first try! The facilities are great too, with enough space to learn driving, parking, and hill hold.",
       },
