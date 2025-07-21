@@ -1,6 +1,6 @@
 
 import { db } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, orderBy, where } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, updateDoc, where } from "firebase/firestore";
 import { addLog } from "./auditLogService";
 
 // Define the shape of the instructor data
@@ -85,10 +85,33 @@ export async function updateInstructor(id: string, instructorData: Partial<Omit<
     }
 }
 
-// Delete an instructor from Firestore
+// Delete an instructor from Firestore (hybrid admin/client approach)
 export async function deleteInstructor(id: string): Promise<void> {
-    if (!db.app) throw new Error("Firebase not initialized.");
     try {
+        // Try admin API first if we're on client side
+        if (typeof window !== 'undefined') {
+            try {
+                const { deleteFromAdminAPI } = await import('@/lib/admin-utils');
+                await deleteFromAdminAPI('instructors', id);
+                return;
+            } catch (adminError) {
+                console.log('Admin API not available, falling back to client SDK');
+                // Fall through to client SDK approach
+            }
+        } else {
+            // Server-side: try admin server function
+            try {
+                const { deleteInstructorAdmin } = await import('@/lib/admin-server-functions');
+                await deleteInstructorAdmin(id);
+                return;
+            } catch (adminError) {
+                console.log('Admin server function failed, falling back to client SDK');
+                // Fall through to client SDK approach
+            }
+        }
+
+        // Client SDK fallback
+        if (!db.app) throw new Error("Firebase not initialized.");
         const docRef = doc(db, INSTRUCTORS_COLLECTION, id);
         const docSnap = await getDoc(docRef);
         const instructorName = docSnap.exists() ? docSnap.data().name : `ID: ${id}`;

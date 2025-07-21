@@ -1,7 +1,7 @@
-import { NextResponse, type NextRequest } from 'next/server';
 import { getAdminApp } from '@/lib/firebase-admin';
 import { getAuth } from 'firebase-admin/auth';
 import { cookies } from 'next/headers';
+import { NextResponse, type NextRequest } from 'next/server';
 
 /**
  * This API route runs in the Node.js runtime and is responsible for
@@ -17,9 +17,6 @@ export async function GET(request: NextRequest) {
 
   try {
     const adminApp = getAdminApp();
-    if (!adminApp) {
-      throw new Error("Firebase Admin SDK not initialized on the server.");
-    }
     
     // verifySessionCookie checks for revocation and expiration.
     const decodedToken = await getAuth(adminApp).verifySessionCookie(sessionCookie, true);
@@ -29,6 +26,14 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Session verification error:', error);
+    
+    // Check if it's a Firebase Admin initialization error
+    if (error instanceof Error && error.message.includes('Firebase Admin SDK failed to initialize')) {
+      // For development: if admin SDK is not configured, return unauthorized
+      // This prevents the middleware from blocking all admin routes during development
+      return NextResponse.json({ error: 'Development mode: Admin SDK not configured.' }, { status: 401 });
+    }
+    
     // The cookie is invalid, so we instruct the client to clear it.
     const response = NextResponse.json({ error: 'Unauthorized: Invalid session cookie.' }, { status: 401 });
     response.cookies.set('__session', '', { expires: new Date(0) });

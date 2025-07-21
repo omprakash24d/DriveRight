@@ -1,10 +1,9 @@
-'use client';
+"use client";
 
-import { ErrorDisplay } from '@/components/ErrorDisplay';
-import { Footer } from '@/components/Footer';
-import { getSiteSettings } from '@/services/settingsService';
-import { useEffect, useState } from 'react';
-import type { SiteSettings } from '@/services/settingsService';
+import { ErrorDisplay } from "@/components/ErrorDisplay";
+import type { SiteSettings } from "@/services/settingsService";
+import { getSiteSettings } from "@/services/settingsService";
+import { useEffect, useState } from "react";
 
 export default function Error({
   error,
@@ -22,7 +21,18 @@ export default function Error({
     // Fetch settings on the client to pass to the Footer
     // Note: This is a simplified approach for the error boundary.
     // In a real app, this might be handled differently to avoid re-fetching.
-    getSiteSettings().then(setSettings);
+    const fetchSettings = async () => {
+      try {
+        const settings = await getSiteSettings();
+        setSettings(settings);
+      } catch (error) {
+        console.error("Error fetching settings in error boundary:", error);
+        // Use default settings or leave empty
+        setSettings(null);
+      }
+    };
+
+    fetchSettings();
   }, [error]);
 
   return (

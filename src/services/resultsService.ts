@@ -1,11 +1,8 @@
 
-'use server';
-
+import { fetchFromAdminAPI, isServerSide } from "@/lib/admin-utils";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, orderBy, Timestamp, where } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, Timestamp, updateDoc, where } from "firebase/firestore";
 import { addLog } from "./auditLogService";
-import { getStudents, type Student } from "./studentsService";
-import type { NewCertificateData } from "./certificatesService";
 
 // Define the shape of the test result data
 export interface TestResult {
@@ -24,6 +21,18 @@ const STUDENTS_COLLECTION = 'students';
 
 // Fetch all results from Firestore
 export async function getResults(): Promise<TestResult[]> {
+  // If running on server side, try to use admin API first
+  if (isServerSide()) {
+    try {
+      return await fetchFromAdminAPI('results');
+    } catch (adminError) {
+      console.warn('Admin API not available, falling back to client SDK');
+      // Return empty array instead of trying client SDK on server
+      return [];
+    }
+  }
+  
+  // Fallback to client SDK (for client-side only)
   if (!db.app) return [];
   try {
     const resultsCollection = collection(db, RESULTS_COLLECTION);
@@ -31,7 +40,7 @@ export async function getResults(): Promise<TestResult[]> {
     const snapshot = await getDocs(q);
 
     if (snapshot.empty) {
-        return [];
+      return [];
     }
 
     return snapshot.docs.map(doc => ({
@@ -40,7 +49,8 @@ export async function getResults(): Promise<TestResult[]> {
     }));
   } catch (error) {
     console.error("Error fetching results:", error);
-    throw new Error("Could not fetch test results.");
+    // Return empty array instead of throwing error
+    return [];
   }
 }
 
@@ -53,7 +63,7 @@ export async function getResultsForUser(userId: string): Promise<TestResult[]> {
     const snapshot = await getDocs(q);
 
     if (snapshot.empty) {
-        return [];
+      return [];
     }
 
     return snapshot.docs.map(doc => ({
@@ -69,21 +79,21 @@ export async function getResultsForUser(userId: string): Promise<TestResult[]> {
 
 // Fetch a single result by ID
 export async function getResult(id: string): Promise<TestResult | null> {
-    if (!db.app) return null;
-    try {
-        const docRef = doc(db, RESULTS_COLLECTION, id);
-        const docSnap = await getDoc(docRef);
+  if (!db.app) return null;
+  try {
+    const docRef = doc(db, RESULTS_COLLECTION, id);
+    const docSnap = await getDoc(docRef);
 
-        if (docSnap.exists()) {
-            return { id: docSnap.id, ...(docSnap.data() as Omit<TestResult, 'id'>) };
-        } else {
-            console.warn(`No test result document found with id: ${id}`);
-            return null;
-        }
-    } catch (error) {
-        console.error(`Error fetching result with id ${id}:`, error);
-        throw new Error("Could not fetch test result.");
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...(docSnap.data() as Omit<TestResult, 'id'>) };
+    } else {
+      console.warn(`No test result document found with id: ${id}`);
+      return null;
     }
+  } catch (error) {
+    console.error(`Error fetching result with id ${id}:`, error);
+    throw new Error("Could not fetch test result.");
+  }
 }
 
 // Add a new result to Firestore
@@ -119,10 +129,33 @@ export async function updateResult(id: string, resultData: Partial<Omit<TestResu
     }
 }
 
-// Delete a result from Firestore
+// Delete a result from Firestore (hybrid admin/client approach)
 export async function deleteResult(id: string): Promise<void> {
-    if (!db.app) throw new Error("Firebase not initialized.");
     try {
+        // Try admin API first if we're on client side
+        if (typeof window !== 'undefined') {
+            try {
+                const { deleteFromAdminAPI } = await import('@/lib/admin-utils');
+                await deleteFromAdminAPI('results', id);
+                return;
+            } catch (adminError) {
+                console.log('Admin API not available, falling back to client SDK');
+                // Fall through to client SDK approach
+            }
+        } else {
+            // Server-side: try admin server function
+            try {
+                const { deleteResultAdmin } = await import('@/lib/admin-server-functions');
+                await deleteResultAdmin(id);
+                return;
+            } catch (adminError) {
+                console.log('Admin server function failed, falling back to client SDK');
+                // Fall through to client SDK approach
+            }
+        }
+
+        // Client SDK fallback
+        if (!db.app) throw new Error("Firebase not initialized.");
         const docRef = doc(db, RESULTS_COLLECTION, id);
         const docSnap = await getDoc(docRef);
         const resultTarget = docSnap.exists() ? `For: ${docSnap.data().studentName}` : `ID: ${id}`;

@@ -2,14 +2,14 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { SiteSettings } from "@/services/settingsService";
 
 const videos = [
-    {
-      id: "Qc0s4WMPaxY",
-      title: "How to pass driving test in 1st attempt",
-    },
-    {
-      id: "SJSe0TbdhHo",
-      title: "Two Wheeler Driving Skill Testing Track Measurement",
-    },
+  {
+    id: "Qc0s4WMPaxY",
+    title: "How to pass driving test in 1st attempt",
+  },
+  {
+    id: "SJSe0TbdhHo",
+    title: "Two Wheeler Driving Skill Testing Track Measurement",
+  },
 ];
 
 interface VideoSectionProps {
@@ -18,10 +18,18 @@ interface VideoSectionProps {
 
 export function VideoSection({ settings }: VideoSectionProps) {
   return (
-    <section id="videos" className="w-full py-20 md:py-24 bg-background" role="region" aria-labelledby="video-section-title">
+    <section
+      id="videos"
+      className="w-full py-20 md:py-24 bg-background"
+      role="region"
+      aria-labelledby="video-section-title"
+    >
       <div className="container mx-auto px-4 md:px-6">
         <div className="text-center mb-12">
-          <h2 id="video-section-title" className="text-3xl md:text-4xl font-bold tracking-tight">
+          <h2
+            id="video-section-title"
+            className="text-3xl md:text-4xl font-bold tracking-tight"
+          >
             {settings.videoSectionTitle}
           </h2>
           <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
@@ -35,10 +43,10 @@ export function VideoSection({ settings }: VideoSectionProps) {
                 <div className="w-full aspect-video">
                   <iframe
                     className="w-full h-full"
-                    src={`https://www.youtube.com/embed/${video.id}?rel=0&modestbranding=1`}
+                    src={`https://www.youtube-nocookie.com/embed/${video.id}?rel=0&modestbranding=1&iv_load_policy=3&disablekb=1`}
                     title={video.title}
                     frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
                     loading="lazy"
                     aria-label={`Embedded YouTube video: ${video.title}`}
@@ -46,7 +54,9 @@ export function VideoSection({ settings }: VideoSectionProps) {
                 </div>
                 <CardHeader>
                   <figcaption>
-                    <CardTitle className="text-lg group-hover:text-primary transition-colors">{video.title}</CardTitle>
+                    <CardTitle className="text-lg group-hover:text-primary transition-colors">
+                      {video.title}
+                    </CardTitle>
                   </figcaption>
                 </CardHeader>
               </figure>

@@ -1,7 +1,7 @@
 
-import { db, storage } from "@/lib/firebase";
-import { collection, getDocs, doc, updateDoc, query, orderBy, Timestamp, getDoc } from "firebase/firestore";
-import { ref, uploadString, getDownloadURL } from "firebase/storage";
+import { fetchFromAdminAPI, isServerSide } from "@/lib/admin-utils";
+import { db } from "@/lib/firebase";
+import { collection, doc, getDoc, getDocs, orderBy, query, Timestamp, updateDoc } from "firebase/firestore";
 import { addLog } from "./auditLogService";
 import { createStudentFromEnrollment } from "./studentsService";
 
@@ -31,31 +31,44 @@ export interface Enrollment {
 const ENROLLMENTS_COLLECTION = 'enrollments';
 
 export async function getEnrollments(): Promise<Enrollment[]> {
-    if (!db.app) return [];
+  // If running on server side, try to use admin API first
+  if (isServerSide()) {
     try {
-        const enrollmentsCollection = collection(db, ENROLLMENTS_COLLECTION);
-        const q = query(enrollmentsCollection, orderBy("createdAt", "desc"));
-        const snapshot = await getDocs(q);
-
-        if (snapshot.empty) {
-            return [];
-        }
-
-        return snapshot.docs.map(doc => {
-            const data = doc.data();
-            // Ensure dateOfBirth is formatted nicely for display if it's a string
-            const dob = data.dateOfBirth ? new Date(data.dateOfBirth).toLocaleDateString() : 'N/A';
-            
-            return {
-                id: doc.id,
-                ...data,
-                dateOfBirth: dob,
-            } as Enrollment;
-        });
-    } catch (error) {
-        console.error("Error fetching enrollments:", error);
-        throw new Error("Could not fetch enrollments.");
+      return await fetchFromAdminAPI('enrollments');
+    } catch (adminError) {
+      console.warn('Admin API not available, falling back to client SDK');
+      // Return empty array instead of trying client SDK on server
+      return [];
     }
+  }
+  
+  // Fallback to client SDK (for client-side only)
+  if (!db.app) return [];
+  try {
+    const enrollmentsCollection = collection(db, ENROLLMENTS_COLLECTION);
+    const q = query(enrollmentsCollection, orderBy("createdAt", "desc"));
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      return [];
+    }
+
+    return snapshot.docs.map(doc => {
+      const data = doc.data();
+      // Ensure dateOfBirth is formatted nicely for display if it's a string
+      const dob = data.dateOfBirth ? new Date(data.dateOfBirth).toLocaleDateString() : 'N/A';
+      
+      return {
+        id: doc.id,
+        ...data,
+        dateOfBirth: dob,
+      } as Enrollment;
+    });
+  } catch (error) {
+    console.error("Error fetching enrollments:", error);
+    // Return empty array instead of throwing error
+    return [];
+  }
 }
 
 export async function updateEnrollmentStatus(id: string, newStatus: EnrollmentStatus, adminRemarks?: string): Promise<void> {

@@ -22,22 +22,29 @@ export async function POST(req: NextRequest) {
     
     const { idToken } = validationResult.data;
 
-    const adminApp = getAdminApp();
-    const adminAuth = adminApp.auth(); // Correctly get auth from the initialized app instance
+    try {
+      const adminApp = getAdminApp();
+      const adminAuth = adminApp.auth(); // Correctly get auth from the initialized app instance
 
-    // Set session expiration to 5 days.
-    const expiresIn = 60 * 60 * 24 * 5 * 1000;
-  
-    const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
+      // Set session expiration to 5 days.
+      const expiresIn = 60 * 60 * 24 * 5 * 1000;
     
-    cookies().set('__session', sessionCookie, {
-      maxAge: expiresIn,
-      httpOnly: true,
-      secure: true, // Always use secure cookies
-      path: '/',
-      sameSite: 'lax', // Use 'lax' for a good balance of security and usability
-    });
-    return NextResponse.json({ success: true });
+      const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
+      
+      cookies().set('__session', sessionCookie, {
+        maxAge: expiresIn,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // Only secure in production
+        path: '/',
+        sameSite: 'lax', // Use 'lax' for a good balance of security and usability
+      });
+      return NextResponse.json({ success: true });
+    } catch (adminError) {
+      // If Firebase Admin SDK is not configured, we'll skip session cookie creation for development
+      // This allows the app to work without server-side session verification
+      console.warn('Firebase Admin SDK not configured, skipping session cookie creation');
+      return NextResponse.json({ success: true, warning: 'Development mode: Session cookie not created' });
+    }
 
   } catch (error: any) {
     console.error('Error creating session cookie:', error.message, 'Code:', error.code);

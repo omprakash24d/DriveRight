@@ -1,27 +1,31 @@
-import type { Metadata } from "next";
-import { Inter, Dancing_Script } from "next/font/google";
-import "./globals.css";
-import { HeaderWrapper } from "@/components/HeaderWrapper";
-import { Footer } from "@/components/Footer";
-import { Toaster } from "@/components/ui/toaster";
-import { cn } from "@/lib/utils";
 import { Chatbot } from "@/components/Chatbot";
-import { ThemeProvider } from "@/components/theme-provider";
+import { Footer } from "@/components/Footer";
+import { HeaderWrapper } from "@/components/HeaderWrapper";
 import { SiteWrapper } from "@/components/SiteWrapper";
-import { getSiteSettings } from "@/services/settingsService";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/context/AuthContext";
 import { schoolConfig } from "@/lib/config";
+import { cn } from "@/lib/utils";
+import { getSiteSettings } from "@/services/settingsService";
+import type { Metadata } from "next";
+import { Dancing_Script, Inter } from "next/font/google";
 import Script from "next/script";
+import "./globals.css";
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-body",
+  display: "swap",
+  preload: true,
 });
 
 const dancingScript = Dancing_Script({
   subsets: ["latin"],
   weight: "700",
   variable: "--font-cursive",
+  display: "swap",
+  preload: true,
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -36,7 +40,18 @@ export async function generateMetadata(): Promise<Metadata> {
       template: `%s | ${schoolName}`,
     },
     description: `Join ${schoolName}, the leading driving school in Arwal, Bihar. We offer professional lessons for cars (LMV), motorcycles (MCWG), and heavy vehicles (HMV). Enroll online today!`,
-    keywords: ['driving school Arwal', 'driving school Bihar', 'learn to drive', 'driving lessons', 'driving license Arwal', 'LMV training', 'MCWG training', 'HMV training', 'refresher course', schoolName],
+    keywords: [
+      "driving school Arwal",
+      "driving school Bihar",
+      "learn to drive",
+      "driving lessons",
+      "driving license Arwal",
+      "LMV training",
+      "MCWG training",
+      "HMV training",
+      "refresher course",
+      schoolName,
+    ],
     authors: [{ name: schoolName, url: appBaseUrl }],
     creator: schoolName,
     openGraph: {
@@ -52,13 +67,14 @@ export async function generateMetadata(): Promise<Metadata> {
           alt: `A student learning to drive with an instructor at ${schoolName}`,
         },
       ],
-      locale: 'en_IN',
-      type: 'website',
+      locale: "en_IN",
+      type: "website",
     },
     twitter: {
-      card: 'summary_large_image',
+      card: "summary_large_image",
       title: `${schoolName} - Professional Driving School`,
-      description: 'Learn to drive with the best instructors in Arwal, Bihar. Offering LMV, MCWG, and HMV courses.',
+      description:
+        "Learn to drive with the best instructors in Arwal, Bihar. Offering LMV, MCWG, and HMV courses.",
       images: [`${appBaseUrl}/images/1.jpeg`],
     },
     robots: {
@@ -67,9 +83,9 @@ export async function generateMetadata(): Promise<Metadata> {
       googleBot: {
         index: true,
         follow: true,
-        'max-video-preview': -1,
-        'max-image-preview': 'large',
-        'max-snippet': -1,
+        "max-video-preview": -1,
+        "max-image-preview": "large",
+        "max-snippet": -1,
       },
     },
   };
@@ -84,21 +100,21 @@ export default async function RootLayout({
   const appBaseUrl = schoolConfig.appBaseUrl;
 
   const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'DrivingSchool',
+    "@context": "https://schema.org",
+    "@type": "DrivingSchool",
     name: settings.schoolName,
     address: {
-      '@type': 'PostalAddress',
+      "@type": "PostalAddress",
       streetAddress: settings.address,
-      addressLocality: 'Arwal',
-      addressRegion: 'Bihar',
-      postalCode: '804401',
-      addressCountry: 'IN'
+      addressLocality: "Arwal",
+      addressRegion: "Bihar",
+      postalCode: "804401",
+      addressCountry: "IN",
     },
     contactPoint: {
-      '@type': 'ContactPoint',
+      "@type": "ContactPoint",
       telephone: settings.phone,
-      contactType: 'Customer Service',
+      contactType: "Customer Service",
       email: settings.contactEmail,
     },
     telephone: settings.phone,
@@ -108,37 +124,52 @@ export default async function RootLayout({
     image: `${appBaseUrl}/images/1.jpeg`,
     description: `Professional driving school offering HMV, LMV, and motorcycle training courses in ${settings.address}.`,
     hasOfferCatalog: {
-      '@type': 'OfferCatalog',
-      name: 'Driving Courses',
+      "@type": "OfferCatalog",
+      name: "Driving Courses",
       itemListElement: [
-        { '@type': 'Offer', 'itemOffered': { '@type': 'Service', name: 'HMV Training' } },
-        { '@type': 'Offer', 'itemOffered': { '@type': 'Service', name: 'LMV Training' } },
-        { '@type': 'Offer', 'itemOffered': { '@type': 'Service', name: 'Motorcycle Training' } }
-      ]
+        {
+          "@type": "Offer",
+          itemOffered: { "@type": "Service", name: "HMV Training" },
+        },
+        {
+          "@type": "Offer",
+          itemOffered: { "@type": "Service", name: "LMV Training" },
+        },
+        {
+          "@type": "Offer",
+          itemOffered: { "@type": "Service", name: "Motorcycle Training" },
+        },
+      ],
     },
     sameAs: [
       process.env.NEXT_PUBLIC_FACEBOOK_URL,
       process.env.NEXT_PUBLIC_TWITTER_URL,
-      process.env.NEXT_PUBLIC_INSTAGRAM_URL
+      process.env.NEXT_PUBLIC_INSTAGRAM_URL,
     ].filter(Boolean),
   };
 
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <head>
-        <link rel="preload" href={inter.style.fontFamily} as="font" type="font/woff2" crossOrigin="anonymous" />
-        <link rel="preload" href={dancingScript.style.fontFamily} as="font" type="font/woff2" crossOrigin="anonymous" />
         {/* Google tag (gtag.js) */}
-        <Script async src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID}`}></Script>
-        <Script id="google-analytics">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-
-            gtag('config', '${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID}');
-          `}
-        </Script>
+        {process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID && (
+          <>
+            <Script
+              strategy="afterInteractive"
+              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID}`}
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID}', {
+                  send_page_view: false
+                });
+              `}
+            </Script>
+          </>
+        )}
       </head>
       <body
         className={cn(
@@ -158,8 +189,8 @@ export default async function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <SiteWrapper 
-              header={<HeaderWrapper settings={settings} />} 
+            <SiteWrapper
+              header={<HeaderWrapper settings={settings} />}
               footer={<Footer />}
             >
               {children}
@@ -172,4 +203,3 @@ export default async function RootLayout({
     </html>
   );
 }
-

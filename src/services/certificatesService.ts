@@ -2,10 +2,7 @@
 'use server';
 
 import { db } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, orderBy, Timestamp, where, limit } from "firebase/firestore";
-import { addLog } from "./auditLogService";
-import { sendCertificateNotificationEmail } from "@/app/certificate/_lib/email-service";
-import { getStudent } from "./studentsService";
+import { collection, doc, getDoc, getDocs, limit, orderBy, query, Timestamp, where } from "firebase/firestore";
 
 export type CertificateStatus = 'Issued' | 'Pending Generation';
 export type CertificateType = 'LL' | 'DL';
@@ -102,24 +99,60 @@ export async function getCertificate(id: string): Promise<Certificate | null> {
 // Find a certificate by number and optionally by student name
 export async function findCertificate(certNumber: string, studentName: string): Promise<Certificate | null> {
     if (!db.app) return null;
+    
+    // Input validation and sanitization
+    if (!certNumber || !studentName) {
+        console.warn("Missing required parameters for certificate search");
+        return null;
+    }
+    
+    const sanitizedCertNumber = certNumber.trim().replace(/[^A-Za-z0-9-]/g, '');
+    const sanitizedStudentName = studentName.trim().replace(/[^A-Za-z\s]/g, '');
+    
+    if (!sanitizedCertNumber || !sanitizedStudentName) {
+        console.warn("Invalid parameters after sanitization");
+        return null;
+    }
+    
     try {
         const certsRef = collection(db, CERTIFICATES_COLLECTION);
-        const trimmedCertNumber = certNumber.trim();
-        const trimmedStudentNameLower = studentName.trim().toLowerCase();
+        
+        // Clean and normalize the certificate number
+        const cleanedCertNumber = sanitizedCertNumber.trim();
+        const normalizedCertNumber = cleanedCertNumber.toUpperCase();
+        const trimmedStudentNameLower = sanitizedStudentName.trim().toLowerCase();
 
-        // Step 1: Query for the certificate by its number. This is indexed and efficient.
-        const q = query(
-            certsRef,
-            where("certNumber", "==", trimmedCertNumber),
-            limit(1)
-        );
-        const snapshot = await getDocs(q);
+        // Try multiple search approaches for maximum compatibility
+        const searchVariants = [
+            normalizedCertNumber,           // Uppercase version
+            cleanedCertNumber,              // Original input
+            cleanedCertNumber.toLowerCase() // Lowercase version
+        ];
 
-        if (snapshot.empty) {
-            return null; // No certificate found with this number.
+        // Remove duplicates
+        const uniqueSearchVariants = [...new Set(searchVariants)];
+
+        let certDoc = null;
+        
+        // Try each variant until we find a match
+        for (const variant of uniqueSearchVariants) {
+            const q = query(
+                certsRef,
+                where("certNumber", "==", variant),
+                limit(1)
+            );
+            const snapshot = await getDocs(q);
+            
+            if (!snapshot.empty) {
+                certDoc = snapshot.docs[0];
+                break;
+            }
         }
 
-        const certDoc = snapshot.docs[0];
+        if (!certDoc) {
+            return null; // No certificate found with any variant of this number.
+        }
+
         const certData = { id: certDoc.id, ...certDoc.data() } as Certificate;
 
         // Step 2: If a student name was provided for verification (e.g., from the download page),

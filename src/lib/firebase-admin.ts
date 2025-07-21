@@ -24,11 +24,13 @@ export function getAdminApp(): admin.app.App {
     }
 
     try {
-        // Check if the app is already initialized by name to prevent re-initialization errors in hot-reload environments
-        const existingApp = admin.apps.find(app => app?.name === admin.app.DEFAULT_APP_NAME);
-        if (existingApp) {
-            adminAppInstance = existingApp;
-            return adminAppInstance;
+        // Check if the default app is already initialized
+        if (admin.apps.length > 0) {
+            const defaultApp = admin.app();
+            if (defaultApp) {
+                adminAppInstance = defaultApp;
+                return adminAppInstance;
+            }
         }
 
         const serviceAccount = JSON.parse(serviceAccountJson);

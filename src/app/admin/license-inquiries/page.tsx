@@ -1,17 +1,42 @@
-
-import { getLicensePrintInquiries } from "@/services/licensePrintInquiriesService";
+import { getLicensePrintInquiriesAdmin } from "@/lib/admin-server-functions";
 import { AdminLicenseInquiriesView } from "./_components/AdminLicenseInquiriesView";
-import type { LicensePrintInquiry } from "@/services/licensePrintInquiriesService";
-import type { Timestamp } from "firebase/firestore";
+
+interface LicensePrintInquiryData {
+  id: string;
+  name: string;
+  email: string;
+  dlNumber: string;
+  dob: string;
+  mobileNumber: string;
+  address: string;
+  state: string;
+  status: string;
+  notes: string;
+  timestamp: Date | string;
+}
 
 export default async function LicenseInquiriesPage() {
-    const inquiries: LicensePrintInquiry[] = await getLicensePrintInquiries();
+  let inquiries: LicensePrintInquiryData[] = [];
 
-    // Serialize Firestore Timestamps to ISO strings for client component props
-    const serializableInquiries = inquiries.map(inquiry => ({
-        ...inquiry,
-        timestamp: (inquiry.timestamp as Timestamp).toDate().toISOString(),
-    }));
-    
-    return <AdminLicenseInquiriesView initialInquiries={serializableInquiries} />;
+  try {
+    // Try to fetch data using Admin SDK for better performance and reliability
+    inquiries = await getLicensePrintInquiriesAdmin();
+  } catch (error) {
+    console.error(
+      "Failed to fetch license print inquiries via Admin SDK:",
+      error
+    );
+    // Component will handle data fetching via client-side API if no initial data
+  }
+
+  // Serialize dates to ISO strings for client component props
+  const serializableInquiries = inquiries.map((inquiry) => ({
+    ...inquiry,
+    timestamp:
+      inquiry.timestamp instanceof Date
+        ? inquiry.timestamp.toISOString()
+        : inquiry.timestamp,
+  }));
+
+  return <AdminLicenseInquiriesView initialInquiries={serializableInquiries} />;
 }

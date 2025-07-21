@@ -1,17 +1,44 @@
 
-'use server';
-
-import { db, auth } from "@/lib/firebase";
-import { getAdminApp } from "@/lib/firebase-admin";
-import { getAuth as getAdminAuth } from 'firebase-admin/auth';
-import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, orderBy, Timestamp, setDoc, where, limit } from "firebase/firestore";
-import { addLog } from "./auditLogService";
+import { fetchFromAdminAPI, isServerSide } from "@/lib/admin-utils";
+import { db } from "@/lib/firebase";
 import type { User as FirebaseUser } from 'firebase/auth';
-import type { Course } from "./coursesService";
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, limit, orderBy, query, setDoc, Timestamp, updateDoc, where } from "firebase/firestore";
+import { addLog } from "./auditLogService";
+import type { Certificate } from "./certificatesService";
 import { getCourse } from "./coursesService";
 import type { TestResult } from "./resultsService";
-import type { Certificate } from "./certificatesService";
+
+// For admin dashboard - user and enrollment types
+interface UserWithId {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string;
+    role?: string;
+    createdAt?: Timestamp;
+}
+
+interface EnrollmentWithId {
+    id: string;
+    userId: string;
+    selectedCourse?: string;
+    status?: string;
+    createdAt?: Timestamp;
+}
+
+// For admin dashboard student list
+export interface StudentBase {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    currentCourse: string;
+    enrollmentStatus: string;
+    enrollmentDate: Timestamp | null;
+    totalEnrollments: number;
+}
 
 
 // For admin-managed student records
@@ -145,6 +172,18 @@ export async function getUserEnrolledCourses(userId: string): Promise<EnrolledCo
 
 // Fetch all students from Firestore
 export async function getStudents(): Promise<Student[]> {
+  // If running on server side, try to use admin API first
+  if (isServerSide()) {
+    try {
+      return await fetchFromAdminAPI('students');
+    } catch (adminError) {
+      console.warn('Admin API not available, falling back to client SDK');
+      // Return empty array instead of trying client SDK on server
+      return [];
+    }
+  }
+  
+  // Fallback to client SDK (for client-side only)
   if (!db.app) return [];
   try {
     const studentsCollection = collection(db, STUDENTS_COLLECTION);
@@ -152,7 +191,7 @@ export async function getStudents(): Promise<Student[]> {
     const snapshot = await getDocs(q);
 
     if (snapshot.empty) {
-        return [];
+      return [];
     }
 
     return snapshot.docs.map(doc => ({
@@ -167,21 +206,21 @@ export async function getStudents(): Promise<Student[]> {
 
 // Fetch a single student by ID
 export async function getStudent(id: string): Promise<Student | null> {
-    if (!db.app) return null;
-    try {
-        const docRef = doc(db, STUDENTS_COLLECTION, id);
-        const docSnap = await getDoc(docRef);
+  if (!db.app) return null;
+  try {
+    const docRef = doc(db, STUDENTS_COLLECTION, id);
+    const docSnap = await getDoc(docRef);
 
-        if (docSnap.exists()) {
-            return { id: docSnap.id, ...(docSnap.data() as Omit<Student, 'id'>) };
-        } else {
-            console.warn(`No student document found with id: ${id}`);
-            return null;
-        }
-    } catch (error) {
-        console.error(`Error fetching student with id ${id}:`, error);
-        return null;
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...(docSnap.data() as Omit<Student, 'id'>) };
+    } else {
+      console.warn(`No student document found with id: ${id}`);
+      return null;
     }
+  } catch (error) {
+    console.error(`Error fetching student with id ${id}:`, error);
+    return null;
+  }
 }
 
 // Add a new student to Firestore
@@ -239,57 +278,46 @@ export async function updateStudent(id: string, studentData: Partial<Omit<Studen
     }
 }
 
-// Delete a student from Firestore and their associated auth user
+// Delete a student from Firestore (hybrid admin/client approach)
 export async function deleteStudent(id: string): Promise<void> {
-    const adminApp = getAdminApp();
-    if (!adminApp) throw new Error("Firebase Admin SDK not initialized.");
-
-    const adminDb = getAdminFirestore(adminApp);
-    const adminAuth = getAdminAuth(adminApp);
-
-    const docRef = adminDb.collection(STUDENTS_COLLECTION).doc(id);
-    
     try {
-        const docSnap = await docRef.get();
-        if (!docSnap.exists) {
-            console.warn(`Student with ID ${id} not found for deletion.`);
-            return;
-        }
-
-        const studentData = docSnap.data() as Omit<Student, 'id'>;
-        const studentName = studentData.name || `ID: ${id}`;
-        const studentEmail = studentData.email;
-
-        // Step 1: Delete the document from the 'students' collection
-        await docRef.delete();
-        await addLog('Deleted Student', `Name: ${studentName}`);
-
-        // Step 2: Find and delete the corresponding Firebase Auth user and 'users' doc
-        if (studentEmail) {
+        // Try admin API first if we're on client side
+        if (typeof window !== 'undefined') {
             try {
-                const userRecord = await adminAuth.getUserByEmail(studentEmail);
-                if (userRecord) {
-                    // Delete from Auth
-                    await adminAuth.deleteUser(userRecord.uid);
-                    console.log(`Successfully deleted Firebase Auth user: ${userRecord.uid}`);
-
-                    // Delete from 'users' collection
-                    const userDocRef = adminDb.collection(USERS_COLLECTION).doc(userRecord.uid);
-                    await userDocRef.delete();
-                    console.log(`Successfully deleted user profile from 'users' collection: ${userRecord.uid}`);
-                }
-            } catch (error: any) {
-                if (error.code === 'auth/user-not-found') {
-                    console.log(`No Firebase Auth user found for email ${studentEmail}. Skipping auth deletion.`);
-                } else {
-                    console.error(`Error deleting Firebase Auth user for ${studentEmail}:`, error);
-                    // Decide if you want to throw or just log. Logging is safer to not interrupt the flow.
-                }
+                const { deleteFromAdminAPI } = await import('@/lib/admin-utils');
+                await deleteFromAdminAPI('students', id);
+                await addLog('Deleted Student', `ID: ${id} (via admin API)`);
+                return;
+            } catch (adminError) {
+                console.log('Admin API not available, falling back to client SDK');
+                // Fall through to client SDK approach
+            }
+        } else {
+            // Server-side: try admin server function
+            try {
+                const { deleteStudentAdmin } = await import('@/lib/admin-server-functions');
+                await deleteStudentAdmin(id);
+                return;
+            } catch (adminError) {
+                console.log('Admin server function failed, falling back to client SDK');
+                // Fall through to client SDK approach
             }
         }
+
+        // Client SDK fallback - this will throw an error for delete operations
+        // as regular users don't have delete permissions
+        if (!db.app) throw new Error("Firebase not initialized.");
+        
+        // Attempt to delete (this will likely fail due to security rules)
+        await deleteDoc(doc(db, 'students', id));
+        await addLog('Deleted Student', `ID: ${id} (via client SDK)`);
+        
     } catch (error) {
-        console.error("Error deleting student record:", error);
-        throw new Error("Could not delete student from the database.");
+        console.error("Error deleting student: ", error);
+        if (error instanceof Error && error.message.includes('admin API delete failed: 401')) {
+            throw new Error("Delete student functionality requires admin privileges");
+        }
+        throw new Error("Could not delete student - admin privileges required");
     }
 }
 
@@ -325,4 +353,80 @@ export async function seedDefaultStudents(): Promise<number> {
         console.error("Error seeding default students:", error);
         throw new Error("Could not seed default students.");
     }
+}
+
+// Get students for admin dashboard
+export async function getStudentsAdmin(): Promise<StudentBase[]> {
+  // If running on server side, try to use admin API first
+  if (isServerSide()) {
+    try {
+      return await fetchFromAdminAPI('students');
+    } catch (adminError) {
+      console.warn('Admin API not available:', adminError);
+      // Return empty array instead of trying client SDK on server
+      return [];
+    }
+  }
+  
+  // Fallback to client SDK (for client-side only)
+  if (!db.app) return [];
+
+  try {
+    const usersQuery = query(
+      collection(db, 'users'),
+      where('role', '==', 'student'),
+      orderBy('createdAt', 'desc')
+    );
+    
+    const enrollmentsQuery = query(
+      collection(db, 'enrollments'),
+      orderBy('createdAt', 'desc')
+    );
+
+    const [usersSnapshot, enrollmentsSnapshot] = await Promise.all([
+      getDocs(usersQuery),
+      getDocs(enrollmentsQuery)
+    ]);
+
+    const users = usersSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as UserWithId[];
+
+    const enrollments = enrollmentsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as EnrollmentWithId[];
+
+    // Group enrollments by user
+    const enrollmentsByUser = enrollments.reduce((acc, enrollment) => {
+      if (!acc[enrollment.userId]) {
+        acc[enrollment.userId] = [];
+      }
+      acc[enrollment.userId].push(enrollment);
+      return acc;
+    }, {} as Record<string, EnrollmentWithId[]>);
+
+    const students: StudentBase[] = users.map(user => {
+      const userEnrollments = enrollmentsByUser[user.id] || [];
+      const latestEnrollment = userEnrollments[0]; // Already sorted by createdAt desc
+
+      return {
+        id: user.id,
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        currentCourse: latestEnrollment?.selectedCourse || 'None',
+        enrollmentStatus: latestEnrollment?.status || 'Not Enrolled',
+        enrollmentDate: latestEnrollment?.createdAt || null,
+        totalEnrollments: userEnrollments.length
+      };
+    });
+
+    return students;
+  } catch (error) {
+    console.error('Error fetching students from client SDK:', error);
+    return [];
+  }
 }

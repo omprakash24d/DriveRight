@@ -1,6 +1,7 @@
 
+import { ErrorService } from "@/lib/error-service";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, getDocs, query, orderBy, Timestamp } from "firebase/firestore";
+import { addDoc, collection, getDocs, orderBy, query, Timestamp } from "firebase/firestore";
 
 export type LogAction = 
   // Courses
@@ -48,7 +49,11 @@ const LOGS_COLLECTION = 'auditLogs';
  */
 export async function addLog(action: LogAction, target: string) {
     if (!db.app) {
-        console.warn(`Audit Log Skipped (Firebase not init): ${action} - ${target}`);
+        ErrorService.logWarning(`Audit Log Skipped (Firebase not init): ${action} - ${target}`, {
+            component: 'auditLogService',
+            action: 'addLog',
+            metadata: { action, target }
+        });
         return;
     }
     try {
@@ -59,14 +64,25 @@ export async function addLog(action: LogAction, target: string) {
             timestamp: Timestamp.now(),
         });
     } catch (error) {
-        console.error("Error adding audit log: ", error);
+        ErrorService.logError(error as Error, {
+            component: 'auditLogService',
+            action: 'addLog',
+            metadata: { action, target }
+        });
         // This fails silently on purpose. Logging should not break core functionality.
     }
 }
 
 // Fetch all logs
 export async function getLogs(): Promise<AuditLog[]> {
-    if (!db.app) return [];
+    if (!db.app) {
+        ErrorService.logWarning("Firebase not initialized, returning empty logs array", {
+            component: 'auditLogService',
+            action: 'getLogs'
+        });
+        return [];
+    }
+    
     try {
         const logsCollection = collection(db, LOGS_COLLECTION);
         const q = query(logsCollection, orderBy("timestamp", "desc"));
@@ -81,7 +97,11 @@ export async function getLogs(): Promise<AuditLog[]> {
             ...(doc.data() as Omit<AuditLog, 'id'>)
         }));
     } catch (error) {
-        console.error("Error fetching audit logs:", error);
-        throw new Error("Could not fetch audit logs.");
+        ErrorService.logError(error as Error, {
+            component: 'auditLogService',
+            action: 'getLogs'
+        });
+        // Return empty array instead of throwing to prevent server-side crashes
+        return [];
     }
 }

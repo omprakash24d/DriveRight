@@ -1,6 +1,6 @@
 
 import { db } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, orderBy, where } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { addLog } from "./auditLogService";
 
 // Define the shape of the testimonial data
@@ -48,7 +48,7 @@ export async function getTestimonial(id: string): Promise<Testimonial | null> {
         if (docSnap.exists()) {
             return { id: docSnap.id, ...(docSnap.data() as Omit<Testimonial, 'id'>) };
         } else {
-            console.log("No such testimonial document!");
+            console.warn("No testimonial document found for ID:", id);
             return null;
         }
     } catch (error) {
@@ -59,7 +59,10 @@ export async function getTestimonial(id: string): Promise<Testimonial | null> {
 
 // Add a new testimonial to Firestore
 export async function addTestimonial(testimonialData: Omit<Testimonial, 'id'>) {
-    if (!db.app) throw new Error("Firebase not initialized.");
+    if (!db.app) {
+        console.warn("Firebase not initialized, cannot add testimonial");
+        throw new Error("Database connection not available");
+    }
     try {
         const docRef = await addDoc(collection(db, TESTIMONIALS_COLLECTION), testimonialData);
         await addLog('Added Testimonial', `From: ${testimonialData.name}`);
@@ -72,7 +75,10 @@ export async function addTestimonial(testimonialData: Omit<Testimonial, 'id'>) {
 
 // Update an existing testimonial in Firestore
 export async function updateTestimonial(id: string, testimonialData: Partial<Omit<Testimonial, 'id'>>) {
-    if (!db.app) throw new Error("Firebase not initialized.");
+    if (!db.app) {
+        console.warn("Firebase not initialized, cannot update testimonial");
+        throw new Error("Database connection not available");
+    }
     try {
         const docRef = doc(db, TESTIMONIALS_COLLECTION, id);
         await updateDoc(docRef, testimonialData);
@@ -85,7 +91,10 @@ export async function updateTestimonial(id: string, testimonialData: Partial<Omi
 
 // Delete a testimonial from Firestore
 export async function deleteTestimonial(id: string): Promise<void> {
-    if (!db.app) throw new Error("Firebase not initialized.");
+    if (!db.app) {
+        console.warn("Firebase not initialized, cannot delete testimonial");
+        throw new Error("Database connection not available");
+    }
     try {
         const docRef = doc(db, TESTIMONIALS_COLLECTION, id);
         const docSnap = await getDoc(docRef);
@@ -101,7 +110,10 @@ export async function deleteTestimonial(id: string): Promise<void> {
 
 // Seed the database with default testimonials
 export async function seedDefaultTestimonials(): Promise<number> {
-    if (!db.app) throw new Error("Firebase not initialized.");
+    if (!db.app) {
+        console.warn("Firebase not initialized, cannot seed testimonials");
+        return 0;
+    }
     const defaultTestimonials: Omit<Testimonial, 'id'>[] = [
       {
         name: "Rohan Kumar",

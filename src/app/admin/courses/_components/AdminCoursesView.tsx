@@ -1,19 +1,5 @@
-
 "use client";
 
-import React, { useState } from "react";
-import { Trash2, Edit, PlusCircle, Car, type LucideIcon } from "lucide-react";
-import * as icons from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,16 +11,32 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
-import Link from "next/link";
-import { deleteCourse, type Course } from "@/services/coursesService";
-import { useRealtimeData } from "@/hooks/use-realtime-data";
-import { collection, query, orderBy } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useRealtimeData } from "@/hooks/use-realtime-data";
+import { useToast } from "@/hooks/use-toast";
+import { db } from "@/lib/firebase";
+import { deleteCourse, type Course } from "@/services/coursesService";
+import { collection, orderBy, query } from "firebase/firestore";
+import * as icons from "lucide-react";
+import { Car, Edit, PlusCircle, Trash2, type LucideIcon } from "lucide-react";
+import Link from "next/link";
 
 export function AdminCoursesView() {
-  const { data: courses, loading, error } = useRealtimeData<Course>(
+  const {
+    data: courses,
+    loading,
+    error,
+  } = useRealtimeData<Course>(
     query(collection(db, "courses"), orderBy("title"))
   );
   const { toast } = useToast();
@@ -92,10 +94,18 @@ export function AdminCoursesView() {
               {loading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell><Skeleton className="h-6 w-6" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-48" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                    <TableCell>
+                      <Skeleton className="h-6 w-6" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-48" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-24" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-20" />
+                    </TableCell>
                     <TableCell className="text-right space-x-2">
                       <Skeleton className="h-8 w-8 inline-block" />
                       <Skeleton className="h-8 w-8 inline-block" />
@@ -104,15 +114,20 @@ export function AdminCoursesView() {
                 ))
               ) : courses && courses.length > 0 ? (
                 courses.map((course) => {
-                  const IconComponent = (icons as Record<string, LucideIcon>)[course.icon] || Car;
+                  const IconComponent =
+                    ((icons as any)[course.icon] as LucideIcon) || Car;
                   return (
                     <TableRow key={course.id}>
                       <TableCell>
                         <IconComponent className="h-6 w-6 text-primary" />
                       </TableCell>
-                      <TableCell className="font-medium">{course.title}</TableCell>
+                      <TableCell className="font-medium">
+                        {course.title}
+                      </TableCell>
                       <TableCell>{course.price}</TableCell>
-                      <TableCell><code>{course.value}</code></TableCell>
+                      <TableCell>
+                        <code>{course.value}</code>
+                      </TableCell>
                       <TableCell className="text-right space-x-2">
                         <Button variant="outline" size="icon" asChild>
                           <Link href={`/admin/courses/${course.id}/edit`}>
@@ -129,14 +144,19 @@ export function AdminCoursesView() {
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogTitle>
+                                Are you absolutely sure?
+                              </AlertDialogTitle>
                               <AlertDialogDescription>
-                                This will permanently delete the course. This action cannot be undone.
+                                This will permanently delete the course. This
+                                action cannot be undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(course.id)}>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(course.id)}
+                              >
                                 Continue
                               </AlertDialogAction>
                             </AlertDialogFooter>
@@ -148,7 +168,9 @@ export function AdminCoursesView() {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">No courses found.</TableCell>
+                  <TableCell colSpan={5} className="h-24 text-center">
+                    No courses found.
+                  </TableCell>
                 </TableRow>
               )}
             </TableBody>
