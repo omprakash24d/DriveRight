@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useForm, type SubmitHandler } from "react-hook-form";
@@ -31,64 +30,67 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function StudentLoginPage() {
-    const router = useRouter();
-    const [isLoading, setIsLoading] = useState(false);
-    const { toast } = useToast();
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-    const form = useForm<LoginFormValues>({
-        resolver: zodResolver(loginSchema),
-        defaultValues: {
-            email: "",
-            password: "",
-        },
-    });
-    
-    useEffect(() => {
-        form.setFocus("email");
-    }, [form]);
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+    mode: "onChange",
+  });
 
-    const onSubmit: SubmitHandler<LoginFormValues> = async (data) => {
-        setIsLoading(true);
-        try {
-            await signInWithEmailAndPassword(auth, data.email, data.password);
-            toast({ title: "Login Successful", description: "Welcome back!" });
-            router.push('/dashboard');
-        } catch (error: any) {
-            const authError = error as AuthError;
-            console.error("Login error:", authError.code);
-            
-            let errorMessage = "An unexpected error occurred. Please try again.";
-            if (authError.code === 'auth/invalid-credential' || authError.code === 'auth/wrong-password' || authError.code === 'auth/user-not-found') {
-                errorMessage = "Invalid credentials. Please check your email and password.";
-                form.setError("email", { type: "manual", message: " " }); // Add error to trigger invalid state
-                form.setError("password", { type: "manual", message: errorMessage });
-                form.setFocus("password");
-            } else {
-                 toast({
-                    variant: "destructive",
-                    title: "Login Failed",
-                    description: errorMessage,
-                });
-            }
-        } finally {
-            setIsLoading(false);
-        }
-    };
+  useEffect(() => {
+    form.setFocus("email");
+  }, [form]);
+
+  const onSubmit: SubmitHandler<LoginFormValues> = async (data) => {
+    setIsLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, data.email, data.password);
+      toast({ title: "Login Successful", description: "Welcome back!" });
+      router.push("/dashboard");
+    } catch (error: any) {
+      const authError = error as AuthError;
+      console.error("Login error:", authError.code);
+
+      let errorMessage = "An unexpected error occurred. Please try again.";
+      if (
+        authError.code === "auth/invalid-credential" ||
+        authError.code === "auth/wrong-password" ||
+        authError.code === "auth/user-not-found"
+      ) {
+        errorMessage = "Invalid credentials. Please check your email and password.";
+        form.setError("email", { type: "manual", message: " " });
+        form.setError("password", { type: "manual", message: errorMessage });
+        form.setFocus("password");
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Login Failed",
+          description: errorMessage,
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-secondary p-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-                <Car className="h-10 w-10 text-primary" />
-            </div>
+          <div className="mb-4 flex justify-center">
+            <Car className="h-10 w-10 text-primary" />
+          </div>
           <CardTitle className="text-2xl">Student Login</CardTitle>
-          <CardDescription>
-            Access your dashboard and courses.
-          </CardDescription>
+          <CardDescription>Access your dashboard and courses.</CardDescription>
         </CardHeader>
         <CardContent>
-           <Form {...form}>
+          <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <InputField
                 control={form.control}
@@ -111,23 +113,27 @@ export default function StudentLoginPage() {
                   Forgot Password?
                 </Link>
               </div>
-              <Button 
-                type="submit" 
-                className="w-full" 
+              <Button
+                type="submit"
+                className="w-full"
                 disabled={isLoading || !form.formState.isDirty || !form.formState.isValid}
               >
-                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Sign In'}
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  "Sign In"
+                )}
               </Button>
             </form>
           </Form>
         </CardContent>
         <CardFooter className="flex justify-center text-sm">
-            <p className="text-muted-foreground">
-              Don't have an account?&nbsp;
-              <Link href="/signup" className="underline hover:text-primary">
-                  Sign Up
-              </Link>
-            </p>
+          <p className="text-muted-foreground">
+            Don't have an account?{" "}
+            <Link href="/signup" className="underline hover:text-primary">
+              Sign Up
+            </Link>
+          </p>
         </CardFooter>
       </Card>
     </div>
