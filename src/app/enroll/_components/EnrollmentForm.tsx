@@ -60,6 +60,7 @@ type EnrollmentFormValues = z.infer<typeof enrollmentSchema>;
 export function EnrollmentFormComponent() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isCoursesLoading, setIsCoursesLoading] = useState(true);
   const [submissionResult, setSubmissionResult] = useState<{ success: boolean; refId: string } | null>(null);
   const searchParams = useSearchParams();
   const { user, userProfile } = useAuth();
@@ -103,8 +104,11 @@ export function EnrollmentFormComponent() {
   }, [selectedCourse]);
 
   useEffect(() => {
+    setIsCoursesLoading(true);
     getCourses().then(setCourses).catch(() => {
         toast({ variant: "destructive", title: "Error", description: "Could not load course details." });
+    }).finally(() => {
+        setIsCoursesLoading(false);
     });
   }, [toast]);
 
@@ -301,98 +305,94 @@ export function EnrollmentFormComponent() {
             )}
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <InputField control={form.control} name="fullName" label="Full Name" placeholder="Enter Your Full Name" isRequired />
+                <fieldset disabled={isLoading || isCoursesLoading} className="space-y-6">
+                    <InputField control={form.control} name="fullName" label="Full Name" placeholder="Enter Your Full Name" isRequired />
 
-                <div className="grid md:grid-cols-2 gap-6">
-                  <InputField control={form.control} name="email" label="Email Address" type="email" placeholder="abc@example.com" isRequired />
-                  <InputField control={form.control} name="mobileNumber" label="Mobile Number" placeholder="Enter your Phone Number " isRequired />
-                </div>
-                
-                <div className="grid md:grid-cols-2 gap-6">
-                   <DatePickerField
-                      control={form.control}
-                      name="dateOfBirth"
-                      label="Date of Birth"
-                      isRequired
-                      inputType="text"
-                      captionLayout="dropdown"
-                      fromYear={1950}
-                      toYear={new Date().getFullYear()}
-                    />
-                   <SelectField
-                      control={form.control}
-                      name="state"
-                      label="State"
-                      placeholder="Select your state"
-                      items={indianStates.map(state => ({ value: state, label: state }))}
-                      isRequired
-                    />
-                </div>
-                
-                <InputField control={form.control} name="address" label="Full Address" placeholder="123 Safety Drive, Roadtown" isRequired />
-
-                <SelectField
-                    control={form.control}
-                    name="vehicleType"
-                    label="Vehicle Type"
-                    placeholder="Choose a vehicle type..."
-                    items={[
-                      { value: 'lmv', label: 'Light Motor Vehicle (LMV)' },
-                      { value: 'mcwg', label: 'Motorcycle With Gear (MCWG)' },
-                      { value: 'hmv', label: 'Heavy Motor Vehicle (HMV)' },
-                      { value: 'lmv+mcwg', label: 'LMV + MCWG' },
-                      { value: 'others', label: 'Others' },
-                    ]}
-                    isRequired
-                />
-                 <InputField control={form.control} name="documentId" label="Document ID Number (Optional)" placeholder="e.g., Aadhaar, PAN, or other ID number" description="This can help admins verify your identity faster." />
-                
-                <div className="grid md:grid-cols-2 gap-6 items-start">
-                    <FileField
+                    <div className="grid md:grid-cols-2 gap-6">
+                    <InputField control={form.control} name="email" label="Email Address" type="email" placeholder="abc@example.com" isRequired />
+                    <InputField control={form.control} name="mobileNumber" label="Mobile Number" placeholder="Enter your Phone Number " isRequired />
+                    </div>
+                    
+                    <div className="grid md:grid-cols-2 gap-6">
+                    <DatePickerField
                         control={form.control}
-                        name="idProof"
-                        label="ID Proof Upload"
-                        description="PDF, JPG, PNG. Max 10MB."
+                        name="dateOfBirth"
+                        label="Date of Birth"
+                        isRequired
+                        inputType="text"
+                        captionLayout="dropdown"
+                        fromYear={1950}
+                        toYear={new Date().getFullYear()}
+                        />
+                    <SelectField
+                        control={form.control}
+                        name="state"
+                        label="State"
+                        placeholder="Select your state"
+                        items={indianStates.map(state => ({ value: state, label: state }))}
+                        isRequired
+                        />
+                    </div>
+                    
+                    <InputField control={form.control} name="address" label="Full Address" placeholder="123 Safety Drive, Roadtown" isRequired />
+
+                    <SelectField
+                        control={form.control}
+                        name="vehicleType"
+                        label="Vehicle Type"
+                        placeholder={isCoursesLoading ? "Loading courses..." : "Choose a vehicle type..."}
+                        items={courses.map(c => ({ value: c.value, label: c.title }))}
                         isRequired
                     />
-                    <div>
-                        <FormLabel>Photo Upload <span className="text-destructive">*</span></FormLabel>
-                        {!form.watch('photoCropped') ? (
-                          <label 
-                            htmlFor="photo-upload" 
-                            className="mt-2 relative flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            tabIndex={0}
-                            role="button"
-                            aria-label="Upload your photo"
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                    e.preventDefault();
-                                    document.getElementById('photo-upload')?.click();
-                                }
-                            }}
-                          >
-                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                              <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
-                              <p className="text-xs text-muted-foreground">Click or press Enter to upload</p>
+                    <InputField control={form.control} name="documentId" label="Document ID Number (Optional)" placeholder="e.g., Aadhaar, PAN, or other ID number" description="This can help admins verify your identity faster." />
+                    
+                    <div className="grid md:grid-cols-2 gap-6 items-start">
+                        <FileField
+                            control={form.control}
+                            name="idProof"
+                            label="ID Proof Upload"
+                            description="PDF, JPG, PNG. Max 10MB."
+                            isRequired
+                        />
+                        <div>
+                            <FormLabel>Photo Upload <span className="text-destructive">*</span></FormLabel>
+                            {!form.watch('photoCropped') ? (
+                            <label 
+                                htmlFor="photo-upload" 
+                                className="mt-2 relative flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                tabIndex={0}
+                                role="button"
+                                aria-label="Upload your photo"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        document.getElementById('photo-upload')?.click();
+                                    }
+                                }}
+                            >
+                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
+                                <p className="text-xs text-muted-foreground">Click or press Enter to upload</p>
+                                </div>
+                                <Input id="photo-upload" type="file" className="hidden" onChange={handlePhotoSelect} accept="image/png, image/jpeg" />
+                            </label>
+                            ) : (
+                            <div className="mt-2 relative w-32 h-32">
+                                <Image src={form.getValues('photoCropped')} alt="Photo preview" layout="fill" className="rounded-md object-cover"/>
+                                <Button variant="destructive" size="sm" className="absolute -top-2 -right-2 rounded-full h-7 w-7" onClick={() => {
+                                    form.setValue('photoOriginal', '');
+                                    form.setValue('photoCropped', '');
+                                }}>X</Button>
                             </div>
-                            <Input id="photo-upload" type="file" className="hidden" onChange={handlePhotoSelect} accept="image/png, image/jpeg" />
-                          </label>
-                        ) : (
-                          <div className="mt-2 relative w-32 h-32">
-                             <Image src={form.getValues('photoCropped')} alt="Photo preview" layout="fill" className="rounded-md object-cover"/>
-                             <Button variant="destructive" size="sm" className="absolute -top-2 -right-2 rounded-full h-7 w-7" onClick={() => {
-                                form.setValue('photoOriginal', '');
-                                form.setValue('photoCropped', '');
-                             }}>X</Button>
-                          </div>
-                        )}
-                        <FormDescription>JPG, PNG. Max 10MB.</FormDescription>
-                        <p className="text-sm font-medium text-destructive">{form.formState.errors.photoCropped?.message || form.formState.errors.photoOriginal?.message}</p>
+                            )}
+                            <FormDescription>JPG, PNG. Max 10MB.</FormDescription>
+                            <p className="text-sm font-medium text-destructive">{form.formState.errors.photoCropped?.message || form.formState.errors.photoOriginal?.message}</p>
+                        </div>
                     </div>
-                </div>
+                </fieldset>
 
-                <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-                  {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 
+                <Button type="submit" className="w-full" size="lg" disabled={isLoading || isCoursesLoading}>
+                  {isLoading || isCoursesLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 
                     isFreeCourse ? <><UserPlus className="mr-2 h-4 w-4" />Submit Enrollment</> : <><CreditCard className="mr-2 h-4 w-4" />Pay & Enroll</>
                   }
                 </Button>
