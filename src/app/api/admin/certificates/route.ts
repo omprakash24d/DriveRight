@@ -9,6 +9,7 @@ import { sendCertificateNotificationEmail } from '@/app/certificate/_lib/email-s
 import { addLog } from '@/services/auditLogService';
 import { getStudent } from '@/services/studentsService';
 import { schoolConfig } from '@/lib/config';
+import { cookies } from 'next/headers';
 
 const CERTIFICATES_COLLECTION = 'certificates';
 
@@ -20,29 +21,33 @@ const newCertificateSchema = z.object({
     type: z.enum(["LL", "DL"]),
 });
 
-async function verifyAdmin(request: NextRequest) {
-    const idToken = request.headers.get('Authorization')?.split('Bearer ')[1];
-    if (!idToken) {
-        throw new Error('Unauthorized');
+async function verifyAdminSession() {
+    const sessionCookie = cookies().get('__session')?.value;
+    if (!sessionCookie) {
+        throw new Error('Unauthorized: No session cookie provided.');
     }
+
     const adminApp = getAdminApp();
     if (!adminApp) {
-        throw new Error('Server configuration error');
+        throw new Error('Server configuration error.');
     }
     const adminAuth = getAuth(adminApp);
-    const decodedToken = await adminAuth.verifyIdToken(idToken);
     
-    // SECURE: Check for the 'admin' custom claim.
-    if (decodedToken.admin !== true) {
-        throw new Error('Forbidden: User is not an admin.');
+    try {
+        const decodedToken = await adminAuth.verifySessionCookie(sessionCookie, true);
+        if (decodedToken.admin !== true) {
+            throw new Error('Forbidden: User is not an admin.');
+        }
+        return decodedToken;
+    } catch (error) {
+        throw new Error('Unauthorized: Invalid session.');
     }
-    
-    return decodedToken;
 }
+
 
 export async function POST(request: NextRequest) {
     try {
-        const decodedToken = await verifyAdmin(request);
+        await verifyAdminSession();
         const adminDb = getFirestore(getAdminApp()!);
         
         const body = await request.json();
@@ -90,14 +95,19 @@ export async function POST(request: NextRequest) {
 
     } catch (error: any) {
         console.error("Error in POST /api/admin/certificates:", error);
-        return NextResponse.json({ error: error.message || 'An unknown error occurred.' }, { status: 500 });
+        
+        let status = 500;
+        if (error.message.startsWith('Unauthorized')) status = 401;
+        if (error.message.startsWith('Forbidden')) status = 403;
+
+        return NextResponse.json({ error: error.message || 'An unknown error occurred.' }, { status });
     }
 }
 
 
 export async function DELETE(request: NextRequest) {
     try {
-        await verifyAdmin(request);
+        await verifyAdminSession();
         const adminDb = getFirestore(getAdminApp()!);
 
         const { searchParams } = new URL(request.url);
@@ -118,6 +128,11 @@ export async function DELETE(request: NextRequest) {
 
     } catch (error: any) {
         console.error("Error in DELETE /api/admin/certificates:", error);
-        return NextResponse.json({ error: error.message || 'An unknown error occurred.' }, { status: 500 });
+
+        let status = 500;
+        if (error.message.startsWith('Unauthorized')) status = 401;
+        if (error.message.startsWith('Forbidden')) status = 403;
+
+        return NextResponse.json({ error: error.message || 'An unknown error occurred.' }, { status });
     }
 }

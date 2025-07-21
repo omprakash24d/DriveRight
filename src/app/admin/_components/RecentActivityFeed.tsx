@@ -2,11 +2,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getRecentNotificationsForAdmin, type Notification } from "@/services/notificationsService";
+import { type Notification } from "@/services/notificationsService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileText, Route, Award, UserPlus, CheckCircle, Hourglass } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
+import { useAuth } from "@/context/AuthContext";
 
 const iconMap: Record<string, React.ElementType> = {
     'Enrollment': FileText,
@@ -31,12 +32,17 @@ const statusColorMap: Record<string, string> = {
 export function RecentActivityFeed() {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const { user } = useAuth();
 
     useEffect(() => {
+        // Don't fetch if the user isn't loaded yet
+        if (!user) return;
+
         async function fetchData() {
             setIsLoading(true);
             try {
                 // This function is now fetched from the client, but hits a secure API route
+                // The session cookie is automatically sent by the browser.
                 const response = await fetch('/api/admin/notifications');
                 if (!response.ok) {
                     throw new Error('Failed to fetch notifications');
@@ -54,7 +60,7 @@ export function RecentActivityFeed() {
             }
         }
         fetchData();
-    }, []);
+    }, [user]);
 
     if (isLoading) {
         return (

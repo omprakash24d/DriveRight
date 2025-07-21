@@ -15,7 +15,6 @@ import Link from "next/link";
 import { getStudents, type Student } from "@/services/studentsService";
 import { InputField } from "@/components/form/input-field";
 import { SelectField } from "@/components/form/select-field";
-import { useAuth } from "@/context/AuthContext";
 
 const generateCertificateSchema = z.object({
   studentId: z.string({
@@ -32,7 +31,6 @@ type GenerateCertificateFormValues = z.infer<typeof generateCertificateSchema>;
 export default function GenerateCertificatePage() {
   const { toast } = useToast();
   const router = useRouter();
-  const { getIdToken } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingStudents, setIsFetchingStudents] = useState(true);
   const [students, setStudents] = useState<Student[]>([]);
@@ -73,12 +71,11 @@ export default function GenerateCertificatePage() {
             return;
         }
 
-        const token = await getIdToken();
+        // The session cookie is sent automatically by the browser.
         const response = await fetch('/api/admin/certificates', {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
                 studentId: data.studentId,

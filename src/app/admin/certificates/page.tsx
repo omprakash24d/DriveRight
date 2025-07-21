@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
@@ -31,7 +32,6 @@ import Link from "next/link";
 import { getCertificates, type Certificate } from "@/services/certificatesService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, isValid } from "date-fns";
-import { useAuth } from "@/context/AuthContext";
 
 function toDateSafely(timestamp: any): Date | null {
   if (!timestamp) {
@@ -52,7 +52,6 @@ export default function AdminCertificatesPage() {
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const { getIdToken } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -94,12 +93,9 @@ export default function AdminCertificatesPage() {
 
   const handleDelete = async (certificateId: string) => {
     try {
-      const token = await getIdToken();
+      // The secure session cookie is automatically sent by the browser.
       const response = await fetch(`/api/admin/certificates?id=${certificateId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
 
       if (!response.ok) {
