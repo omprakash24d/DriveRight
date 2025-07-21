@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Table,
@@ -30,26 +30,10 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { type Certificate } from "@/services/certificatesService";
-import { Skeleton } from "@/components/ui/skeleton";
-import { format, isValid } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
 
 interface AdminCertificatesViewProps {
-    initialCertificates: Certificate[];
-}
-
-function toDateSafely(timestamp: any): Date | null {
-  if (!timestamp) {
-    return null;
-  }
-  if (timestamp.toDate && typeof timestamp.toDate === "function") {
-    return timestamp.toDate();
-  }
-  if (typeof timestamp === "object" && "seconds" in timestamp && "nanoseconds" in timestamp) {
-    const date = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
-    return isValid(date) ? date : null;
-  }
-  const date = new Date(timestamp);
-  return isValid(date) ? date : null;
+    initialCertificates: any[];
 }
 
 export function AdminCertificatesView({ initialCertificates }: AdminCertificatesViewProps) {
@@ -160,14 +144,14 @@ export function AdminCertificatesView({ initialCertificates }: AdminCertificates
             <TableBody>
               {filteredCertificates.length > 0 ? (
                 filteredCertificates.map((cert) => {
-                  const safeDate = toDateSafely(cert.issueDate);
+                  const issueDate = typeof cert.issueDate === 'string' ? parseISO(cert.issueDate) : null;
                   return (
                     <TableRow key={cert.id}>
                       <TableCell className="font-medium">{cert.certNumber}</TableCell>
                       <TableCell>{cert.studentName}</TableCell>
                       <TableCell>{cert.course}</TableCell>
                       <TableCell>{cert.type}</TableCell>
-                      <TableCell>{safeDate ? format(safeDate, "PPP") : "N/A"}</TableCell>
+                      <TableCell>{issueDate && isValid(issueDate) ? format(issueDate, "PPP") : "N/A"}</TableCell>
                       <TableCell>
                         <Badge variant={cert.status === "Issued" ? "default" : "secondary"}>
                           {cert.status}

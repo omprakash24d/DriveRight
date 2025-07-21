@@ -11,11 +11,8 @@ export default async function AdminStudentsPage() {
     // We convert them to a plain object that can be safely passed as props.
     const serializableStudents = students.map(student => ({
       ...student,
-      joined: {
-        seconds: (student.joined as Timestamp).seconds,
-        nanoseconds: (student.joined as Timestamp).nanoseconds,
-      }
+      joined: (student.joined as Timestamp).toDate().toISOString(),
     }));
     
-    return <AdminStudentsView initialStudents={serializableStudents as unknown as Student[]} />;
+    return <AdminStudentsView initialStudents={serializableStudents} />;
 }

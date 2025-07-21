@@ -29,11 +29,10 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { generateAvatarColor } from "@/lib/utils";
 import { deleteStudent, type Student } from "@/services/studentsService";
-import { format } from "date-fns";
-import type { Timestamp } from "firebase/firestore";
+import { format, parseISO, isValid } from "date-fns";
 
 interface AdminStudentsViewProps {
-    initialStudents: Student[];
+    initialStudents: any[];
 }
 
 export function AdminStudentsView({ initialStudents }: AdminStudentsViewProps) {
@@ -55,20 +54,6 @@ export function AdminStudentsView({ initialStudents }: AdminStudentsViewProps) {
         description: "Could not delete the student.",
       });
     }
-  };
-
-  // Helper to safely convert Firestore Timestamp-like objects to Date
-  const toDate = (timestamp: Timestamp | { seconds: number; nanoseconds: number }): Date => {
-    // If it's already a Timestamp object with a toDate method
-    if (timestamp && typeof (timestamp as Timestamp).toDate === 'function') {
-      return (timestamp as Timestamp).toDate();
-    }
-    // If it's a serialized plain object
-    if (timestamp && typeof timestamp.seconds === 'number' && typeof timestamp.nanoseconds === 'number') {
-      return new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
-    }
-    // Fallback for any other case
-    return new Date();
   };
 
   return (
@@ -101,52 +86,55 @@ export function AdminStudentsView({ initialStudents }: AdminStudentsViewProps) {
             </TableHeader>
             <TableBody>
               {students.length > 0 ? (
-                students.map((student) => (
-                  <TableRow key={student.id}>
-                    <TableCell className="flex items-center gap-4 font-medium">
-                      <Avatar>
-                        <AvatarImage src={student.avatar} alt={student.name} data-ai-hint="person portrait" />
-                        <AvatarFallback style={{ backgroundColor: generateAvatarColor(student.name) }}>
-                          <User className="h-5 w-5 text-primary" />
-                        </AvatarFallback>
-                      </Avatar>
-                      <span>{student.name}</span>
-                    </TableCell>
-                    <TableCell>{student.email}</TableCell>
-                    <TableCell>{student.phone}</TableCell>
-                    <TableCell>{format(toDate(student.joined), 'PPP')}</TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Button variant="outline" size="icon" asChild>
-                        <Link href={`/admin/students/${student.id}/edit`}>
-                          <Edit className="h-4 w-4" />
-                          <span className="sr-only">Edit</span>
-                        </Link>
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="icon">
-                            <Trash2 className="h-4 w-4" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This action cannot be undone. This will permanently delete the student account and remove their data from our servers.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(student.id)}>
-                              Continue
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </TableCell>
-                  </TableRow>
-                ))
+                students.map((student) => {
+                  const joinedDate = typeof student.joined === 'string' ? parseISO(student.joined) : null;
+                  return (
+                    <TableRow key={student.id}>
+                      <TableCell className="flex items-center gap-4 font-medium">
+                        <Avatar>
+                          <AvatarImage src={student.avatar} alt={student.name} data-ai-hint="person portrait" />
+                          <AvatarFallback style={{ backgroundColor: generateAvatarColor(student.name) }}>
+                            <User className="h-5 w-5 text-primary" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{student.name}</span>
+                      </TableCell>
+                      <TableCell>{student.email}</TableCell>
+                      <TableCell>{student.phone}</TableCell>
+                      <TableCell>{joinedDate && isValid(joinedDate) ? format(joinedDate, 'PPP') : 'N/A'}</TableCell>
+                      <TableCell className="text-right space-x-2">
+                        <Button variant="outline" size="icon" asChild>
+                          <Link href={`/admin/students/${student.id}/edit`}>
+                            <Edit className="h-4 w-4" />
+                            <span className="sr-only">Edit</span>
+                          </Link>
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="icon">
+                              <Trash2 className="h-4 w-4" />
+                              <span className="sr-only">Delete</span>
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the student account and remove their data from our servers.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(student.id)}>
+                                Continue
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })
               ) : (
                 <TableRow>
                   <TableCell colSpan={5} className="h-24 text-center">
