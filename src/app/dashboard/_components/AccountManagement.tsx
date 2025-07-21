@@ -28,16 +28,12 @@ interface AccountManagementProps {
 export function AccountManagement({ user }: AccountManagementProps) {
     const [isExporting, setIsExporting] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
-    const { getIdToken } = useAuth();
     const { toast } = useToast();
 
     const handleExport = async () => {
         setIsExporting(true);
         try {
-            const token = await getIdToken();
-            if (!token) throw new Error("Authentication token not available.");
-            
-            const result = await requestDataExportAction(user.uid, token);
+            const result = await requestDataExportAction();
             if (result.success) {
                 toast({
                     title: "Export Request Sent",
@@ -56,10 +52,7 @@ export function AccountManagement({ user }: AccountManagementProps) {
     const handleDelete = async () => {
         setIsDeleting(true);
          try {
-            const token = await getIdToken();
-            if (!token) throw new Error("Authentication token not available.");
-            
-            const result = await deleteUserAccountAction(user.uid, token);
+            const result = await deleteUserAccountAction();
             if (result.success) {
                 toast({
                     title: "Account Deleted",

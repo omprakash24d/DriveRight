@@ -31,7 +31,7 @@ interface ProfileEditorProps {
 export function ProfileEditor({ user }: ProfileEditorProps) {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
-    const { user: authUser, userProfile, refreshUserProfile, getIdToken } = useAuth();
+    const { user: authUser, userProfile, refreshUserProfile } = useAuth();
 
     const form = useForm<ProfileFormValues>({
         resolver: zodResolver(profileSchema),
@@ -60,12 +60,7 @@ export function ProfileEditor({ user }: ProfileEditorProps) {
         setIsLoading(true);
 
         try {
-            const token = await getIdToken();
-            if (!token) {
-                throw new Error("Authentication token not available.");
-            }
-
-            const result = await updateUserProfileAction(authUser.uid, token, { 
+            const result = await updateUserProfileAction({ 
                 name: data.name, 
                 avatar: data.avatar 
             });

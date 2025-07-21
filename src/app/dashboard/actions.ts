@@ -3,26 +3,37 @@
 
 import { getAdminApp } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
-import { getAuth } from 'firebase-admin/auth';
+import { getAuth, type DecodedIdToken } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { sendDataExportEmail } from './_lib/email-service';
+import { cookies } from 'next/headers';
 
-async function verifyUser(userId: string, token: string) {
+async function verifyUserSession(): Promise<DecodedIdToken> {
+    const sessionCookie = cookies().get('__session')?.value;
+    if (!sessionCookie) {
+        throw new Error('Unauthorized: No session cookie provided.');
+    }
+
     const adminApp = getAdminApp();
     if (!adminApp) {
         throw new Error('Server configuration error.');
     }
     const adminAuth = getAuth(adminApp);
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    if (decodedToken.uid !== userId) {
-        throw new Error('Unauthorized. You can only act on your own profile.');
+    
+    try {
+        const decodedToken = await adminAuth.verifySessionCookie(sessionCookie, true);
+        return decodedToken;
+    } catch (error) {
+        // This will catch expired or invalid cookies
+        throw new Error('Unauthorized: Invalid session.');
     }
-    return decodedToken;
 }
 
-export async function updateUserProfileAction(userId: string, token: string, data: { name?: string, avatar?: string }) {
+export async function updateUserProfileAction(data: { name?: string, avatar?: string }) {
   try {
-    const decodedToken = await verifyUser(userId, token);
+    const decodedToken = await verifyUserSession();
+    const userId = decodedToken.uid;
+    
     const adminApp = getAdminApp()!;
     const adminAuth = getAuth(adminApp);
     const adminFirestore = getFirestore(adminApp);
@@ -48,13 +59,15 @@ export async function updateUserProfileAction(userId: string, token: string, dat
     return { success: true };
   } catch (error: any) {
     console.error('Error updating profile:', error);
-    return { success: false, error: 'Failed to update profile due to an internal error.' };
+    return { success: false, error: error.message || 'Failed to update profile due to an internal error.' };
   }
 }
 
-export async function requestDataExportAction(userId: string, token: string) {
+export async function requestDataExportAction() {
   try {
-    const decodedToken = await verifyUser(userId, token);
+    const decodedToken = await verifyUserSession();
+    const userId = decodedToken.uid;
+
     const adminApp = getAdminApp()!;
     const adminFirestore = getFirestore(adminApp);
 
@@ -85,13 +98,15 @@ export async function requestDataExportAction(userId: string, token: string) {
     return { success: true };
   } catch (error: any) {
     console.error('Error exporting user data:', error);
-    return { success: false, error: 'Failed to export data due to an internal error.' };
+    return { success: false, error: error.message || 'Failed to export data due to an internal error.' };
   }
 }
 
-export async function deleteUserAccountAction(userId: string, token: string) {
+export async function deleteUserAccountAction() {
     try {
-        const decodedToken = await verifyUser(userId, token);
+        const decodedToken = await verifyUserSession();
+        const userId = decodedToken.uid;
+        
         const adminApp = getAdminApp()!;
         const adminAuth = getAuth(adminApp);
         const adminFirestore = getFirestore(adminApp);
@@ -102,10 +117,12 @@ export async function deleteUserAccountAction(userId: string, token: string) {
         // Then delete the Firebase Auth user
         await adminAuth.deleteUser(userId);
         
-        revalidatePath('/dashboard');
+        // Invalidate the cookie on the client by having them sign out.
+        // The AuthProvider will handle the redirect.
+        
         return { success: true };
     } catch (error: any) {
         console.error('Error deleting user account:', error);
-        return { success: false, error: 'Failed to delete account due to an internal error.' };
+        return { success: false, error: error.message || 'Failed to delete account due to an internal error.' };
     }
 }
