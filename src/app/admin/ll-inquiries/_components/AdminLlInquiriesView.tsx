@@ -12,19 +12,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { FileSearch, Loader2, Send, Download, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { format } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
 import { updateLlInquiry, type LlInquiry, type LlInquiryStatus } from "@/services/llInquiriesService";
 import { sendLlStatusUpdateEmail } from "@/app/ll-exam-pass/_lib/email-service";
 import { useToast } from "@/hooks/use-toast";
 
 interface AdminLlInquiriesViewProps {
-    initialInquiries: LlInquiry[];
+    initialInquiries: any[]; // Expect serialized date
 }
 
 export function AdminLlInquiriesView({ initialInquiries }: AdminLlInquiriesViewProps) {
-  const [inquiries, setInquiries] = useState<LlInquiry[]>(initialInquiries);
+  const [inquiries, setInquiries] = useState<any[]>(initialInquiries);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [currentInquiry, setCurrentInquiry] = useState<LlInquiry | null>(null);
+  const [currentInquiry, setCurrentInquiry] = useState<any | null>(null);
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState<LlInquiryStatus | "">("");
   const { toast } = useToast();
@@ -46,7 +46,7 @@ export function AdminLlInquiriesView({ initialInquiries }: AdminLlInquiriesViewP
     });
   }, [inquiries, searchTerm, statusFilter]);
 
-  const handleOpenDialog = (inquiry: LlInquiry) => {
+  const handleOpenDialog = (inquiry: any) => {
     setCurrentInquiry(inquiry);
     setNotes(inquiry.notes || "");
     setStatus(inquiry.status);
@@ -108,17 +108,21 @@ export function AdminLlInquiriesView({ initialInquiries }: AdminLlInquiriesViewP
     const headers = ["Name", "Application No", "Email", "Mobile Number", "Date of Birth", "State", "Status", "Submission Date", "Admin Notes"];
     const csvContent = [
       headers.join(','),
-      ...filteredInquiries.map(i => [
-        sanitizeForCsv(i.name),
-        sanitizeForCsv(i.applicationNo),
-        sanitizeForCsv(i.email),
-        sanitizeForCsv(i.mobileNumber),
-        sanitizeForCsv(format(new Date(i.dob), "yyyy-MM-dd")),
-        sanitizeForCsv(i.state),
-        sanitizeForCsv(i.status),
-        sanitizeForCsv(format(new Date(i.timestamp.seconds * 1000), "yyyy-MM-dd HH:mm:ss")),
-        sanitizeForCsv(i.notes),
-      ].join(','))
+      ...filteredInquiries.map(i => {
+        const dobDate = parseISO(i.dob);
+        const timestampDate = parseISO(i.timestamp);
+        return [
+            sanitizeForCsv(i.name),
+            sanitizeForCsv(i.applicationNo),
+            sanitizeForCsv(i.email),
+            sanitizeForCsv(i.mobileNumber),
+            sanitizeForCsv(isValid(dobDate) ? format(dobDate, "yyyy-MM-dd") : 'Invalid Date'),
+            sanitizeForCsv(i.state),
+            sanitizeForCsv(i.status),
+            sanitizeForCsv(isValid(timestampDate) ? format(timestampDate, "yyyy-MM-dd HH:mm:ss") : 'Invalid Date'),
+            sanitizeForCsv(i.notes),
+        ].join(',');
+      })
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -202,12 +206,15 @@ export function AdminLlInquiriesView({ initialInquiries }: AdminLlInquiriesViewP
             </TableHeader>
             <TableBody>
               {filteredInquiries.length > 0 ? (
-                filteredInquiries.map((inquiry) => (
+                filteredInquiries.map((inquiry) => {
+                  const inquiryDate = parseISO(inquiry.timestamp);
+                  const dobDate = parseISO(inquiry.dob);
+                  return (
                   <TableRow key={inquiry.id}>
                     <TableCell>{inquiry.name}</TableCell>
                     <TableCell>{inquiry.applicationNo}</TableCell>
                     <TableCell>{inquiry.email}</TableCell>
-                    <TableCell>{format(new Date(inquiry.timestamp.seconds * 1000), "PPP p")}</TableCell>
+                    <TableCell>{isValid(inquiryDate) ? format(inquiryDate, "PPP p") : "Invalid Date"}</TableCell>
                     <TableCell>
                       <Badge variant={getStatusVariant(inquiry.status)}>{inquiry.status}</Badge>
                     </TableCell>
@@ -228,7 +235,7 @@ export function AdminLlInquiriesView({ initialInquiries }: AdminLlInquiriesViewP
                                     </CardHeader>
                                     <CardContent className="space-y-1 text-sm pt-4">
                                         <p><strong>Application No.:</strong> {inquiry.applicationNo}</p>
-                                        <p><strong>DOB:</strong> {format(new Date(inquiry.dob), "PPP")}</p>
+                                        <p><strong>DOB:</strong> {isValid(dobDate) ? format(dobDate, "PPP") : "Invalid Date"}</p>
                                         <p><strong>Mobile:</strong> {inquiry.mobileNumber}</p>
                                         <p><strong>Email:</strong> {inquiry.email}</p>
                                     </CardContent>
@@ -262,7 +269,8 @@ export function AdminLlInquiriesView({ initialInquiries }: AdminLlInquiriesViewP
                       </Dialog>
                     </TableCell>
                   </TableRow>
-                ))
+                  );
+                })
               ) : (
                 <TableRow>
                   <TableCell colSpan={6} className="h-24 text-center">

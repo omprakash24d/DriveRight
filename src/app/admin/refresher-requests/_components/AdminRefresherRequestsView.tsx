@@ -47,22 +47,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { sendRefresherStatusUpdateEmail } from "@/app/refresher/_lib/email-service";
 
 interface AdminRefresherRequestsViewProps {
-    initialRequests: RefresherRequest[];
+    initialRequests: any[]; // Expect serialized date
 }
 
 export function AdminRefresherRequestsView({ initialRequests }: AdminRefresherRequestsViewProps) {
-  const [requests, setRequests] = useState<RefresherRequest[]>(initialRequests);
+  const [requests, setRequests] = useState<any[]>(initialRequests);
   const { toast } = useToast();
 
   const [isUpdating, setIsUpdating] = useState(false);
-  const [currentRequest, setCurrentRequest] = useState<RefresherRequest | null>(null);
+  const [currentRequest, setCurrentRequest] = useState<any | null>(null);
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState<RefresherRequestStatus | "">("");
   
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [suggestion, setSuggestion] = useState<SuggestRefresherPlanOutput | null>(null);
 
-  const handleOpenDialog = (request: RefresherRequest) => {
+  const handleOpenDialog = (request: any) => {
     setCurrentRequest(request);
     setSuggestion(null);
     setNotes(request.notes || "");
@@ -140,7 +140,7 @@ export function AdminRefresherRequestsView({ initialRequests }: AdminRefresherRe
   
   const formattedRequests = useMemo(() => {
     return requests.map(req => {
-      const createdAtDate = (req.createdAt as any).seconds ? new Date(req.createdAt.seconds * 1000) : new Date();
+      const createdAtDate = parseISO(req.createdAt);
       const dobDate = parseISO(req.dob);
       return {
         ...req,

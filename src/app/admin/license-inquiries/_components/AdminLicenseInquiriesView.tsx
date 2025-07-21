@@ -11,24 +11,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Printer, Loader2, Send } from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
 import { updateLicensePrintInquiry, type LicensePrintInquiry, type LicensePrintInquiryStatus } from "@/services/licensePrintInquiriesService";
 import { sendLicensePrintStatusUpdateEmail } from "@/app/license-print/_lib/email-service";
 import { useToast } from "@/hooks/use-toast";
 
 interface AdminLicenseInquiriesViewProps {
-    initialInquiries: LicensePrintInquiry[];
+    initialInquiries: any[]; // Expect serialized date
 }
 
 export function AdminLicenseInquiriesView({ initialInquiries }: AdminLicenseInquiriesViewProps) {
-  const [inquiries, setInquiries] = useState<LicensePrintInquiry[]>(initialInquiries);
+  const [inquiries, setInquiries] = useState<any[]>(initialInquiries);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [currentInquiry, setCurrentInquiry] = useState<LicensePrintInquiry | null>(null);
+  const [currentInquiry, setCurrentInquiry] = useState<any | null>(null);
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState<LicensePrintInquiryStatus | "">("");
   const { toast } = useToast();
 
-  const handleOpenDialog = (inquiry: LicensePrintInquiry) => {
+  const handleOpenDialog = (inquiry: any) => {
     setCurrentInquiry(inquiry);
     setNotes(inquiry.notes || "");
     setStatus(inquiry.status);
@@ -98,12 +98,15 @@ export function AdminLicenseInquiriesView({ initialInquiries }: AdminLicenseInqu
             </TableHeader>
             <TableBody>
               {inquiries.length > 0 ? (
-                inquiries.map((inquiry) => (
+                inquiries.map((inquiry) => {
+                  const inquiryDate = parseISO(inquiry.timestamp);
+                  const dobDate = parseISO(inquiry.dob);
+                  return (
                   <TableRow key={inquiry.id}>
                     <TableCell>{inquiry.name}</TableCell>
                     <TableCell>{inquiry.dlNumber}</TableCell>
                     <TableCell>{inquiry.email}</TableCell>
-                    <TableCell>{format(new Date(inquiry.timestamp.seconds * 1000), "PPP p")}</TableCell>
+                    <TableCell>{isValid(inquiryDate) ? format(inquiryDate, "PPP p") : "Invalid Date"}</TableCell>
                     <TableCell>
                       <Badge variant={getStatusVariant(inquiry.status)}>{inquiry.status}</Badge>
                     </TableCell>
@@ -124,7 +127,7 @@ export function AdminLicenseInquiriesView({ initialInquiries }: AdminLicenseInqu
                                     </CardHeader>
                                     <CardContent className="space-y-1 text-sm pt-4">
                                         <p><strong>DL No.:</strong> {inquiry.dlNumber}</p>
-                                        <p><strong>DOB:</strong> {format(new Date(inquiry.dob), "PPP")}</p>
+                                        <p><strong>DOB:</strong> {isValid(dobDate) ? format(dobDate, "PPP") : "Invalid Date"}</p>
                                         <p><strong>Email:</strong> {inquiry.email}</p>
                                     </CardContent>
                                 </Card>
@@ -155,7 +158,8 @@ export function AdminLicenseInquiriesView({ initialInquiries }: AdminLicenseInqu
                       </Dialog>
                     </TableCell>
                   </TableRow>
-                ))
+                  );
+                })
               ) : (
                 <TableRow>
                   <TableCell colSpan={6} className="h-24 text-center">
