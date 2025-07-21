@@ -1,5 +1,10 @@
 
+'use server';
+
 import { db, auth } from "@/lib/firebase";
+import { getAdminApp } from "@/lib/firebase-admin";
+import { getAuth as getAdminAuth } from 'firebase-admin/auth';
+import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, orderBy, Timestamp, setDoc, where, limit } from "firebase/firestore";
 import { addLog } from "./auditLogService";
 import type { User as FirebaseUser } from 'firebase/auth';
@@ -156,7 +161,7 @@ export async function getStudents(): Promise<Student[]> {
     }));
   } catch (error) {
     console.error("Error fetching students:", error);
-    throw new Error("Could not fetch students from the database.");
+    return [];
   }
 }
 
@@ -234,18 +239,56 @@ export async function updateStudent(id: string, studentData: Partial<Omit<Studen
     }
 }
 
-// Delete a student from Firestore
+// Delete a student from Firestore and their associated auth user
 export async function deleteStudent(id: string): Promise<void> {
-    if (!db.app) throw new Error("Firebase not initialized.");
+    const adminApp = getAdminApp();
+    if (!adminApp) throw new Error("Firebase Admin SDK not initialized.");
+
+    const adminDb = getAdminFirestore(adminApp);
+    const adminAuth = getAdminAuth(adminApp);
+
+    const docRef = adminDb.collection(STUDENTS_COLLECTION).doc(id);
+    
     try {
-        const docRef = doc(db, STUDENTS_COLLECTION, id);
-        const docSnap = await getDoc(docRef);
-        const studentName = docSnap.exists() ? docSnap.data().name : `ID: ${id}`;
-        
-        await deleteDoc(docRef);
+        const docSnap = await docRef.get();
+        if (!docSnap.exists) {
+            console.warn(`Student with ID ${id} not found for deletion.`);
+            return;
+        }
+
+        const studentData = docSnap.data() as Omit<Student, 'id'>;
+        const studentName = studentData.name || `ID: ${id}`;
+        const studentEmail = studentData.email;
+
+        // Step 1: Delete the document from the 'students' collection
+        await docRef.delete();
         await addLog('Deleted Student', `Name: ${studentName}`);
+
+        // Step 2: Find and delete the corresponding Firebase Auth user and 'users' doc
+        if (studentEmail) {
+            try {
+                const userRecord = await adminAuth.getUserByEmail(studentEmail);
+                if (userRecord) {
+                    // Delete from Auth
+                    await adminAuth.deleteUser(userRecord.uid);
+                    console.log(`Successfully deleted Firebase Auth user: ${userRecord.uid}`);
+
+                    // Delete from 'users' collection
+                    const userDocRef = adminDb.collection(USERS_COLLECTION).doc(userRecord.uid);
+                    await userDocRef.delete();
+                    console.log(`Successfully deleted user profile from 'users' collection: ${userRecord.uid}`);
+                }
+            } catch (error: any) {
+                if (error.code === 'auth/user-not-found') {
+                    console.log(`No Firebase Auth user found for email ${studentEmail}. Skipping auth deletion.`);
+                } else {
+                    console.error(`Error deleting Firebase Auth user for ${studentEmail}:`, error);
+                    // Decide if you want to throw or just log. Logging is safer to not interrupt the flow.
+                }
+            }
+        }
     } catch (error) {
-        console.error("Error deleting student: ", error);
+        console.error("Error deleting student record:", error);
         throw new Error("Could not delete student from the database.");
     }
 }
