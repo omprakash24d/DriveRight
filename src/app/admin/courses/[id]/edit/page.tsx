@@ -19,7 +19,6 @@ import { getCourse } from "@/services/coursesService";
 import { InputField } from "@/components/form/input-field";
 import { TextareaField } from "@/components/form/textarea-field";
 import { updateCourseAction } from "../../actions";
-import { useAuth } from "@/context/AuthContext";
 
 const attachmentSchema = z.object({
   id: z.string(),
@@ -60,7 +59,6 @@ export default function EditCoursePage() {
   const router = useRouter();
   const params = useParams();
   const courseId = params.id as string;
-  const { getIdToken } = useAuth();
 
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
@@ -107,10 +105,7 @@ export default function EditCoursePage() {
   const onSubmit: SubmitHandler<CourseFormValues> = async (data) => {
     setIsLoading(true);
     try {
-        const token = await getIdToken();
-        if (!token) throw new Error("Authentication error. Please log in again.");
-
-        const result = await updateCourseAction(courseId, token, data);
+        const result = await updateCourseAction(courseId, data);
         if (result.success) {
             toast({ title: "Course Updated Successfully" });
             router.push("/admin/courses");

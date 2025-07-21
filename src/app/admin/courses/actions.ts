@@ -2,17 +2,23 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { cookies } from 'next/headers';
 import { updateCourse, type Course } from '@/services/coursesService';
 import { getAdminApp } from '@/lib/firebase-admin';
 import { getAuth } from 'firebase-admin/auth';
 
-async function verifyAdmin(token: string) {
+async function verifyAdmin() {
     const adminApp = getAdminApp();
     if (!adminApp) throw new Error('Server configuration error.');
 
     const adminAuth = getAuth(adminApp);
+    const sessionCookie = cookies().get('__session')?.value;
     
-    const decodedToken = await adminAuth.verifyIdToken(token);
+    if (!sessionCookie) {
+        throw new Error('Unauthorized: No session cookie provided.');
+    }
+
+    const decodedToken = await adminAuth.verifySessionCookie(sessionCookie, true);
     
     // SECURE: Check for the 'admin' custom claim instead of email.
     if (decodedToken.admin !== true) {
@@ -21,9 +27,9 @@ async function verifyAdmin(token: string) {
     return decodedToken.email;
 }
 
-export async function updateCourseAction(id: string, token: string, data: Partial<Omit<Course, 'id'>>) {
+export async function updateCourseAction(id: string, data: Partial<Omit<Course, 'id'>>) {
     try {
-        await verifyAdmin(token); // Verify the user is an admin before proceeding
+        await verifyAdmin(); // Verify the user is an admin before proceeding
         await updateCourse(id, data);
         revalidatePath('/');
         revalidatePath('/courses');
