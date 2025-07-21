@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { User, Phone, Mail, MapPin, Calendar, Clock, Download, Loader2, FileCheck, Save, MessageSquare } from "lucide-react";
+import { User, Phone, Mail, MapPin, Calendar, Clock, Download, Loader2, FileCheck, Save, MessageSquare, AlertTriangle } from "lucide-react";
 import { getEnrollments, updateEnrollmentStatus, type Enrollment, type EnrollmentStatus } from "@/services/enrollmentsService";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,6 +31,18 @@ import Link from "next/link";
 import Image from "next/image";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+
+const isValidHttpUrl = (string: string | undefined): boolean => {
+  if (!string) return false;
+  let url;
+  try {
+    url = new URL(string);
+  } catch (_) {
+    return false;
+  }
+  return url.protocol === "http:" || url.protocol === "https:";
+};
+
 
 export default function AdminEnrollmentsPage() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
@@ -267,9 +279,10 @@ export default function AdminEnrollmentsPage() {
                                         <Card>
                                             <CardContent className="pt-6 text-sm">
                                                 <div className="grid grid-cols-2 gap-4">
-                                                    {enrollment.photoCroppedUrl && (
-                                                        <div className="space-y-2">
-                                                            <p className="font-semibold">Photograph</p>
+                                                    
+                                                    <div className="space-y-2">
+                                                        <p className="font-semibold">Photograph</p>
+                                                        {isValidHttpUrl(enrollment.photoCroppedUrl) ? (
                                                             <Link href={enrollment.photoCroppedUrl} target="_blank" rel="noopener noreferrer">
                                                                 <Image
                                                                     src={enrollment.photoCroppedUrl}
@@ -279,11 +292,17 @@ export default function AdminEnrollmentsPage() {
                                                                     className="rounded-lg border object-cover aspect-square hover:opacity-80 transition-opacity"
                                                                 />
                                                             </Link>
-                                                        </div>
-                                                    )}
-                                                     {enrollment.idProofUrl && (
-                                                        <div className="space-y-2">
-                                                            <p className="font-semibold">ID Proof</p>
+                                                        ) : (
+                                                            <div className="h-[128px] w-[128px] bg-muted rounded-lg flex flex-col items-center justify-center text-center p-2">
+                                                                <AlertTriangle className="h-6 w-6 text-destructive mb-1"/>
+                                                                <p className="text-xs text-destructive">Invalid URL</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    
+                                                     <div className="space-y-2">
+                                                        <p className="font-semibold">ID Proof</p>
+                                                         {isValidHttpUrl(enrollment.idProofUrl) ? (
                                                             <Link href={enrollment.idProofUrl} target="_blank" rel="noopener noreferrer">
                                                                 <Image
                                                                     src={enrollment.idProofUrl}
@@ -293,8 +312,13 @@ export default function AdminEnrollmentsPage() {
                                                                     className="rounded-lg border object-contain aspect-square hover:opacity-80 transition-opacity"
                                                                 />
                                                              </Link>
-                                                        </div>
-                                                    )}
+                                                         ) : (
+                                                            <div className="h-[128px] w-[128px] bg-muted rounded-lg flex flex-col items-center justify-center text-center p-2">
+                                                                <AlertTriangle className="h-6 w-6 text-destructive mb-1"/>
+                                                                <p className="text-xs text-destructive">Invalid URL</p>
+                                                            </div>
+                                                         )}
+                                                    </div>
                                                 </div>
                                                 <p className="text-muted-foreground mt-4">
                                                     The applicant's full documents are also attached to the notification email. Use the button below to quickly find it in your Gmail inbox.
