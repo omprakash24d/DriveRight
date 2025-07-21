@@ -4,8 +4,8 @@ import type { Metadata } from 'next';
 import { schoolConfig } from "@/lib/config";
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy',
-  description: 'Our policies and procedures on the collection, use and disclosure of your information when you use our service.',
+    title: 'Privacy Policy',
+    description: 'Our policies and procedures on the collection, use and disclosure of your information when you use our service.',
 };
 
 
@@ -20,7 +20,7 @@ export default async function PrivacyPolicyPage() {
                 <p className="text-muted-foreground">Last updated: July 08, 2025</p>
                 <p className="leading-7 [&:not(:first-child)]:mt-6">This Privacy Policy describes Our policies and procedures on the collection, use and disclosure of Your information when You use the Service and tells You about Your privacy rights and how the law protects You.</p>
                 <p className="leading-7 [&:not(:first-child)]:mt-6">We use Your Personal data to provide and improve the Service. By using the Service, You agree to the collection and use of information in accordance with this Privacy Policy.</p>
-                
+
                 <h2 className="text-3xl font-semibold tracking-tight border-b pb-2 mt-10">Interpretation and Definitions</h2>
                 <h3 className="text-2xl font-semibold tracking-tight mt-6">Interpretation</h3>
                 <p className="leading-7 [&:not(:first-child)]:mt-6">The words of which the initial letter is capitalized have meanings defined under the following conditions. The following definitions shall have the same meaning regardless of whether they appear in singular or in plural.</p>
@@ -56,10 +56,10 @@ export default async function PrivacyPolicyPage() {
 
                 <h4 className="text-xl font-semibold tracking-tight mt-4">Usage Data</h4>
                 <p className="leading-7 [&:not(:first-child)]:mt-6">Usage Data is collected automatically when using the Service.</p>
-                <p className="leading-7 [&:not(:first-child)]:mt-6">Usage Data may include information such as Your Device's Internet Protocol address (e.g. IP address), browser type, browser version, the pages of our Service that You visit, the time and date of Your visit, the time spent on those pages, unique device identifiers and other diagnostic data.</p>
+                <p className="leading-7 [&:not(:first-child)]:mt-6">Usage Data may include information such as Your Device&apos;s Internet Protocol address (e.g. IP address), browser type, browser version, the pages of our Service that You visit, the time and date of Your visit, the time spent on those pages, unique device identifiers and other diagnostic data.</p>
                 <p className="leading-7 [&:not(:first-child)]:mt-6">When You access the Service by or through a mobile device, We may collect certain information automatically, including, but not limited to, the type of mobile device You use, Your mobile device unique ID, the IP address of Your mobile device, Your mobile operating system, the type of mobile Internet browser You use, unique device identifiers and other diagnostic data.</p>
                 <p className="leading-7 [&:not(:first-child)]:mt-6">We may also collect information that Your browser sends whenever You visit our Service or when You access the Service by or through a mobile device.</p>
-                
+
                 <h4 className="text-xl font-semibold tracking-tight mt-4">Tracking Technologies and Cookies</h4>
                 <p className="leading-7 [&:not(:first-child)]:mt-6">We use Cookies and similar tracking technologies to track the activity on Our Service and store certain information. Tracking technologies used are beacons, tags, and scripts to collect and track information and to improve and analyze Our Service. The technologies We use may include:</p>
                 <ul className="my-6 ml-6 list-disc [&>li]:mt-2">
@@ -83,7 +83,7 @@ export default async function PrivacyPolicyPage() {
 
                 <h3 className="text-2xl font-semibold tracking-tight mt-6">Security of Your Personal Data</h3>
                 <p className="leading-7 [&:not(:first-child)]:mt-6">The security of Your Personal Data is important to Us, but remember that no method of transmission over the Internet, or method of electronic storage is 100% secure. While We strive to use commercially acceptable means to protect Your Personal Data, We cannot guarantee its absolute security.</p>
-                
+
                 <h2 className="text-3xl font-semibold tracking-tight border-b pb-2 mt-10">GDPR Privacy</h2>
                 <h3 className="text-2xl font-semibold tracking-tight mt-6">Legal Basis for Processing Personal Data under GDPR</h3>
                 <p className="leading-7 [&:not(:first-child)]:mt-6">We may process Personal Data under the following conditions:</p>
@@ -95,6 +95,7 @@ export default async function PrivacyPolicyPage() {
                     <li><strong>Public interests:</strong> Processing Personal Data is related to a task that is carried out in the public interest or in the exercise of official authority vested in the Company.</li>
                     <li><strong>Legitimate interests:</strong> Processing Personal Data is necessary for the purposes of the legitimate interests pursued by the Company.</li>
                 </ul>
+
                 <h3 className="text-2xl font-semibold tracking-tight mt-6">Your Rights under the GDPR</h3>
                 <p className="leading-7 [&:not(:first-child)]:mt-6">You have the right under this Privacy Policy, and by law if You are within the EU, to:</p>
                 <ul className="my-6 ml-6 list-disc [&>li]:mt-2">
@@ -122,7 +123,7 @@ export default async function PrivacyPolicyPage() {
 
                 <h2 className="text-3xl font-semibold tracking-tight border-b pb-2 mt-10">Changes to this Privacy Policy</h2>
                 <p className="leading-7 [&:not(:first-child)]:mt-6">We may update Our Privacy Policy from time to time. We will notify You of any changes by posting the new Privacy Policy on this page.</p>
-                
+
                 <h2 className="text-3xl font-semibold tracking-tight border-b pb-2 mt-10">Contact Us</h2>
                 <p className="leading-7 [&:not(:first-child)]:mt-6">If you have any questions about this Privacy Policy, You can contact us:</p>
                 <ul className="my-6 ml-6 list-disc [&>li]:mt-2">
