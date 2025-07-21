@@ -17,7 +17,6 @@ import { getOnlineService } from "@/services/quickServicesService";
 import { InputField } from "@/components/form/input-field";
 import { TextareaField } from "@/components/form/textarea-field";
 import { updateOnlineServiceAction } from "../../actions";
-import { useAuth } from "@/context/AuthContext";
 
 const serviceSchema = z.object({
   icon: z.string().min(1, "Icon name from lucide-react is required."),
@@ -34,7 +33,6 @@ export default function EditOnlineServicePage() {
   const router = useRouter();
   const params = useParams();
   const serviceId = params.id as string;
-  const { getIdToken } = useAuth();
 
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
@@ -66,10 +64,7 @@ export default function EditOnlineServicePage() {
   const onSubmit: SubmitHandler<ServiceFormValues> = async (data) => {
     setIsLoading(true);
     try {
-        const token = await getIdToken();
-        if (!token) throw new Error("Authentication token not available.");
-
-        const result = await updateOnlineServiceAction(serviceId, token, data);
+        const result = await updateOnlineServiceAction(serviceId, data);
         if (result.success) {
             toast({ title: "Service Updated Successfully" });
             router.push("/admin/online-services");

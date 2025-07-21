@@ -17,7 +17,6 @@ import { getTrainingService } from "@/services/quickServicesService";
 import { InputField } from "@/components/form/input-field";
 import { TextareaField } from "@/components/form/textarea-field";
 import { updateTrainingServiceAction } from "../../actions";
-import { useAuth } from "@/context/AuthContext";
 
 const serviceSchema = z.object({
   icon: z.string().min(1, "Icon name from lucide-react is required."),
@@ -35,7 +34,6 @@ export default function EditTrainingServicePage() {
   const router = useRouter();
   const params = useParams();
   const serviceId = params.id as string;
-  const { getIdToken } = useAuth();
 
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
@@ -70,14 +68,11 @@ export default function EditTrainingServicePage() {
   const onSubmit: SubmitHandler<ServiceFormValues> = async (data) => {
     setIsLoading(true);
     try {
-        const token = await getIdToken();
-        if (!token) throw new Error("Authentication token not available.");
-        
         const serviceData = {
             ...data,
             services: data.services.split('\n').map(s => s.trim()).filter(Boolean),
         }
-        const result = await updateTrainingServiceAction(serviceId, token, serviceData);
+        const result = await updateTrainingServiceAction(serviceId, serviceData);
         if (result.success) {
             toast({ title: "Service Updated Successfully" });
             router.push("/admin/training-services");
