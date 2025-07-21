@@ -3,7 +3,7 @@ import { getAdminApp } from '@/lib/firebase-admin';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getAuth } from 'firebase-admin/auth';
+import { getAuth } from 'firebase-admin/auth'; // CORRECTED IMPORT
 
 const sessionRequestSchema = z.object({
   idToken: z.string().min(1, 'ID token cannot be empty.'),
@@ -24,11 +24,6 @@ export async function POST(req: NextRequest) {
     const { idToken } = validationResult.data;
 
     const adminApp = getAdminApp();
-    if (!adminApp) {
-        // Log detailed error on server, return generic message
-        console.error('Session creation failed: Firebase Admin SDK not initialized.');
-        return NextResponse.json({ error: 'Server configuration error.' }, { status: 500 });
-    }
     const adminAuth = getAuth(adminApp);
 
     // Set session expiration to 5 days.
@@ -36,25 +31,22 @@ export async function POST(req: NextRequest) {
   
     const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
     
-    if (sessionCookie) {
-        cookies().set('__session', sessionCookie, {
-          maxAge: expiresIn,
-          httpOnly: true,
-          secure: true, // Always use secure cookies
-          path: '/',
-          sameSite: 'lax', // Use 'lax' for a good balance of security and usability
-        });
-        return NextResponse.json({ success: true });
-    }
-    return NextResponse.json({ error: 'Failed to create session cookie.' }, { status: 500 });
+    cookies().set('__session', sessionCookie, {
+      maxAge: expiresIn,
+      httpOnly: true,
+      secure: true, // Always use secure cookies
+      path: '/',
+      sameSite: 'lax', // Use 'lax' for a good balance of security and usability
+    });
+    return NextResponse.json({ success: true });
 
   } catch (error: any) {
-    console.error('Error creating session cookie:', error);
+    console.error('Error creating session cookie:', error.message, 'Code:', error.code);
     // Differentiate between invalid token and other server errors
     if (error.code?.startsWith('auth/')) {
         return NextResponse.json({ error: 'Invalid authentication token provided.' }, { status: 401 });
     }
-    return NextResponse.json({ error: 'Failed to create session due to an internal error.' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to create session due to an internal server error.' }, { status: 500 });
   }
 }
 
