@@ -30,7 +30,6 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { deleteTrainingService, type TrainingService } from "@/services/quickServicesService";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface AdminTrainingServicesViewProps {
   initialServices: TrainingService[];
@@ -91,7 +90,7 @@ export function AdminTrainingServicesView({ initialServices }: AdminTrainingServ
             <TableBody>
               {services.length > 0 ? (
                 services.map((service) => {
-                    const IconComponent = (icons[service.icon as keyof typeof icons] || Car) as ElementType;
+                    const IconComponent = (icons as Record<string, React.ElementType>)[service.icon] || ConciergeBell;
                     return (
                         <TableRow key={service.id}>
                         <TableCell>

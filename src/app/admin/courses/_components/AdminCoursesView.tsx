@@ -85,8 +85,7 @@ export function AdminCoursesView({ initialCourses }: AdminCoursesViewProps) {
             <TableBody>
               {courses.length > 0 ? (
                 courses.map((course) => {
-                  // Ensure IconComponent is typed as a React component
-                  const IconComponent = (icons[course.icon as keyof typeof icons] || Car) as React.FC<React.SVGProps<SVGSVGElement>>;
+                  const IconComponent = (icons as Record<string, React.ElementType>)[course.icon] || Car;
                   return (
                     <TableRow key={course.id}>
                       <TableCell>
