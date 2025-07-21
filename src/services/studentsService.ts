@@ -20,7 +20,7 @@ export interface Student {
     name: string;
     email: string;
     phone: string;
-    joined: Timestamp;
+    joined: Timestamp | Date;
     avatar?: string; // Now a URL
 }
 

@@ -11,10 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Form } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, ChevronRight, PlusCircle, User, Car, Clock, Loader2 } from "lucide-react";
-import { format, addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from "date-fns";
+import { format, addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, parseISO } from "date-fns";
 import { getInstructors, type Instructor } from "@/services/instructorsService";
 import { getStudents, type Student } from "@/services/studentsService";
-import { addLesson, getLessons, type Lesson, type NewLessonData } from "@/services/lessonsService";
+import { addLesson, type Lesson, type NewLessonData } from "@/services/lessonsService";
 import { Timestamp } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SelectField } from "@/components/form/select-field";
@@ -33,7 +33,7 @@ const scheduleSchema = z.object({
 type ScheduleFormValues = z.infer<typeof scheduleSchema>;
 
 interface ScheduleViewProps {
-  initialLessons: Lesson[];
+  initialLessons: any[]; // Expecting serialized data
 }
 
 export function ScheduleView({ initialLessons }: ScheduleViewProps) {
@@ -42,16 +42,7 @@ export function ScheduleView({ initialLessons }: ScheduleViewProps) {
   
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
-  
-  const clientSideLessons = useMemo(() => {
-    return initialLessons.map(lesson => ({
-      ...lesson,
-      // Convert plain object from server back to Timestamp instance for date-fns
-      date: new Timestamp(lesson.date.seconds, lesson.date.nanoseconds)
-    }))
-  }, [initialLessons]);
-
-  const [lessons, setLessons] = useState<Lesson[]>(clientSideLessons);
+  const [lessons, setLessons] = useState<Lesson[]>(initialLessons.map(l => ({...l, date: parseISO(l.date)})));
 
   const [isDataLoading, setIsDataLoading] = useState(true);
   const [isLessonsLoading, setIsLessonsLoading] = useState(false);
@@ -80,7 +71,7 @@ export function ScheduleView({ initialLessons }: ScheduleViewProps) {
                 getStudents()
             ]);
             setInstructors(fetchedInstructors);
-            setStudents(fetchedStudents);
+            setStudents(fetchedStudents.map(s => ({...s, joined: parseISO(s.joined as any)})));
         } catch (error) {
             console.error("Failed to fetch initial data:", error);
             toast({ variant: "destructive", title: "Error", description: "Could not load instructors and students." });
@@ -95,12 +86,14 @@ export function ScheduleView({ initialLessons }: ScheduleViewProps) {
   const refreshLessons = useCallback(async () => {
     setIsLessonsLoading(true);
     try {
-        // Now calling the client-side enabled getLessons function
-        const fetchedLessons = await getLessons();
+        const response = await fetch('/api/admin/lessons');
+        if (!response.ok) throw new Error("Failed to fetch lessons");
+        const data = await response.json();
+        const fetchedLessons = data.map((l: any) => ({...l, date: parseISO(l.date)}));
         setLessons(fetchedLessons);
     } catch (error: any) {
         console.error("Failed to fetch lessons:", error);
-        toast({ variant: "destructive", title: "Error Fetching Schedule", description: "Could not fetch lessons. Check permissions." });
+        toast({ variant: "destructive", title: "Error Fetching Schedule", description: "Could not refresh lessons." });
     } finally {
         setIsLessonsLoading(false);
     }
@@ -137,7 +130,7 @@ export function ScheduleView({ initialLessons }: ScheduleViewProps) {
         setIsSubmitting(false);
         setIsDialogOpen(false);
         form.reset();
-        await refreshLessons(); // Refresh lessons after adding a new one
+        await refreshLessons();
 
         toast({
             title: "Lesson Scheduled",
@@ -151,7 +144,7 @@ export function ScheduleView({ initialLessons }: ScheduleViewProps) {
   };
 
   const weeklyLessons = lessons.filter(lesson => {
-    const lessonDate = (lesson.date as Timestamp).toDate();
+    const lessonDate = lesson.date;
     return lessonDate >= weekStart && lessonDate <= weekEnd;
   });
   
@@ -246,7 +239,7 @@ export function ScheduleView({ initialLessons }: ScheduleViewProps) {
                   </div>
                 ) : (
                   weeklyLessons
-                    .filter(lesson => isSameDay((lesson.date as Timestamp).toDate(), day))
+                    .filter(lesson => isSameDay(lesson.date, day))
                     .sort((a: any,b: any) => a.time.localeCompare(b.time))
                     .map((lesson: any) => (
                       <Card key={lesson.id} className="p-2 text-xs shadow-sm hover:shadow-md transition-shadow">
