@@ -1,33 +1,24 @@
 
 "use client";
 
-import { useEffect, useState } from 'react';
-import { getUserEnrolledCourses, type EnrolledCourse } from '@/services/studentsService';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowRight, BookOpen } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useRealtimeData } from '@/hooks/use-realtime-data';
+import { collection, query, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { EnrolledCourse } from '@/services/studentsService';
 
 interface EnrolledCoursesProps {
     userId: string;
 }
 
 export function EnrolledCourses({ userId }: EnrolledCoursesProps) {
-  const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (userId) {
-      setIsLoading(true);
-      getUserEnrolledCourses(userId)
-        .then(courses => {
-          setEnrolledCourses(courses);
-        })
-        .catch(console.error)
-        .finally(() => setIsLoading(false));
-    }
-  }, [userId]);
+  const { data: enrolledCourses, loading: isLoading, error } = useRealtimeData<EnrolledCourse>(
+    query(collection(db, 'users', userId, 'enrolledCourses'), orderBy("enrolledAt", "desc"))
+  );
 
   return (
     <div>
@@ -49,7 +40,9 @@ export function EnrolledCourses({ userId }: EnrolledCoursesProps) {
               </Card>
             ))}
           </div>
-        ) : enrolledCourses.length > 0 ? (
+        ) : error ? (
+            <p className="text-destructive">Could not load courses: {error}</p>
+        ) : enrolledCourses && enrolledCourses.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {enrolledCourses.map(course => (
               <Card key={course.courseId} className="flex flex-col">

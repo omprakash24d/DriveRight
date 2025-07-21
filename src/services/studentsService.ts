@@ -37,7 +37,7 @@ export interface EnrolledCourse {
     courseId: string;
     title: string;
     description: string;
-    enrolledAt: Date;
+    enrolledAt: Date | Timestamp;
 }
 
 export interface UserActivity {
@@ -109,7 +109,7 @@ export async function enrollUserInCourse(userId: string, courseId: string): Prom
     if (!course) {
         throw new Error("Course not found, cannot enroll.");
     }
-    const enrollmentRef = doc(db, USERS_COLLECTION, userId, 'enrolledCourses', course.id);
+    const enrollmentRef = doc(db, USERS_COLLECTION, userId, 'enrolledCourses', courseId);
     await setDoc(enrollmentRef, {
         title: course.title,
         description: course.description,

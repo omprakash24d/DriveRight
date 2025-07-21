@@ -31,20 +31,24 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { type Certificate } from "@/services/certificatesService";
 import { format, parseISO, isValid } from "date-fns";
+import { useRealtimeData } from "@/hooks/use-realtime-data";
+import { collection, orderBy, query } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { Skeleton } from "@/components/ui/skeleton";
 
-interface AdminCertificatesViewProps {
-    initialCertificates: any[];
-}
+export function AdminCertificatesView() {
+  const { data: certificates, loading, error } = useRealtimeData<Certificate>(
+    query(collection(db, "certificates"), orderBy("issueDate", "desc"))
+  );
 
-export function AdminCertificatesView({ initialCertificates }: AdminCertificatesViewProps) {
-  const [certificates, setCertificates] = useState<Certificate[]>(initialCertificates);
-  const [isLoading, setIsLoading] = useState(false); // Used for delete actions now
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
 
   const filteredCertificates = useMemo(() => {
+    if (!certificates) return [];
     return certificates.filter((cert) => {
       const searchTermLower = searchTerm.toLowerCase();
       const matchesSearch =
@@ -59,9 +63,8 @@ export function AdminCertificatesView({ initialCertificates }: AdminCertificates
   }, [certificates, searchTerm, statusFilter]);
 
   const handleDelete = async (certificateId: string) => {
-    setIsLoading(true);
+    setIsDeleting(true);
     try {
-      // The secure session cookie is automatically sent by the browser.
       const response = await fetch(`/api/admin/certificates?id=${certificateId}`, {
         method: "DELETE",
       });
@@ -71,7 +74,6 @@ export function AdminCertificatesView({ initialCertificates }: AdminCertificates
         throw new Error(errorResult.error || "Failed to delete certificate");
       }
 
-      setCertificates(certificates.filter((cert) => cert.id !== certificateId));
       toast({
         title: "Certificate Deleted",
         description: "The certificate record has been successfully removed.",
@@ -83,9 +85,13 @@ export function AdminCertificatesView({ initialCertificates }: AdminCertificates
         description: error.message || "Could not delete the certificate. Please try again.",
       });
     } finally {
-      setIsLoading(false);
+      setIsDeleting(false);
     }
   };
+
+  if (error) {
+    return <p className="text-destructive">Error loading certificates: {error}</p>;
+  }
 
   return (
     <div>
@@ -142,9 +148,21 @@ export function AdminCertificatesView({ initialCertificates }: AdminCertificates
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredCertificates.length > 0 ? (
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                    <TableCell className="text-right"><Skeleton className="h-8 w-8" /></TableCell>
+                  </TableRow>
+                ))
+              ) : filteredCertificates.length > 0 ? (
                 filteredCertificates.map((cert) => {
-                  const issueDate = typeof cert.issueDate === 'string' ? parseISO(cert.issueDate) : null;
+                  const issueDate = cert.issueDate instanceof Timestamp ? cert.issueDate.toDate() : (typeof cert.issueDate === 'string' ? parseISO(cert.issueDate) : null);
                   return (
                     <TableRow key={cert.id}>
                       <TableCell className="font-medium">{cert.certNumber}</TableCell>
@@ -166,7 +184,7 @@ export function AdminCertificatesView({ initialCertificates }: AdminCertificates
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="destructive" size="icon" disabled={isLoading}>
+                            <Button variant="destructive" size="icon" disabled={isDeleting}>
                               <Trash2 className="h-4 w-4" />
                               <span className="sr-only">Delete</span>
                             </Button>
@@ -180,7 +198,8 @@ export function AdminCertificatesView({ initialCertificates }: AdminCertificates
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(cert.id)}>
+                              <AlertDialogAction onClick={() => handleDelete(cert.id)} disabled={isDeleting}>
+                                {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 Continue
                               </AlertDialogAction>
                             </AlertDialogFooter>
@@ -193,7 +212,7 @@ export function AdminCertificatesView({ initialCertificates }: AdminCertificates
               ) : (
                 <TableRow>
                   <TableCell colSpan={7} className="h-24 text-center">
-                    {initialCertificates.length > 0
+                    {certificates && certificates.length > 0
                       ? "No certificates match your filters."
                       : "No certificates found."}
                   </TableCell>

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -30,19 +30,21 @@ import Link from "next/link";
 import { generateAvatarColor } from "@/lib/utils";
 import { deleteStudent, type Student } from "@/services/studentsService";
 import { format, parseISO, isValid } from "date-fns";
+import { useRealtimeData } from "@/hooks/use-realtime-data";
+import { collection, query, orderBy, Timestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { Skeleton } from "@/components/ui/skeleton";
 
-interface AdminStudentsViewProps {
-    initialStudents: any[];
-}
-
-export function AdminStudentsView({ initialStudents }: AdminStudentsViewProps) {
-  const [students, setStudents] = useState<Student[]>(initialStudents);
+export function AdminStudentsView() {
+  const { data: students, loading, error } = useRealtimeData<Student>(
+    query(collection(db, 'students'), orderBy('name'))
+  );
+  
   const { toast } = useToast();
 
   const handleDelete = async (studentId: string) => {
     try {
       await deleteStudent(studentId);
-      setStudents(students.filter((student) => student.id !== studentId));
       toast({
         title: "Student Deleted",
         description: "The student record has been successfully removed.",
@@ -55,6 +57,11 @@ export function AdminStudentsView({ initialStudents }: AdminStudentsViewProps) {
       });
     }
   };
+
+  if (error) {
+    return <p className="text-destructive">Error loading students: {error}</p>;
+  }
+
 
   return (
     <>
@@ -85,9 +92,25 @@ export function AdminStudentsView({ initialStudents }: AdminStudentsViewProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {students.length > 0 ? (
+               {loading ? (
+                 Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                        <TableCell className="flex items-center gap-4">
+                            <Skeleton className="h-10 w-10 rounded-full" />
+                            <Skeleton className="h-4 w-32" />
+                        </TableCell>
+                        <TableCell><Skeleton className="h-4 w-48" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                        <TableCell className="text-right space-x-2">
+                            <Skeleton className="h-8 w-8 inline-block" />
+                            <Skeleton className="h-8 w-8 inline-block" />
+                        </TableCell>
+                    </TableRow>
+                 ))
+              ) : students && students.length > 0 ? (
                 students.map((student) => {
-                  const joinedDate = typeof student.joined === 'string' ? parseISO(student.joined) : null;
+                  const joinedDate = student.joined instanceof Timestamp ? student.joined.toDate() : (typeof student.joined === 'string' ? parseISO(student.joined) : null);
                   return (
                     <TableRow key={student.id}>
                       <TableCell className="flex items-center gap-4 font-medium">

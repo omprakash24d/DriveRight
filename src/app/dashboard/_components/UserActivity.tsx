@@ -1,41 +1,33 @@
 
 "use client";
 
-import { useEffect, useState } from 'react';
-import { getResultsForUser, type TestResult } from '@/services/resultsService';
-import { getCertificatesForUser, type Certificate } from '@/services/certificatesService';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Award, ClipboardList, CheckCircle, XCircle } from 'lucide-react';
+import { Award, CheckCircle, XCircle } from 'lucide-react';
+import { useRealtimeData } from '@/hooks/use-realtime-data';
+import { collection, query, where, orderBy, Timestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { TestResult } from '@/services/resultsService';
+import type { Certificate } from '@/services/certificatesService';
 
 interface UserActivityProps {
     userId: string;
 }
 
 export function UserActivity({ userId }: UserActivityProps) {
-  const [results, setResults] = useState<TestResult[]>([]);
-  const [certificates, setCertificates] = useState<Certificate[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: results, loading: resultsLoading, error: resultsError } = useRealtimeData<TestResult>(
+    query(collection(db, "testResults"), where("studentId", "==", userId), orderBy("date", "desc"))
+  );
+  
+  const { data: certificates, loading: certsLoading, error: certsError } = useRealtimeData<Certificate>(
+    query(collection(db, "certificates"), where("studentId", "==", userId), orderBy("issueDate", "desc"))
+  );
 
-  useEffect(() => {
-    if (userId) {
-      setIsLoading(true);
-      Promise.all([
-        getResultsForUser(userId),
-        getCertificatesForUser(userId),
-      ])
-      .then(([userResults, userCerts]) => {
-        setResults(userResults);
-        setCertificates(userCerts);
-      })
-      .catch(console.error)
-      .finally(() => setIsLoading(false));
-    }
-  }, [userId]);
+  const isLoading = resultsLoading || certsLoading;
 
   return (
     <div className="space-y-8">
@@ -45,13 +37,15 @@ export function UserActivity({ userId }: UserActivityProps) {
           <CardContent className="p-0">
             {isLoading ? (
                 <div className="p-6 space-y-4"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></div>
-            ) : results.length > 0 ? (
+            ) : resultsError ? (
+                <p className="p-6 text-destructive text-center">Could not load test results: {resultsError}</p>
+            ) : results && results.length > 0 ? (
                 <ul className="divide-y">
                     {results.map(result => (
                         <li key={result.id} className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                            <div className="flex-1 space-y-1">
                                 <p className="font-semibold">{result.testType}</p>
-                                <p className="text-sm text-muted-foreground">Taken on {format(result.date.toDate(), 'PPP')}</p>
+                                <p className="text-sm text-muted-foreground">Taken on {format((result.date as Timestamp).toDate(), 'PPP')}</p>
                            </div>
                            <div className="flex items-center gap-4">
                                 <Badge variant={result.status === 'Pass' ? 'default' : 'destructive'} className="text-base py-1 px-3">
@@ -78,7 +72,9 @@ export function UserActivity({ userId }: UserActivityProps) {
           <CardContent className="p-0">
             {isLoading ? (
                 <div className="p-6 space-y-4"><Skeleton className="h-10 w-full" /></div>
-            ) : certificates.length > 0 ? (
+            ) : certsError ? (
+                <p className="p-6 text-destructive text-center">Could not load certificates: {certsError}</p>
+            ) : certificates && certificates.length > 0 ? (
                 <ul className="divide-y">
                     {certificates.map(cert => (
                         <li key={cert.id} className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -86,7 +82,7 @@ export function UserActivity({ userId }: UserActivityProps) {
                                 <Award className="h-6 w-6 text-amber-500" />
                                 <div className="flex-1 space-y-1">
                                     <p className="font-semibold">{cert.course} ({cert.type})</p>
-                                    <p className="text-sm text-muted-foreground">Issued on {format(cert.issueDate.toDate(), 'PPP')}</p>
+                                    <p className="text-sm text-muted-foreground">Issued on {format((cert.issueDate as Timestamp).toDate(), 'PPP')}</p>
                                 </div>
                             </div>
                             <Button asChild variant="secondary" size="sm">
