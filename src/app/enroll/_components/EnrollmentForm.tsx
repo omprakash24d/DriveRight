@@ -62,7 +62,7 @@ export function EnrollmentFormComponent() {
   const [isLoading, setIsLoading] = useState(false);
   const [submissionResult, setSubmissionResult] = useState<{ success: boolean; refId: string } | null>(null);
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
 
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -106,11 +106,20 @@ export function EnrollmentFormComponent() {
     getCourses().then(setCourses).catch(() => {
         toast({ variant: "destructive", title: "Error", description: "Could not load course details." });
     });
-    
+  }, [toast]);
+
+  useEffect(() => {
     if (defaultVehicleType) {
       form.setValue('vehicleType', defaultVehicleType, { shouldValidate: true });
     }
-  }, [defaultVehicleType, form, toast]);
+  }, [defaultVehicleType, form]);
+
+  useEffect(() => {
+    if (userProfile) {
+        form.setValue('fullName', userProfile.name || '');
+        form.setValue('email', userProfile.email || '');
+    }
+  }, [userProfile, form]);
 
   const handlePhotoSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {

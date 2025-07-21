@@ -12,7 +12,7 @@ export function LocationSection({ settings }: LocationSectionProps) {
         <div className="text-center mb-12">
           <h2 id="location-title" className="text-3xl md:text-4xl font-bold tracking-tight">Find Us</h2>
           <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
-            Visit us for a personal consultation. We're conveniently located and ready to help you start your driving journey.
+            Visit us for a personal consultation. We&apos;re conveniently located and ready to help you start your driving journey.
           </p>
         </div>
         <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -53,7 +53,7 @@ export function LocationSection({ settings }: LocationSectionProps) {
               title={`${settings.schoolName} Location`}
               aria-label={`Google Maps location of ${settings.schoolName}`}
             ></iframe>
-        </div>
+          </div>
         </div>
       </div>
     </section>
