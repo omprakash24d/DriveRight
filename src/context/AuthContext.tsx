@@ -23,10 +23,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  const fetchUserProfile = useCallback(async (firebaseUser: FirebaseUser | null) => {
+  const fetchUserProfile = useCallback(async (firebaseUser: FirebaseUser | null): Promise<void> => {
     if (firebaseUser) {
-      const profile = await getUserProfile(firebaseUser.uid);
-      setUserProfile(profile);
+      try {
+        const profile = await getUserProfile(firebaseUser.uid);
+        setUserProfile(profile);
+      } catch (error) {
+        console.error("Failed to fetch user profile, setting to null.", error);
+        setUserProfile(null);
+      }
     } else {
       setUserProfile(null);
     }
@@ -47,9 +52,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setIsLoading(true); // Start loading when auth state changes
       setUser(user);
-      await fetchUserProfile(user);
-      setIsLoading(false);
+      await fetchUserProfile(user); // Fetch profile for the new user state
+      setIsLoading(false); // Stop loading only after user and profile are settled
     });
 
     return () => unsubscribe();
