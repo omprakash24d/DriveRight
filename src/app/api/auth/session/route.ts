@@ -3,7 +3,6 @@ import { getAdminApp } from '@/lib/firebase-admin';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getAuth } from 'firebase-admin/auth'; // CORRECTED IMPORT
 
 const sessionRequestSchema = z.object({
   idToken: z.string().min(1, 'ID token cannot be empty.'),
@@ -24,7 +23,7 @@ export async function POST(req: NextRequest) {
     const { idToken } = validationResult.data;
 
     const adminApp = getAdminApp();
-    const adminAuth = getAuth(adminApp);
+    const adminAuth = adminApp.auth(); // Correctly get auth from the initialized app instance
 
     // Set session expiration to 5 days.
     const expiresIn = 60 * 60 * 24 * 5 * 1000;
