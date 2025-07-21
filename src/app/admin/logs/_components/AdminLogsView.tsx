@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { History, User } from "lucide-react";
 import { generateAvatarColor } from "@/lib/utils";
 import type { AuditLog, LogAction } from "@/services/auditLogService";
-import { format } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
 
 const getActionVariant = (action: LogAction) => {
     if (action.includes('Delete') || action.includes('Decline')) {
@@ -28,7 +28,7 @@ const getActionVariant = (action: LogAction) => {
 }
 
 interface AdminLogsViewProps {
-    initialLogs: AuditLog[];
+    initialLogs: any[]; // Use any to accommodate serialized date
 }
 
 export function AdminLogsView({ initialLogs }: AdminLogsViewProps) {
@@ -57,26 +57,29 @@ export function AdminLogsView({ initialLogs }: AdminLogsViewProps) {
             </TableHeader>
             <TableBody>
               {initialLogs.length > 0 ? (
-                initialLogs.map((log) => (
+                initialLogs.map((log) => {
+                  const logDate = parseISO(log.timestamp);
+                  return (
                     <TableRow key={log.id}>
-                    <TableCell className="flex items-center gap-4">
-                        <Avatar>
-                        <AvatarImage src={(log as any).userAvatar} alt={log.user} data-ai-hint="person portrait" />
-                        <AvatarFallback style={{ backgroundColor: generateAvatarColor(log.user) }}>
-                            <User className="h-5 w-5 text-primary" />
-                        </AvatarFallback>
-                        </Avatar>
-                        <span>{log.user}</span>
-                    </TableCell>
-                    <TableCell>
-                        <Badge variant={getActionVariant(log.action)}>
-                            {log.action}
-                        </Badge>
-                    </TableCell>
-                    <TableCell>{log.target}</TableCell>
-                    <TableCell>{format(log.timestamp.toDate(), "PPP p")}</TableCell>
+                      <TableCell className="flex items-center gap-4">
+                          <Avatar>
+                          <AvatarImage src={(log as any).userAvatar} alt={log.user} data-ai-hint="person portrait" />
+                          <AvatarFallback style={{ backgroundColor: generateAvatarColor(log.user) }}>
+                              <User className="h-5 w-5 text-primary" />
+                          </AvatarFallback>
+                          </Avatar>
+                          <span>{log.user}</span>
+                      </TableCell>
+                      <TableCell>
+                          <Badge variant={getActionVariant(log.action)}>
+                              {log.action}
+                          </Badge>
+                      </TableCell>
+                      <TableCell>{log.target}</TableCell>
+                      <TableCell>{isValid(logDate) ? format(logDate, "PPP p") : "Invalid Date"}</TableCell>
                     </TableRow>
-                ))
+                  )
+                })
               ) : (
                 <TableRow>
                     <TableCell colSpan={4} className="h-24 text-center">No audit logs found.</TableCell>
