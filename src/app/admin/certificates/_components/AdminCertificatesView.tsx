@@ -30,7 +30,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { type Certificate } from "@/services/certificatesService";
-import { format, parseISO, isValid } from "date-fns";
+import { format, isValid } from "date-fns";
 import { useRealtimeData } from "@/hooks/use-realtime-data";
 import { collection, orderBy, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -162,7 +162,7 @@ export function AdminCertificatesView() {
                 ))
               ) : filteredCertificates.length > 0 ? (
                 filteredCertificates.map((cert) => {
-                  const issueDate = cert.issueDate instanceof Timestamp ? cert.issueDate.toDate() : (typeof cert.issueDate === 'string' ? parseISO(cert.issueDate) : null);
+                  const issueDate = cert.issueDate as unknown as Date;
                   return (
                     <TableRow key={cert.id}>
                       <TableCell className="font-medium">{cert.certNumber}</TableCell>
