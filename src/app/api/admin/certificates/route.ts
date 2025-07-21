@@ -1,7 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminApp } from '@/lib/firebase-admin';
-import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { z } from 'zod';
 import { Timestamp } from 'firebase-admin/firestore';
@@ -9,7 +8,7 @@ import { sendCertificateNotificationEmail } from '@/app/certificate/_lib/email-s
 import { addLog } from '@/services/auditLogService';
 import { getStudent } from '@/services/studentsService';
 import { schoolConfig } from '@/lib/config';
-import { cookies } from 'next/headers';
+import { verifyAdmin } from '@/lib/admin-auth';
 
 const CERTIFICATES_COLLECTION = 'certificates';
 
@@ -21,33 +20,9 @@ const newCertificateSchema = z.object({
     type: z.enum(["LL", "DL"]),
 });
 
-async function verifyAdminSession() {
-    const sessionCookie = cookies().get('__session')?.value;
-    if (!sessionCookie) {
-        throw new Error('Unauthorized: No session cookie provided.');
-    }
-
-    const adminApp = getAdminApp();
-    if (!adminApp) {
-        throw new Error('Server configuration error.');
-    }
-    const adminAuth = getAuth(adminApp);
-    
-    try {
-        const decodedToken = await adminAuth.verifySessionCookie(sessionCookie, true);
-        if (decodedToken.admin !== true) {
-            throw new Error('Forbidden: User is not an admin.');
-        }
-        return decodedToken;
-    } catch (error) {
-        throw new Error('Unauthorized: Invalid session.');
-    }
-}
-
-
 export async function POST(request: NextRequest) {
     try {
-        await verifyAdminSession();
+        await verifyAdmin(); // Middleware already runs, but this is an extra layer for Server Action-like safety.
         const adminDb = getFirestore(getAdminApp()!);
         
         const body = await request.json();
@@ -63,7 +38,7 @@ export async function POST(request: NextRequest) {
             studentEmail: certData.studentEmail,
             course: certData.course,
             type: certData.type,
-            studentName_lowercase: certData.studentName.toLowerCase(), // Ensure this is always created
+            studentName_lowercase: certData.studentName.toLowerCase(),
             studentAvatar: studentProfile?.avatar || '',
             status: 'Issued' as const,
             issueDate: Timestamp.now(),
@@ -107,7 +82,7 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
     try {
-        await verifyAdminSession();
+        await verifyAdmin();
         const adminDb = getFirestore(getAdminApp()!);
 
         const { searchParams } = new URL(request.url);
