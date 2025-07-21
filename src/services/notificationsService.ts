@@ -22,6 +22,7 @@ export async function getRecentNotificationsForAdmin(): Promise<Notification[]> 
     const adminDb = getAdminFirestore(adminApp);
     const notifications: Notification[] = [];
     const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
     try {
         const collectionsToFetch = [
@@ -32,7 +33,11 @@ export async function getRecentNotificationsForAdmin(): Promise<Notification[]> 
         ];
 
         for (const c of collectionsToFetch) {
-            const q = adminDb.collection(c.name).orderBy(c.dateField, 'desc').limit(3);
+            const q = adminDb.collection(c.name)
+                .where(c.dateField, '>=', thirtyDaysAgo)
+                .orderBy(c.dateField, 'desc')
+                .limit(5); // Fetch a few from each to ensure a mix
+                
             const snapshot = await q.get();
             snapshot.forEach(doc => {
                 const data = doc.data();
