@@ -1,0 +1,7 @@
+src/ai/
+.env.local
+.env.development
+node_modules/
+.next/
+*.log
+.DS_Store

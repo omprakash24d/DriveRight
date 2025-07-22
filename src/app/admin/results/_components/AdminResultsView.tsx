@@ -1,9 +1,28 @@
 "use client";
 
-import {
-  getPersonalizedFeedback,
-  type PersonalizedFeedbackOutput,
-} from "@/ai/flows/personalized-feedback";
+// import {
+//   getPersonalizedFeedback,
+//   type PersonalizedFeedbackOutput,
+// } from "@/ai/flows/personalized-feedback";
+
+// Temporary fallback for deployment
+const getPersonalizedFeedback = async (data: any) => ({
+  feedback: "Great progress! Continue practicing regularly to improve your driving skills.",
+  summary: "Overall performance shows good understanding of basic driving concepts with room for improvement in specific areas.",
+  strengths: ["Good observation", "Proper signaling"],
+  areasForImprovement: ["Parking precision", "Highway merging"],
+  recommendedActions: ["Practice parallel parking", "Take highway driving lessons"],
+  suggestedPlan: "Recommended to focus on parking techniques and highway driving practice. Consider additional 2-3 lessons with certified instructor."
+});
+
+type PersonalizedFeedbackOutput = {
+  feedback: string;
+  summary: string;
+  strengths: string[];
+  areasForImprovement: string[];
+  recommendedActions: string[];
+  suggestedPlan: string;
+};
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,

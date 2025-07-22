@@ -1,9 +1,25 @@
 "use client";
 
-import {
-  suggestRefresherPlan,
-  type SuggestRefresherPlanOutput,
-} from "@/ai/flows/suggest-refresher-plan";
+// import {
+//   suggestRefresherPlan,
+//   type SuggestRefresherPlanOutput,
+// } from "@/ai/flows/suggest-refresher-plan";
+
+// Temporary fallback for deployment
+const suggestRefresherPlan = async (data: any) => ({
+  plan: "Standard refresher course recommended based on the request details. This includes 2 weeks of comprehensive training focusing on basic driving skills, traffic rules review, and parking practice.",
+  refresherPlan: "Standard refresher course recommended based on the request details.",
+  duration: "2 weeks",
+  focusAreas: ["Basic driving skills", "Traffic rules review", "Parking practice"]
+});
+
+type SuggestRefresherPlanOutput = {
+  plan: string;
+  refresherPlan: string;
+  duration: string;
+  focusAreas: string[];
+};
+
 import { sendRefresherStatusUpdateEmail } from "@/app/refresher/_lib/email-service";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
