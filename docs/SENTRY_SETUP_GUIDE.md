@@ -67,7 +67,7 @@ SENTRY_ORG=cusb
 SENTRY_AUTH_TOKEN=your-auth-token-here
 
 # With your actual token:
-SENTRY_AUTH_TOKEN=sntryu_abc123def456...
+SENTRY_AUTH_TOKEN=sntryu_your_token_here...
 ```
 
 ### **4. Validate Configuration**

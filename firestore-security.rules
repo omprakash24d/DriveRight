@@ -1,0 +1,46 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Public read access for courses
+    match /courses/{document} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // Protected user data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isAdmin();
+    }
+    
+    // Admin-only collections
+    match /audit_logs/{document} {
+      allow read, write: if isAdmin();
+    }
+    
+    match /security_events/{document} {
+      allow read, write: if isAdmin();
+    }
+    
+    match /blocked_ips/{document} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Enrollment data - user or admin access
+    match /enrollments/{document} {
+      allow read, write: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || isAdmin());
+    }
+    
+    // Helper functions
+    function isAdmin() {
+      return request.auth != null && 
+        request.auth.token.admin == true;
+    }
+    
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

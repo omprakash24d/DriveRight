@@ -1,7 +1,7 @@
 
+import { schoolConfig } from "@/lib/config";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { schoolConfig } from "@/lib/config";
 import { addLog } from "./auditLogService";
 
 export interface HomepageStat {
@@ -116,7 +116,7 @@ const defaultSettings: SiteSettings = {
     developerAvatarUrl: "https://om.indhinditech.com/_next/image?url=%2Fimages%2Fom.jpg&w=828&q=75",
     // About Page Defaults
     aboutPageTitle: "Our Mission: Safe, Confident Driving for All",
-    aboutPageSubtitle: "Discover the values and people that make DriveRight the leading choice for driving education in the region.",
+        aboutPageSubtitle: "Discover the values and people that make Driving School Arwal the leading choice for driving education in the region.",
     aboutPageText1: "Founded over a decade ago, Our School was born from a simple yet powerful vision: to create a new generation of drivers who are not just licensed, but are truly safe, confident, and responsible on the road. We believe that learning to drive is a rite of passage, a skill that opens up a world of freedom and opportunity. It's a responsibility we take seriously.",
     aboutPageText2: "Our approach is built on a foundation of patience, expertise, and personalized instruction. We understand that every student learns differently, which is why we tailor our programs to fit your individual needs. From our modern, dual-control vehicles to our comprehensive curriculum that blends theory with extensive practical experience, every aspect of our school is designed to create a supportive and effective learning environment. Our ultimate goal is not just to help you pass your test, but to build a lifetime of safe driving habits.",
     whyChooseUsPoints: defaultWhyChooseUsPoints,

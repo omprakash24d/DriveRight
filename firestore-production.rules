@@ -1,0 +1,40 @@
+// Enhanced Firestore rules for production
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Enrollments - admin and instructors only
+    match /enrollments/{enrollmentId} {
+      allow read, write: if isAdmin() || isInstructor();
+      allow create: if isValidEnrollment();
+    }
+    
+    // Student progress - students can read own, instructors can write
+    match /student_progress/{studentId} {
+      allow read: if isOwner(studentId) || isInstructor() || isAdmin();
+      allow write: if isInstructor() || isAdmin();
+    }
+    
+    // Helper functions
+    function isAdmin() {
+      return request.auth != null && 
+             request.auth.token.email in ['admin@drivingschool.com'];
+    }
+    
+    function isInstructor() {
+      return request.auth != null && 
+             'instructor' in request.auth.token;
+    }
+    
+    function isOwner(userId) {
+      return request.auth != null && 
+             request.auth.uid == userId;
+    }
+    
+    function isValidEnrollment() {
+      return request.auth != null &&
+             request.resource.data.keys().hasAll(['fullName', 'email', 'mobileNumber']) &&
+             request.resource.data.fullName is string &&
+             request.resource.data.email.matches('.*@.*\\..*');
+    }
+  }
+}

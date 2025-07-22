@@ -1,0 +1,57 @@
+{
+  "requiredEnvVars": [
+    "ENCRYPTION_KEY",
+    "JWT_SECRET",
+    "FIREBASE_PROJECT_ID",
+    "FIREBASE_PRIVATE_KEY",
+    "FIREBASE_CLIENT_EMAIL",
+    "NEXT_PUBLIC_BASE_URL"
+  ],
+  "securityHeaders": {
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "X-XSS-Protection": "1; mode=block",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=(self), payment=()",
+    "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+  },
+  "rateLimits": {
+    "global": {
+      "requests": 100,
+      "windowMs": 60000
+    },
+    "auth": {
+      "requests": 5,
+      "windowMs": 60000
+    },
+    "api": {
+      "requests": 60,
+      "windowMs": 60000
+    },
+    "admin": {
+      "requests": 10,
+      "windowMs": 60000
+    },
+    "contact": {
+      "requests": 3,
+      "windowMs": 300000
+    }
+  },
+  "monitoring": {
+    "enableAuditLogging": true,
+    "enableSecurityEvents": true,
+    "enableIPBlocking": true,
+    "enableSuspiciousInputDetection": true,
+    "criticalEventNotifications": true
+  },
+  "dataProtection": {
+    "enableEncryption": true,
+    "encryptionAlgorithm": "aes-256-gcm",
+    "enablePIIDetection": true,
+    "enableDataClassification": true,
+    "enableSecureStorage": true
+  },
+  "firestoreRules": "\nrules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    // Public read access for courses\n    match /courses/{document} {\n      allow read: if true;\n      allow write: if isAdmin();\n    }\n    \n    // Protected user data\n    match /users/{userId} {\n      allow read, write: if request.auth != null && request.auth.uid == userId;\n      allow read, write: if isAdmin();\n    }\n    \n    // Admin-only collections\n    match /audit_logs/{document} {\n      allow read, write: if isAdmin();\n    }\n    \n    match /security_events/{document} {\n      allow read, write: if isAdmin();\n    }\n    \n    match /blocked_ips/{document} {\n      allow read, write: if isAdmin();\n    }\n    \n    // Enrollment data - user or admin access\n    match /enrollments/{document} {\n      allow read, write: if request.auth != null && \n        (request.auth.uid == resource.data.userId || isAdmin());\n    }\n    \n    // Helper functions\n    function isAdmin() {\n      return request.auth != null && \n        request.auth.token.admin == true;\n    }\n    \n    function isOwner(userId) {\n      return request.auth != null && request.auth.uid == userId;\n    }\n  }\n}",
+  "storageRules": "\nrules_version = '2';\nservice firebase.storage {\n  match /b/{bucket}/o {\n    // Public read for images\n    match /images/{allPaths=**} {\n      allow read: if true;\n      allow write: if isAdmin();\n    }\n    \n    // User documents - user or admin access\n    match /documents/{userId}/{allPaths=**} {\n      allow read, write: if request.auth != null && \n        (request.auth.uid == userId || isAdmin());\n    }\n    \n    // Admin-only uploads\n    match /admin/{allPaths=**} {\n      allow read, write: if isAdmin();\n    }\n    \n    function isAdmin() {\n      return request.auth != null && \n        request.auth.token.admin == true;\n    }\n  }\n}"
+}

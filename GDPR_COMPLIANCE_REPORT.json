@@ -1,0 +1,110 @@
+{
+  "timestamp": "2025-07-22T12:29:16.407Z",
+  "summary": {
+    "totalTests": 4,
+    "passed": 2,
+    "failed": 2,
+    "score": "50%",
+    "status": "non-compliant"
+  },
+  "tests": [
+    {
+      "name": "GDPR Compliance Infrastructure",
+      "success": false,
+      "status": "partial",
+      "details": {
+        "score": "5/8",
+        "checks": [
+          {
+            "check": "GDPR Service Module",
+            "passed": true,
+            "details": "Core GDPR compliance service implementation"
+          },
+          {
+            "check": "API Endpoint: route.ts",
+            "passed": true,
+            "details": "GDPR API endpoint implementation"
+          },
+          {
+            "check": "API Endpoint: route.ts",
+            "passed": true,
+            "details": "GDPR API endpoint implementation"
+          },
+          {
+            "check": "API Endpoint: route.ts",
+            "passed": true,
+            "details": "GDPR API endpoint implementation"
+          },
+          {
+            "check": "API Endpoint: route.ts",
+            "passed": true,
+            "details": "GDPR API endpoint implementation"
+          },
+          {
+            "check": "Environment Variable: ENCRYPTION_KEY",
+            "passed": false,
+            "details": "Required for GDPR compliance operations"
+          },
+          {
+            "check": "Environment Variable: FIREBASE_PROJECT_ID",
+            "passed": false,
+            "details": "Required for GDPR compliance operations"
+          },
+          {
+            "check": "Environment Variable: NEXT_PUBLIC_BASE_URL",
+            "passed": false,
+            "details": "Required for GDPR compliance operations"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Security Headers Check",
+      "success": false,
+      "status": "failed",
+      "details": {
+        "score": "0/5",
+        "checks": {
+          "content-security-policy": false,
+          "x-frame-options": false,
+          "x-content-type-options": false,
+          "strict-transport-security": false,
+          "referrer-policy": false
+        }
+      }
+    },
+    {
+      "name": "Data Encryption Test",
+      "success": true,
+      "status": "passed",
+      "details": {
+        "module": "exists",
+        "algorithm": "AES-256-GCM",
+        "keyManagement": "environment-based"
+      }
+    },
+    {
+      "name": "Audit Logging Test",
+      "success": true,
+      "status": "passed",
+      "details": {
+        "module": "exists",
+        "features": [
+          "GDPR events",
+          "Security events",
+          "Data access logging"
+        ]
+      }
+    }
+  ],
+  "recommendations": [
+    "Configure missing security headers in middleware"
+  ],
+  "nextSteps": [
+    "Deploy to staging environment for testing",
+    "Conduct user acceptance testing",
+    "Train staff on GDPR procedures",
+    "Set up monitoring and alerting",
+    "Schedule regular compliance audits"
+  ]
+}

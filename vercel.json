@@ -1,0 +1,89 @@
+{
+  "version": 2,
+  "name": "drivingschoolarwal",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1",
+      "headers": {
+        "Cache-Control": "no-cache"
+      }
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "@node-env",
+    "NEXT_PUBLIC_APP_URL": "@next-public-app-url",
+    "NEXT_PUBLIC_API_URL": "@next-public-api-url",
+    "ENCRYPTION_KEY": "@encryption-key",
+    "JWT_SECRET": "@jwt-secret",
+    "SESSION_SECRET": "@session-secret",
+    "FIREBASE_PROJECT_ID": "@firebase-project-id",
+    "FIREBASE_PRIVATE_KEY": "@firebase-private-key",
+    "FIREBASE_CLIENT_EMAIL": "@firebase-client-email",
+    "SMTP_HOST": "@smtp-host",
+    "SMTP_PORT": "@smtp-port",
+    "SMTP_USER": "@smtp-user",
+    "SMTP_PASS": "@smtp-pass",
+    "SENTRY_DSN": "@sentry-dsn",
+    "GOOGLE_ANALYTICS_ID": "@google-analytics-id",
+    "REDIS_URL": "@redis-url",
+    "RATE_LIMIT_REDIS_URL": "@rate-limit-redis-url",
+    "GDPR_NOTIFICATION_EMAIL": "@gdpr-notification-email",
+    "DPO_EMAIL": "@dpo-email",
+    "SECURITY_TEAM_EMAIL": "@security-team-email",
+    "BACKUP_STORAGE_BUCKET": "@backup-storage-bucket",
+    "BACKUP_ENCRYPTION_KEY": "@backup-encryption-key",
+    "CDN_URL": "@cdn-url",
+    "STORAGE_BUCKET": "@storage-bucket"
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains; preload"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/home",
+      "destination": "/",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/health",
+      "destination": "/api/monitoring/health"
+    }
+  ]
+}

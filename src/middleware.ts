@@ -1,4 +1,33 @@
+import { auditLogger } from '@/lib/audit-logger';
 import { NextResponse, type NextRequest } from 'next/server';
+
+// Security configurations
+const SECURITY_HEADERS = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'X-XSS-Protection': '1; mode=block',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'X-DNS-Prefetch-Control': 'off',
+  'Permissions-Policy': 'camera=self, microphone=self, geolocation=self, payment=self, usb=none',
+};
+
+// Content Security Policy for production
+const CSP_POLICY = process.env.NODE_ENV === 'production' 
+  ? "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://storage.googleapis.com https://firebasestorage.googleapis.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com; frame-src 'self' https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
+  : "default-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https: wss:;";
+
+// Suspicious patterns for security monitoring
+const SUSPICIOUS_PATTERNS = [
+  /(\<script\>|\<\/script\>)/i,
+  /(javascript:|data:text\/html)/i,
+  /(union.*select|select.*from|insert.*into|delete.*from)/i,
+  /(\.\.\/|\.\.\\|\.\.%2f|\.\.%5c)/i,
+  /(\|\||&&|\;|\`)/,
+  /(exec|eval|system|shell_exec)/i
+];
+
+// Rate limiting storage (in production, use Redis)
+const rateLimitStore = new Map<string, { count: number; reset: number }>();
 
 // Define which origins are allowed to access your API
 const allowedOrigins = [
@@ -23,17 +52,150 @@ function applyCorsHeaders(response: NextResponse, request: NextRequest) {
   return response;
 }
 
-export async function middleware(request: NextRequest) {
-  // --- CORS Preflight Handling ---
-  if (request.method === 'OPTIONS') {
-    const response = new NextResponse(null, { status: 204 });
-    return applyCorsHeaders(response, request);
+// Security helper functions
+function getClientIP(request: NextRequest): string {
+  const forwarded = request.headers.get('x-forwarded-for');
+  const realIP = request.headers.get('x-real-ip');
+  const cfConnectingIP = request.headers.get('cf-connecting-ip');
+  
+  return cfConnectingIP || realIP || forwarded?.split(',')[0] || 'unknown';
+}
+
+function applySecurityHeaders(response: NextResponse): void {
+  Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+  
+  response.headers.set('Content-Security-Policy', CSP_POLICY);
+  response.headers.set('X-Request-ID', crypto.randomUUID());
+}
+
+function checkRateLimit(request: NextRequest, endpoint: string): { allowed: boolean; remaining: number } {
+  const clientIP = getClientIP(request);
+  const key = `${clientIP}:${endpoint}`;
+  const now = Date.now();
+  const windowMs = 60 * 1000; // 1 minute window
+  const maxRequests = endpoint.includes('/api/auth') ? 5 : 60;
+  
+  const record = rateLimitStore.get(key);
+  
+  if (!record || now > record.reset) {
+    rateLimitStore.set(key, { count: 1, reset: now + windowMs });
+    return { allowed: true, remaining: maxRequests - 1 };
+  }
+  
+  if (record.count >= maxRequests) {
+    return { allowed: false, remaining: 0 };
+  }
+  
+  record.count++;
+  return { allowed: true, remaining: maxRequests - record.count };
+}
+
+function detectSuspiciousInput(request: NextRequest): boolean {
+  const url = request.url;
+  const queryParams = request.nextUrl.searchParams.toString();
+  
+  return SUSPICIOUS_PATTERNS.some(pattern => 
+    pattern.test(url) || pattern.test(queryParams)
+  );
+}
+
+async function logSecurityEvent(request: NextRequest, event: string, metadata: any = {}): Promise<void> {
+  const ip = getClientIP(request);
+  const userAgent = request.headers.get('user-agent') || '';
+  
+  const auditContext = {
+    ip,
+    userAgent,
+    sessionId: request.cookies.get('session')?.value
+  };
+
+  // Determine severity based on event type
+  let severity: 'low' | 'medium' | 'high' | 'critical' = 'low';
+  
+  if (event.includes('suspicious_input') || event.includes('admin_access_denied')) {
+    severity = 'high';
+  } else if (event.includes('rate_limit') || event.includes('admin_access_attempt')) {
+    severity = 'medium';
+  } else if (event.includes('critical') || event.includes('breach')) {
+    severity = 'critical';
   }
 
-  const response = NextResponse.next();
+  try {
+    await auditLogger.logSecurityEvent(
+      auditContext,
+      event,
+      severity,
+      {
+        pathname: request.nextUrl.pathname,
+        method: request.method,
+        ...metadata
+      }
+    );
+  } catch (error) {
+    console.error('Failed to log security event:', error);
+    // Fallback to console logging
+    console.log('🔒 SECURITY:', {
+      timestamp: new Date().toISOString(),
+      event,
+      ip,
+      userAgent,
+      pathname: request.nextUrl.pathname,
+      method: request.method,
+      ...metadata
+    });
+  }
+}
+
+export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
   
-  // --- Apply CORS to all outgoing responses ---
+  // Create response object
+  const response = request.method === 'OPTIONS' 
+    ? new NextResponse(null, { status: 204 })
+    : NextResponse.next();
+
+  // Apply CORS headers
   applyCorsHeaders(response, request);
+  
+  // Apply security headers
+  applySecurityHeaders(response);
+
+  // Security monitoring and protection
+  await logSecurityEvent(request, 'request_received');
+
+  // Rate limiting check
+  const rateLimitResult = checkRateLimit(request, pathname);
+  if (!rateLimitResult.allowed) {
+    await logSecurityEvent(request, 'rate_limit_exceeded', { 
+      endpoint: pathname,
+      ip: getClientIP(request)
+    });
+    
+    return new NextResponse('Too Many Requests', { 
+      status: 429,
+      headers: {
+        'Retry-After': '60',
+        'X-RateLimit-Remaining': '0'
+      }
+    });
+  }
+
+  // Suspicious input detection
+  if (detectSuspiciousInput(request)) {
+    await logSecurityEvent(request, 'suspicious_input_detected', {
+      url: request.url,
+      ip: getClientIP(request)
+    });
+    
+    return new NextResponse('Bad Request', { status: 400 });
+  }
+
+  // Handle CORS preflight
+  if (request.method === 'OPTIONS') {
+    return response;
+  }
 
   // --- Admin API Route Protection ---
   if (request.nextUrl.pathname.startsWith('/api/admin')) {
@@ -90,6 +252,18 @@ export async function middleware(request: NextRequest) {
 
 // Define which paths the middleware should run on
 export const config = {
-  // We exclude the verification route itself to prevent an infinite loop.
-  matcher: ['/api/admin/:path*', '/api/auth/session'],
+  matcher: [
+    // API routes
+    '/api/:path*',
+    
+    // Admin routes  
+    '/admin/:path*',
+    
+    // Auth routes
+    '/login/:path*',
+    '/signup/:path*',
+    
+    // Exclude static files
+    '/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)/'
+  ],
 };

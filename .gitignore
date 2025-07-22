@@ -38,11 +38,113 @@ yarn-error.log*
 next-env.d.ts
 
 .genkit/*
-.env*
 
-# firebase
+# ================================
+# ENVIRONMENT & CONFIGURATION FILES
+# ================================
+# All environment files (CRITICAL: Never commit these!)
+.env*
+!.env.example
+
+# Configuration files with sensitive data
+config/project-config.cjs
+config/project-config.cjs.backup
+!config/project-config.example.cjs
+
+# Backup files that might contain sensitive data
+backups/
+*.backup
+*.bak
+
+# ================================
+# FIREBASE & GOOGLE CLOUD
+# ================================
 firebase-debug.log
 firestore-debug.log
+firebase-adminsdk-*.json
+service-account-*.json
+*.serviceaccount.json
 
-# development uploads (local storage fallback)
+# ================================
+# SECURITY & SECRETS
+# ================================
+# SSL certificates
+*.key
+*.crt
+*.pem
+*.p12
+*.pfx
+
+# API keys and secrets
+secrets/
+.secrets
+api-keys.json
+credentials.json
+
+# ================================
+# DATABASE & STORAGE
+# ================================
+# Database dumps
+*.sql
+*.db
+*.sqlite
+*.sqlite3
+
+# Redis dumps
+dump.rdb
+
+# ================================
+# DEVELOPMENT & TESTING
+# ================================
+# Development uploads (local storage fallback)
 public/uploads/
+uploads/
+
+# Test files
+coverage/
+.nyc_output/
+test-results/
+
+# ================================
+# LOGS & MONITORING
+# ================================
+# Application logs
+logs/
+*.log
+log-*.txt
+
+# Performance monitoring
+.lighthouse/
+lighthouse-results/
+
+# ================================
+# IDE & EDITOR FILES
+# ================================
+# VS Code
+.vscode/settings.json
+.vscode/launch.json
+
+# IntelliJ
+.idea/
+*.iml
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ================================
+# OPERATING SYSTEM FILES
+# ================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
