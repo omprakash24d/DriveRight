@@ -1,13 +1,14 @@
 
+import { logSubmission } from '@/app/contact/_lib/logging'; // Re-using contact form logger
+import { ACCEPTED_DOCUMENT_TYPES, MAX_FILE_SIZE } from '@/lib/constants';
+import { db } from '@/lib/firebase';
+import { uploadFileAdmin } from '@/lib/server-utils';
+import { sanitize } from '@/lib/utils';
+import { addDoc, collection, Timestamp } from 'firebase/firestore';
+import { nanoid } from 'nanoid';
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { sendEnrollmentAdminEmail, sendEnrollmentConfirmationEmail } from '../_lib/email-service';
-import { logSubmission } from '@/app/contact/_lib/logging'; // Re-using contact form logger
-import { addDoc, collection, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { uploadFile, sanitize } from '@/lib/utils';
-import { nanoid } from 'nanoid';
-import { MAX_FILE_SIZE, ACCEPTED_DOCUMENT_TYPES } from '@/lib/constants';
 
 const ENROLLMENTS_COLLECTION = 'enrollments';
 
@@ -20,16 +21,16 @@ const formSchemaServer = z.object({
   state: z.string().min(1),
   address: z.string().min(10),
   vehicleType: z.enum(["hmv", "lmv", "mcwg", "lmv+mcwg", "others"]),
-  documentId: z.string().optional(),
+  documentId: z.string().nullable().optional().transform(val => val || ""),
   idProof: z.instanceof(File)
     .refine((file) => file.size > 0, "ID Proof is required.")
     .refine((file) => file.size <= MAX_FILE_SIZE, `Max file size is ${MAX_FILE_SIZE / 1024 / 1024}MB.`)
     .refine((file) => ACCEPTED_DOCUMENT_TYPES.includes(file.type), `Only ${ACCEPTED_DOCUMENT_TYPES.join(', ')} files are accepted.`),
   // The client sends the cropped photo as a Base64 Data URL string
   photoCropped: z.string().startsWith('data:image/', 'Cropped photo must be a valid data URL.'),
-  paymentId: z.string().optional(),
-  orderId: z.string().optional(),
-  pricePaid: z.string().optional(),
+  paymentId: z.string().nullable().optional().transform(val => val || ""),
+  orderId: z.string().nullable().optional().transform(val => val || ""),
+  pricePaid: z.string().nullable().optional().transform(val => val || ""),
 });
 
 
@@ -80,19 +81,55 @@ export async function POST(req: NextRequest) {
       ...unSanitizedEnrollmentData,
       fullName: sanitize(unSanitizedEnrollmentData.fullName),
       address: sanitize(unSanitizedEnrollmentData.address),
-      documentId: unSanitizedEnrollmentData.documentId ? sanitize(unSanitizedEnrollmentData.documentId) : undefined,
+      documentId: unSanitizedEnrollmentData.documentId || "", // Ensure it's always a string, never undefined
     };
 
     const refId = `ENR-${Date.now()}`;
     const uniqueId = nanoid();
 
     // Convert the data URL to a Blob/File-like object for upload
-    const photoBlob = await (await fetch(photoCropped)).blob();
-    const photoFile = new File([photoBlob], 'photo_cropped.jpg', { type: 'image/jpeg' });
+    let photoCroppedUrl = '';
+    let idProofUrl = '';
+    
+    try {
+      // Validate Firebase configuration
+      if (!process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+        throw new Error('Firebase Admin SDK not configured');
+      }
+      
+      if (!process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET) {
+        throw new Error('Firebase Storage bucket not configured');
+      }
+      
+      const photoBlob = await (await fetch(photoCropped)).blob();
+      const photoFile = new File([photoBlob], 'photo_cropped.jpg', { type: 'image/jpeg' });
 
-    // --- Upload images to Firebase Storage ---
-    const photoCroppedUrl = await uploadFile(photoFile, `enrollments/${uniqueId}/photo_cropped.jpg`);
-    const idProofUrl = await uploadFile(idProof, `enrollments/${uniqueId}/id_proof.${idProof.name.split('.').pop()}`);
+      // --- Upload images to Firebase Storage using Admin SDK ---
+      console.log(`Uploading files: photo (${photoFile.size} bytes), idProof (${idProof.size} bytes)`);
+      photoCroppedUrl = await uploadFileAdmin(photoFile, `enrollments/${uniqueId}/photo_cropped.jpg`);
+      idProofUrl = await uploadFileAdmin(idProof, `enrollments/${uniqueId}/id_proof.${idProof.name.split('.').pop()}`);
+      console.log(`Upload successful: photo URL: ${photoCroppedUrl}, idProof URL: ${idProofUrl}`);
+    } catch (uploadError: any) {
+      console.error('Firebase Storage upload error:', uploadError);
+      await logSubmission({
+        level: 'error',
+        message: 'File upload to Firebase Storage failed',
+        data: { 
+          errorMessage: uploadError.message,
+          uniqueId,
+          refId,
+          fileName: idProof.name,
+          fileSize: idProof.size,
+          fileType: idProof.type,
+          hasServiceAccount: !!process.env.FIREBASE_SERVICE_ACCOUNT_KEY,
+          hasStorageBucket: !!process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+        },
+      });
+      return NextResponse.json(
+        { message: 'File upload failed. Please check your Firebase configuration and try again.' },
+        { status: 500 }
+      );
+    }
 
     // Add to firestore with public URLs
     await addDoc(collection(db, ENROLLMENTS_COLLECTION), {

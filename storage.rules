@@ -1,4 +1,3 @@
-
 rules_version = '2';
 
 service firebase.storage {
@@ -7,18 +6,20 @@ service firebase.storage {
     // --- Enrollment and Refresher Form Uploads ---
     // This rule allows anyone to upload files for enrollment or refresher courses.
     // It restricts file size to 10MB and only allows common document/image types.
-    // Importantly, it PREVENTS anyone from reading these files back. Only your
-    // server-side code with Admin SDK can access them.
+    // Server-side uploads with Admin SDK bypass these rules, but this provides
+    // client-side protection if needed.
     match /enrollments/{uniqueId}/{fileName} {
       allow create: if request.resource.size < 10 * 1024 * 1024
                     && request.resource.contentType.matches('image/.*|application/pdf');
-      allow read, write, delete: if false; // Deny read, update, and delete for everyone
+      allow read: if true; // Allow public read access for uploaded files
+      allow write, delete: if false; // Deny update and delete for everyone
     }
 
     match /refresher-requests/{refId}/{fileName} {
       allow create: if request.resource.size < 10 * 1024 * 1024
                     && request.resource.contentType.matches('image/.*|application/pdf');
-      allow read, write, delete: if false;
+      allow read: if true; // Allow public read access for uploaded files
+      allow write, delete: if false;
     }
     
     // --- Default Deny ---

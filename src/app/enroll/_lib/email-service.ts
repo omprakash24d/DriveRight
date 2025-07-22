@@ -1,10 +1,10 @@
 
 'use server';
 
-import nodemailer from 'nodemailer';
 import { schoolConfig } from '@/lib/config';
-import { format } from 'date-fns';
 import { getEmailTemplate } from '@/lib/email-helper';
+import { format } from 'date-fns';
+import nodemailer from 'nodemailer';
 
 interface EnrollmentData {
     fullName: string;
@@ -53,17 +53,33 @@ export async function sendEnrollmentAdminEmail({ data, refId, idProofFile }: Adm
     checkEmailConfig();
     const { fullName, email, mobileNumber, dateOfBirth, address, state, vehicleType, photoCroppedUrl } = data;
 
+    // Convert URL path to actual file system path for local files
+    let photoAttachment;
+    if (photoCroppedUrl.startsWith('/uploads/')) {
+        // Local file - convert URL to file system path
+        const { join } = await import('path');
+        const localPath = join(process.cwd(), 'public', photoCroppedUrl.replace('/', ''));
+        photoAttachment = {
+            filename: `Photo_Cropped_${sanitize(fullName)}.jpg`,
+            path: localPath,
+            contentType: 'image/jpeg',
+        };
+    } else {
+        // Firebase Storage URL - use URL directly
+        photoAttachment = {
+            filename: `Photo_Cropped_${sanitize(fullName)}.jpg`,
+            path: photoCroppedUrl,
+            contentType: 'image/jpeg',
+        };
+    }
+
     const attachments = [
         {
             filename: `IDProof_${sanitize(fullName)}_${idProofFile.name}`,
             content: Buffer.from(await idProofFile.arrayBuffer()),
             contentType: idProofFile.type,
         },
-        {
-            filename: `Photo_Cropped_${sanitize(fullName)}.jpg`,
-            path: photoCroppedUrl, // Use URL for linked attachment
-            contentType: 'image/jpeg',
-        }
+        photoAttachment
     ];
     
     let htmlContent = getEmailTemplate('enrollment-admin-notification');

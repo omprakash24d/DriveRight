@@ -34,8 +34,15 @@ export function getAdminApp(): admin.app.App {
         }
 
         const serviceAccount = JSON.parse(serviceAccountJson);
+        const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+        
+        if (!storageBucket) {
+            throw new Error("Firebase Storage bucket is not configured. The NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET environment variable is missing.");
+        }
+        
         adminAppInstance = admin.initializeApp({
             credential: admin.credential.cert(serviceAccount),
+            storageBucket: storageBucket,
         });
         
         return adminAppInstance;

@@ -1,9 +1,8 @@
 
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
 import { storage } from "@/lib/firebase";
-import { ref, uploadBytes, getDownloadURL, uploadString } from "firebase/storage";
-import { nanoid } from "nanoid";
+import { clsx, type ClassValue } from "clsx";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -92,7 +91,7 @@ export function resizeImage(file: File, maxSize: number, outputType: 'dataUrl' |
 }
 
 /**
- * Uploads a file to Firebase Storage.
+ * Uploads a file to Firebase Storage using the client SDK.
  * @param file The file to upload.
  * @param path The path in Firebase Storage where the file should be stored.
  * @returns A promise that resolves with the public download URL of the uploaded file.

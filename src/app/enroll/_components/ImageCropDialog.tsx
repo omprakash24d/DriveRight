@@ -1,23 +1,26 @@
-
 "use client";
 
-import React, { useState, useRef } from 'react';
-import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
-import 'react-image-crop/dist/ReactCrop.css';
 import Image from "next/image";
+import React, { useRef, useState } from "react";
+import ReactCrop, {
+  type Crop,
+  centerCrop,
+  makeAspectCrop,
+} from "react-image-crop";
+import "react-image-crop/dist/ReactCrop.css";
 
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
-import { Label } from '@/components/ui/label';
-import { useDebounce } from '@/hooks/use-debounce';
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface ImageCropDialogProps {
   imageUrl: string;
@@ -28,32 +31,35 @@ interface ImageCropDialogProps {
 function centerAspectCrop(
   mediaWidth: number,
   mediaHeight: number,
-  aspect: number,
+  aspect: number
 ): Crop {
   return centerCrop(
     makeAspectCrop(
       {
-        unit: '%',
+        unit: "%",
         width: 90,
       },
       aspect,
       mediaWidth,
-      mediaHeight,
+      mediaHeight
     ),
     mediaWidth,
-    mediaHeight,
+    mediaHeight
   );
 }
 
-
-export function ImageCropDialog({ imageUrl, onCrop, onClose }: ImageCropDialogProps) {
+export function ImageCropDialog({
+  imageUrl,
+  onCrop,
+  onClose,
+}: ImageCropDialogProps) {
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<Crop>();
   const [scale, setScale] = useState(1);
   const [rotate, setRotate] = useState(0);
   const imgRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  
+
   const debouncedScale = useDebounce(scale, 100);
   const debouncedRotate = useDebounce(rotate, 100);
 
@@ -61,16 +67,16 @@ export function ImageCropDialog({ imageUrl, onCrop, onClose }: ImageCropDialogPr
     const { width, height } = e.currentTarget;
     setCrop(centerAspectCrop(width, height, 1));
   }
-  
+
   const handleCrop = () => {
     if (!completedCrop || !imgRef.current || !canvasRef.current) {
-        return;
+      return;
     }
     const image = imgRef.current;
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) {
-        throw new Error('No 2d context');
+      throw new Error("No 2d context");
     }
 
     const scaleX = image.naturalWidth / image.width;
@@ -81,7 +87,7 @@ export function ImageCropDialog({ imageUrl, onCrop, onClose }: ImageCropDialogPr
     canvas.height = Math.floor(completedCrop.height * scaleY * pixelRatio);
 
     ctx.scale(pixelRatio, pixelRatio);
-    ctx.imageSmoothingQuality = 'high';
+    ctx.imageSmoothingQuality = "high";
 
     const cropX = completedCrop.x * scaleX;
     const cropY = completedCrop.y * scaleY;
@@ -94,28 +100,24 @@ export function ImageCropDialog({ imageUrl, onCrop, onClose }: ImageCropDialogPr
     ctx.rotate((rotate * Math.PI) / 180);
     ctx.scale(scale, scale);
     ctx.translate(-centerX, -centerY);
-    ctx.drawImage(
-      image,
-      0,
-      0,
-      image.naturalWidth,
-      image.naturalHeight,
-    );
+    ctx.drawImage(image, 0, 0, image.naturalWidth, image.naturalHeight);
     ctx.restore();
 
-    onCrop(canvas.toDataURL('image/jpeg', 0.92));
+    onCrop(canvas.toDataURL("image/jpeg", 0.92));
   };
 
   return (
     <Dialog open={true} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="sm:max-w-[525px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Crop Your Photo</DialogTitle>
           <DialogDescription>
-            Adjust the image to fit perfectly. This will be used for your profile and certificate.
+            Adjust the image to fit perfectly. This will be used for your
+            profile and certificate.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex justify-center bg-muted/50 p-4 rounded-md">
+        <div className="flex-1 overflow-auto">
+          <div className="flex justify-center bg-muted/50 p-4 rounded-md min-h-[300px]">
             <ReactCrop
               crop={crop}
               onChange={(_, percentCrop) => setCrop(percentCrop)}
@@ -131,30 +133,57 @@ export function ImageCropDialog({ imageUrl, onCrop, onClose }: ImageCropDialogPr
                 src={imageUrl}
                 width={500}
                 height={500}
-                style={{ transform: `scale(${debouncedScale}) rotate(${debouncedRotate}deg)` }}
+                style={{
+                  transform: `scale(${debouncedScale}) rotate(${debouncedRotate}deg)`,
+                }}
                 onLoad={onImageLoad}
               />
             </ReactCrop>
+          </div>
         </div>
-        <canvas ref={canvasRef} style={{ display: 'none' }} />
-        <div className="space-y-4 pt-4">
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <Label htmlFor="scale-slider" aria-label="Zoom control">Zoom</Label>
-                <span className="text-sm text-muted-foreground">{Math.round(scale * 100)}%</span>
-              </div>
-              <Slider id="scale-slider" defaultValue={[1]} min={0.5} max={2} step={0.01} onValueChange={(value) => setScale(value[0])} />
+        <canvas ref={canvasRef} className="hidden" />
+        <div className="space-y-4 pt-4 flex-shrink-0">
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <Label htmlFor="scale-slider" aria-label="Zoom control">
+                Zoom
+              </Label>
+              <span className="text-sm text-muted-foreground">
+                {Math.round(scale * 100)}%
+              </span>
             </div>
-             <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <Label htmlFor="rotate-slider" aria-label="Rotation control">Rotate</Label>
-                <span className="text-sm text-muted-foreground">{Math.round(rotate)}°</span>
-              </div>
-              <Slider id="rotate-slider" defaultValue={[0]} min={-180} max={180} step={1} onValueChange={(value) => setRotate(value[0])} />
+            <Slider
+              id="scale-slider"
+              defaultValue={[1]}
+              min={0.5}
+              max={2}
+              step={0.01}
+              onValueChange={(value) => setScale(value[0])}
+            />
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <Label htmlFor="rotate-slider" aria-label="Rotation control">
+                Rotate
+              </Label>
+              <span className="text-sm text-muted-foreground">
+                {Math.round(rotate)}°
+              </span>
             </div>
+            <Slider
+              id="rotate-slider"
+              defaultValue={[0]}
+              min={-180}
+              max={180}
+              step={1}
+              onValueChange={(value) => setRotate(value[0])}
+            />
+          </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+        <DialogFooter className="flex-shrink-0">
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
           <Button onClick={handleCrop}>Crop & Save</Button>
         </DialogFooter>
       </DialogContent>
