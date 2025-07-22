@@ -49,7 +49,7 @@ const nextConfig = {
     instrumentationHook: true,
   },
 
-  // Fix for Node.js modules in client-side build
+  // Fix for Node.js modules in client-side build and Genkit dependencies
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
@@ -68,6 +68,20 @@ const nextConfig = {
         path: false,
       };
     }
+
+    // Ignore external modules that cause warnings
+    config.externals = config.externals || [];
+    config.externals.push({
+      "@opentelemetry/exporter-jaeger":
+        "commonjs @opentelemetry/exporter-jaeger",
+    });
+
+    // Suppress warnings for dynamic requires and handlebars
+    config.module = config.module || {};
+    config.module.unknownContextCritical = false;
+    config.module.unknownContextRegExp = /^\.\/.*$/;
+    config.module.unknownContextRequest = ".";
+
     return config;
   },
 };
