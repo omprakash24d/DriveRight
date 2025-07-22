@@ -2,11 +2,22 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit } from '../_lib/rate-limiter';
-import { analyzeSubmission } from '../_ai/spam-filter';
-import { personalizeResponse } from '../_ai/personalize-response';
-import { logSubmission } from '../_lib/logging';
-import { sendAdminEmail, sendConfirmationEmail } from '../_lib/email-service';
+// import { analyzeSubmission } from '../_ai/spam-filter';
+// import { personalizeResponse } from '../_ai/personalize-response';
 import { sanitize } from '@/lib/utils';
+import { sendAdminEmail, sendConfirmationEmail } from '../_lib/email-service';
+import { logSubmission } from '../_lib/logging';
+
+// Temporary fallback functions for deployment
+const analyzeSubmission = async (data: any) => ({
+  isSpam: false,
+  confidence: 0.1,
+  reason: 'Fallback analysis - not spam'
+});
+
+const personalizeResponse = async (data: any) => ({
+  personalizedMessage: "Thank you for contacting Driving School Arwal! We have received your message and will get back to you soon. For urgent matters, please call us at +91-9430420215."
+});
 
 // Zod schema for input validation
 const contactFormSchema = z.object({
