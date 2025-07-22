@@ -52,7 +52,7 @@ optionalVars.forEach((varName) => {
 
 console.log("\n🔗 Configuration Files:");
 const configFiles = [
-  "sentry.client.config.ts",
+  "instrumentation-client.ts",
   "sentry.server.config.ts",
   "sentry.edge.config.ts",
   "instrumentation.ts",

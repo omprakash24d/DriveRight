@@ -61,12 +61,13 @@
 ## 🚀 Quick Start
 
 ### 🔐 Security-First Setup
+
 **This repository is configured for secure deployment with no exposed credentials.**
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/yourusername/your-driving-school.git
-cd your-driving-school
+git clone https://github.com/omprakash24d/DriveRight.git
+cd DriveRight
 
 # 2. Install dependencies
 npm install
@@ -84,6 +85,7 @@ npm run dev
 ```
 
 ### ⚡ Alternative: Interactive Setup
+
 ```bash
 # Use the automated configuration updater
 npm run config:update
@@ -92,8 +94,9 @@ npm run config:update
 Visit `http://localhost:9002` to see your driving school portal in action! 🎉
 
 ### 🛡️ Security Notice
+
 - ✅ **No sensitive data** is stored in this repository
-- ✅ **All secrets** are managed through environment variables  
+- ✅ **All secrets** are managed through environment variables
 - ✅ **Templates provided** for easy and secure setup
 - ✅ **Enterprise-grade security** measures implemented
 
@@ -1103,7 +1106,7 @@ This project is licensed under the **MIT License**. See the [LICENSE](./LICENSE)
     <strong>Driving School Arwal</strong> is production-ready and waiting to revolutionize your driving school operations!
   </p>
   
-  [![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/omprakash24d/Driving-School-Arwal)
+  [![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/omprakash24d/DriveRight)
   
   <p>
     <a href="https://www.drivingschoolarwal.in">🌐 View Live Demo</a> •
@@ -1113,7 +1116,7 @@ This project is licensed under the **MIT License**. See the [LICENSE](./LICENSE)
   </p>
   
   <p>
-    <strong>Built with ❤️ by the Driving School Arwal team</strong>
+    <strong>Built with ❤️ by OM Prakash</strong>
   </p>
   
   <p>

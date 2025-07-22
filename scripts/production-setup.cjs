@@ -42,8 +42,8 @@ const productionConfig = {
 const productionEnvVars = {
   // Core Application
   NODE_ENV: "production",
-  NEXT_PUBLIC_APP_URL: "https://app.www.drivingschoolarwal.in",
-  NEXT_PUBLIC_API_URL: "https://app.www.drivingschoolarwal.in/api",
+  NEXT_PUBLIC_APP_URL: "https://www.drivingschoolarwal.in",
+  NEXT_PUBLIC_API_URL: "https://www.drivingschoolarwal.in/api",
 
   // Security
   ENCRYPTION_KEY: "your-production-encryption-key-32-chars",

@@ -6,7 +6,7 @@ This document outlines the comprehensive error tracking and monitoring system im
 
 ### **1. Sentry Integration**
 
-- **Client-side tracking** (`sentry.client.config.ts`)
+- **Client-side tracking** (`instrumentation-client.ts`)
 - **Server-side tracking** (`sentry.server.config.ts`)
 - **Edge runtime tracking** (`sentry.edge.config.ts`)
 - **Performance monitoring** with automatic instrumentation
@@ -162,7 +162,7 @@ function useUserData() {
 ### **Sample Rates (Adjust for Production)**
 
 ```typescript
-// In sentry.client.config.ts
+// In instrumentation-client.ts
 tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
 profilesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
 ```

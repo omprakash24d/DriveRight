@@ -1,5 +1,5 @@
-import { type MetadataRoute } from 'next';
 import { schoolConfig } from '@/lib/config';
+import { type MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
   const appBaseUrl = schoolConfig.appBaseUrl;
@@ -9,9 +9,40 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/admin/', '/api/', '/dashboard/'],
+        disallow: [
+          '/admin/',
+          '/api/',
+          '/dashboard/',
+          '/_next/',
+          '/private/',
+          '/temp/',
+          '/backup/',
+          '/*.json$',
+          '/api/*',
+        ],
       },
+      {
+        userAgent: 'Googlebot',
+        allow: '/',
+        disallow: [
+          '/admin/',
+          '/api/',
+          '/dashboard/',
+          '/private/',
+        ],
+      },
+      {
+        userAgent: 'Bingbot',
+        allow: '/',
+        disallow: [
+          '/admin/',
+          '/api/',
+          '/dashboard/',
+          '/private/',
+        ],
+      }
     ],
     sitemap: `${appBaseUrl}/sitemap.xml`,
+    host: appBaseUrl,
   };
 }

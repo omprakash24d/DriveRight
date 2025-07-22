@@ -26,22 +26,26 @@
 ## 🏢 Current Configuration
 
 ### Business Information
+
 - **Name:** Driving School Arwal
 - **Contact:** nitishkr3404@gmail.com
 - **Phone:** +919430420215
 - **Address:** Jinpura Near Police line..and collectorate, Arwal Sipah Panchayat, Bihar 804401
 
 ### Domains & URLs
+
 - **Production:** https://www.drivingschoolarwal.in
 - **Staging:** https://staging.drivingschoolarwal.in
 - **Development:** http://localhost:9002
 
 ### Infrastructure
+
 - **Firebase Project:** your-firebase-project
 - **Docker Image:** drivingschoolarwal
 - **Vercel Project:** drivingschoolarwal
 
 ### Email Configuration
+
 - **Support:** nitishkr3404@gmail.com
 - **Admin:** omprakash24d@gmail.com
 - **Privacy:** privacy@drivingschoolarwal.in
@@ -60,4 +64,4 @@
 
 ---
 
-*Configuration managed by automated update system*
+_Configuration managed by automated update system_

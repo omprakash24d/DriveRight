@@ -22,9 +22,10 @@
 ## 🚨 Critical Security Information
 
 ### Your Sensitive Data is Protected:
+
 - 🔐 Firebase service account private key
 - 🔐 Gmail app password
-- 🔐 Razorpay secret key  
+- 🔐 Razorpay secret key
 - 🔐 Gemini API key
 - 🔐 Sentry auth token
 - 🔐 All other API keys and credentials

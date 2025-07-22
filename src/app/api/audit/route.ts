@@ -1,14 +1,31 @@
 // src/app/api/audit/route.ts - Audit logs API
-import { AuditLog, auditLogger } from '@/lib/audit-logger';
 import { trackError } from '@/lib/error-tracking';
 import { monitoring } from '@/lib/monitoring';
 import { NextRequest, NextResponse } from 'next/server';
+
+type AuditLog = {
+  id?: string;
+  timestamp: string;
+  userId?: string;
+  userEmail?: string;
+  action: string;
+  resource: string;
+  resourceId?: string;
+  details: Record<string, any>;
+  ip: string;
+  userAgent?: string;
+  method: string;
+  endpoint: string;
+};
 
 export async function GET(request: NextRequest) {
   monitoring.recordRequest();
   const startTime = Date.now();
 
   try {
+    // Dynamic import to avoid build-time initialization issues
+    const { auditLogger } = await import('@/lib/audit-logger');
+    
     const { searchParams } = new URL(request.url);
     
     // Extract query parameters
@@ -74,25 +91,18 @@ export async function GET(request: NextRequest) {
 
 // Generate audit report
 export async function POST(request: NextRequest) {
-  try {
-    const { 
-      startDate, 
-      endDate, 
-      userId, 
-      actions, 
-      resources,
-      format = 'json'
-    } = await request.json();
+  monitoring.recordRequest();
+  const startTime = Date.now();
 
-    if (!startDate || !endDate) {
-      return NextResponse.json(
-        { error: 'Start date and end date are required for reports' },
-        { status: 400 }
-      );
-    }
+  try {
+    // Dynamic import to avoid build-time initialization issues
+    const { auditLogger } = await import('@/lib/audit-logger');
+    
+    const body = await request.json();
+    const { startDate, endDate, actions, resources, format = 'json' } = body;
 
     const filters: any = {};
-    if (userId) filters.userId = userId;
+    if (body.userId) filters.userId = body.userId;
     if (actions) filters.actions = actions;
     if (resources) filters.resources = resources;
 
@@ -112,20 +122,25 @@ export async function POST(request: NextRequest) {
 
     if (format === 'csv') {
       const csv = convertReportToCSV(report);
-      
       return new NextResponse(csv, {
-        status: 200,
         headers: {
           'Content-Type': 'text/csv',
-          'Content-Disposition': `attachment; filename="audit_report_${startDate}_${endDate}.csv"`
+          'Content-Disposition': 'attachment; filename="audit-report.csv"'
         }
       });
     }
 
+    monitoring.recordResponseTime(Date.now() - startTime);
     return NextResponse.json(report);
 
   } catch (error) {
-    console.error('Failed to generate audit report:', error);
+    monitoring.recordError();
+    trackError(error as Error, { 
+      category: 'system', 
+      severity: 'high',
+      url: request.url 
+    });
+    
     return NextResponse.json(
       { error: 'Failed to generate audit report' },
       { status: 500 }
@@ -164,8 +179,8 @@ function convertToCSV(logs: AuditLog[]): string {
       log.ip,
       log.method,
       log.endpoint,
-      log.statusCode?.toString() || '',
-      log.duration?.toString() || '',
+      (log as any).statusCode?.toString() || '',
+      (log as any).duration?.toString() || '',
       JSON.stringify(log.details).replace(/"/g, '""')
     ].map(field => `"${field}"`).join(','))
   ];

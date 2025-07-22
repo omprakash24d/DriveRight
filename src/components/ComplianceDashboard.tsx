@@ -25,7 +25,7 @@ import {
   Users,
   UserX,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface GDPRRequest {
   id: string;
@@ -62,11 +62,7 @@ export default function ComplianceDashboard() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
 
-  useEffect(() => {
-    loadComplianceData();
-  }, []);
-
-  const loadComplianceData = async () => {
+  const loadComplianceData = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -87,7 +83,11 @@ export default function ComplianceDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadComplianceData();
+  }, [loadComplianceData]);
 
   const generateConsentOverview = () => {
     // This would typically come from your consent API

@@ -47,7 +47,7 @@
 
 ```
 📁 Sentry Configuration
-├── sentry.client.config.ts     # Browser error tracking
+├── instrumentation-client.ts   # Browser error tracking
 ├── sentry.server.config.ts     # Server-side monitoring
 ├── sentry.edge.config.ts       # Edge runtime support
 └── instrumentation.ts          # Next.js integration

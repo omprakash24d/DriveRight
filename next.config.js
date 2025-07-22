@@ -1,6 +1,6 @@
 // @ts-check
-import { config } from "dotenv";
 import { withSentryConfig } from "@sentry/nextjs";
+import { config } from "dotenv";
 
 // Load environment variables from .env file at the very beginning
 config({ path: "./.env" });
@@ -48,6 +48,28 @@ const nextConfig = {
   experimental: {
     instrumentationHook: true,
   },
+
+  // Fix for Node.js modules in client-side build
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        crypto: false,
+        stream: false,
+        url: false,
+        zlib: false,
+        http: false,
+        https: false,
+        assert: false,
+        os: false,
+        path: false,
+      };
+    }
+    return config;
+  },
 };
 
 // Sentry configuration options
@@ -71,7 +93,6 @@ const sentryWebpackPluginOptions = {
 
 // Make sure to wrap your config with withSentryConfig
 export default withSentryConfig(nextConfig, sentryWebpackPluginOptions);
-
 
 // Injected content via Sentry wizard below
 // Injected content via Sentry wizard below

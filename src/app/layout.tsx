@@ -88,6 +88,12 @@ export async function generateMetadata(): Promise<Metadata> {
         "max-snippet": -1,
       },
     },
+    verification: {
+      google: process.env.GOOGLE_SITE_VERIFICATION,
+      other: {
+        "msvalidate.01": process.env.BING_SITE_VERIFICATION || "",
+      },
+    },
   };
 }
 
@@ -151,6 +157,19 @@ export default async function RootLayout({
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <head>
+        {/* Preconnect to external domains for better performance */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin=""
+        />
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+
+        {/* DNS prefetch for better loading */}
+        <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="//www.google-analytics.com" />
+
         {/* Google tag (gtag.js) */}
         {process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID && (
           <>

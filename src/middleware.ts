@@ -1,5 +1,32 @@
-import { auditLogger } from '@/lib/audit-logger';
 import { NextResponse, type NextRequest } from 'next/server';
+
+// Simple logging function for middleware (client-side compatible)
+async function logSecurityEvent(request: NextRequest, event: string, metadata: any = {}): Promise<void> {
+  const ip = getClientIP(request);
+  const userAgent = request.headers.get('user-agent') || '';
+  
+  // Determine severity based on event type
+  let severity: 'low' | 'medium' | 'high' | 'critical' = 'low';
+  
+  if (event.includes('suspicious_input') || event.includes('admin_access_denied')) {
+    severity = 'high';
+  } else if (event.includes('rate_limit') || event.includes('admin_access_attempt')) {
+    severity = 'medium';
+  } else if (event.includes('critical') || event.includes('breach')) {
+    severity = 'critical';
+  }
+
+  // Simple console logging for development
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[SECURITY ${severity.toUpperCase()}] ${event}`, {
+      ip,
+      userAgent,
+      pathname: request.nextUrl.pathname,
+      method: request.method,
+      ...metadata
+    });
+  }
+}
 
 // Security configurations
 const SECURITY_HEADERS = {
@@ -99,53 +126,6 @@ function detectSuspiciousInput(request: NextRequest): boolean {
   return SUSPICIOUS_PATTERNS.some(pattern => 
     pattern.test(url) || pattern.test(queryParams)
   );
-}
-
-async function logSecurityEvent(request: NextRequest, event: string, metadata: any = {}): Promise<void> {
-  const ip = getClientIP(request);
-  const userAgent = request.headers.get('user-agent') || '';
-  
-  const auditContext = {
-    ip,
-    userAgent,
-    sessionId: request.cookies.get('session')?.value
-  };
-
-  // Determine severity based on event type
-  let severity: 'low' | 'medium' | 'high' | 'critical' = 'low';
-  
-  if (event.includes('suspicious_input') || event.includes('admin_access_denied')) {
-    severity = 'high';
-  } else if (event.includes('rate_limit') || event.includes('admin_access_attempt')) {
-    severity = 'medium';
-  } else if (event.includes('critical') || event.includes('breach')) {
-    severity = 'critical';
-  }
-
-  try {
-    await auditLogger.logSecurityEvent(
-      auditContext,
-      event,
-      severity,
-      {
-        pathname: request.nextUrl.pathname,
-        method: request.method,
-        ...metadata
-      }
-    );
-  } catch (error) {
-    console.error('Failed to log security event:', error);
-    // Fallback to console logging
-    console.log('🔒 SECURITY:', {
-      timestamp: new Date().toISOString(),
-      event,
-      ip,
-      userAgent,
-      pathname: request.nextUrl.pathname,
-      method: request.method,
-      ...metadata
-    });
-  }
 }
 
 export async function middleware(request: NextRequest) {
