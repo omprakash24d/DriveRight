@@ -51,6 +51,10 @@ config/project-config.cjs
 config/project-config.cjs.backup
 !config/project-config.example.cjs
 
+# Test files with credentials (never commit these)
+test-storage.*
+**/test-storage.*
+
 # Backup files that might contain sensitive data
 backups/
 *.backup

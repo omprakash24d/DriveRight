@@ -34,17 +34,26 @@ export function getAdminApp(): admin.app.App {
         }
 
         const serviceAccount = JSON.parse(serviceAccountJson);
-        const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
         
-        if (!storageBucket) {
-            throw new Error("Firebase Storage bucket is not configured. The NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET environment variable is missing.");
+        // Use explicit project ID from environment variable for production consistency
+        const projectId = process.env.FIREBASE_PROJECT_ID || serviceAccount.project_id || 'driveright-11b83';
+        
+        // Ensure storage bucket is properly configured for production
+        const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 
+                             process.env.FIREBASE_STORAGE_BUCKET || 
+                             'driveright-11b83.firebasestorage.app';
+        
+        if (!projectId) {
+            throw new Error("Firebase project ID is not configured. Missing project_id in service account or FIREBASE_PROJECT_ID environment variable.");
         }
         
         adminAppInstance = admin.initializeApp({
             credential: admin.credential.cert(serviceAccount),
             storageBucket: storageBucket,
+            projectId: projectId,
         });
         
+        console.log(`Firebase Admin initialized successfully for project: ${projectId}, bucket: ${storageBucket}`);
         return adminAppInstance;
     } catch (error: any) {
         const errorMessage = "Firebase Admin SDK failed to initialize due to invalid credentials. Server-side authentication will not work.";

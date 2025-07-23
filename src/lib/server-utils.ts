@@ -46,15 +46,22 @@ export async function uploadFileAdmin(file: File, path: string): Promise<string>
         
         const adminApp = getAdminApp();
         const storage = admin.storage(adminApp);
-        const bucket = storage.bucket();
+        
+        // Use the correct Firebase Storage bucket with proper fallback
+        const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 
+                          process.env.FIREBASE_STORAGE_BUCKET || 
+                          'driveright-11b83.firebasestorage.app'; // Correct Firebase Storage format
+        
+        const bucket = storage.bucket(bucketName);
         
         console.log('🔍 Upload Debug Info:', {
-            bucketName: bucket.name,
             projectId: adminApp.options.projectId,
+            bucketName: bucketName,
             filePath: path,
             fileSize: file.size,
             fileType: file.type,
-            isDevelopment
+            isDevelopment,
+            storageUrl: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
         });
         
         // Validate file
@@ -89,7 +96,12 @@ export async function uploadFileAdmin(file: File, path: string): Promise<string>
             return publicUrl;
             
         } catch (storageError: any) {
-            console.log('⚠️ Firebase Storage upload failed:', storageError.message);
+            console.error('⚠️ Firebase Storage upload failed:', {
+                message: storageError.message,
+                code: storageError.code,
+                bucketName: bucketName,
+                path: path
+            });
             
             // In development, fall back to local storage
             if (isDevelopment) {
@@ -99,8 +111,21 @@ export async function uploadFileAdmin(file: File, path: string): Promise<string>
                 return localUrl;
             }
             
-            // In production, throw the error
-            throw storageError;
+            // In production, provide better error handling
+            if (storageError.message?.includes('bucket does not exist') || 
+                storageError.message?.includes('The specified bucket does not exist') ||
+                storageError.code === 404) {
+                console.error('🚨 Firebase Storage bucket not found. Check bucket configuration.');
+                throw new Error(`Storage bucket "${bucketName}" not found. Please check your Firebase Storage configuration.`);
+            }
+            
+            if (storageError.code === 403) {
+                console.error('🚨 Firebase Storage permission denied. Check service account permissions.');
+                throw new Error('Permission denied. Check Firebase Storage permissions for service account.');
+            }
+            
+            // Re-throw other storage errors
+            throw new Error(`Firebase Storage error: ${storageError.message}`);
         }
         
     } catch (error: any) {
