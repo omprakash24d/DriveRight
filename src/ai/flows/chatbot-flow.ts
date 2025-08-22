@@ -8,11 +8,11 @@
  * - ChatOutput - The return type for the chat function.
  */
 
-import {ai} from '@/ai/genkit';
-import {schoolConfig} from '@/lib/config';
-import {z} from 'genkit';
+import { ai } from '@/ai/genkit';
+import { schoolConfig } from '@/lib/config';
 import { getCourses } from '@/services/coursesService';
 import { getInstructors } from '@/services/instructorsService';
+import { z } from 'genkit';
 
 const ChatHistoryMessageSchema = z.object({
   role: z.enum(['user', 'model']),
@@ -39,7 +39,8 @@ const listCoursesTool = ai.defineTool(
     outputSchema: z.array(z.object({ title: z.string(), price: z.string() })),
   },
   async () => {
-    const courses = await getCourses();
+    const coursesResult = await getCourses();
+    const courses = coursesResult.success ? coursesResult.data : [];
     return courses.map(c => ({ title: c.title, price: c.price }));
   }
 );

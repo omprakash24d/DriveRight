@@ -82,7 +82,7 @@ export async function deleteRefresherRequest(id: string): Promise<void> {
                 await deleteFromAdminAPI('refresher-requests', id);
                 return;
             } catch (adminError) {
-                console.log('Admin API not available, falling back to client SDK');
+
                 // Fall through to client SDK approach
             }
         } else {
@@ -92,7 +92,7 @@ export async function deleteRefresherRequest(id: string): Promise<void> {
                 await deleteRefresherRequestAdmin(id);
                 return;
             } catch (adminError) {
-                console.log('Admin server function failed, falling back to client SDK');
+
                 // Fall through to client SDK approach
             }
         }

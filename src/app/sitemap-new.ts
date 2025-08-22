@@ -8,10 +8,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const currentDate = new Date();
 
   // Fetch dynamic content
-  const [courses, instructors] = await Promise.all([
-    getCourses().catch(() => []),
+  const [coursesResult, instructors] = await Promise.all([
+    getCourses().catch(() => ({ success: false, data: [], error: 'Failed to fetch courses' })),
     getInstructors().catch(() => [])
   ]);
+
+  // Extract courses data if successful
+  const courses = coursesResult.success ? coursesResult.data : [];
 
   // Dynamic course pages
   const courseUrls = courses.map((course) => ({

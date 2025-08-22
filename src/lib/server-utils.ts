@@ -15,18 +15,18 @@ async function saveFileLocally(file: File, path: string): Promise<string> {
     
     // Create directory if it doesn't exist
     const dir = dirname(fullPath);
-    console.log('📁 Creating directory:', dir);
+
     await mkdir(dir, { recursive: true });
     
     // Convert File to Buffer and save
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    console.log('💾 Saving file to:', fullPath);
+
     await writeFile(fullPath, buffer);
     
     // Return public URL
     const publicUrl = `/uploads/${path}`;
-    console.log('🔗 Public URL:', publicUrl);
+
     return publicUrl;
 }
 
@@ -92,7 +92,7 @@ export async function uploadFileAdmin(file: File, path: string): Promise<string>
             
             // Return the public URL
             const publicUrl = `https://storage.googleapis.com/${bucket.name}/${path}`;
-            console.log('✅ File uploaded to Firebase Storage:', publicUrl);
+
             return publicUrl;
             
         } catch (storageError: any) {
@@ -105,9 +105,9 @@ export async function uploadFileAdmin(file: File, path: string): Promise<string>
             
             // In development, fall back to local storage
             if (isDevelopment) {
-                console.log('🔄 Falling back to local file storage...');
+
                 const localUrl = await saveFileLocally(file, path);
-                console.log('✅ File saved locally:', localUrl);
+
                 return localUrl;
             }
             
@@ -134,9 +134,9 @@ export async function uploadFileAdmin(file: File, path: string): Promise<string>
         // In development, try local storage as fallback
         if (isDevelopment) {
             try {
-                console.log('🔄 Using local storage fallback...');
+
                 const localUrl = await saveFileLocally(file, path);
-                console.log('✅ File saved locally as fallback:', localUrl);
+
                 return localUrl;
             } catch (localError: any) {
                 console.error('Local storage fallback failed:', localError);

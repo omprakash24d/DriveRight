@@ -29,7 +29,7 @@ export async function logSubmission(logEntry: LogData) {
 
   // Development logging
   if (process.env.NODE_ENV === 'development') {
-    console.log(JSON.stringify(logObject));
+    // Log to internal service only
   }
 
   // Production logging with Sentry

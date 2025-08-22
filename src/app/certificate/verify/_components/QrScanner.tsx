@@ -34,7 +34,7 @@ export function QrScanner({ onScanSuccess }: QrScannerProps) {
                 undefined // Optional error callback
             );
         } catch (err) {
-            console.log("Failed to start with back camera, trying front.", err);
+
             try {
                  await scanner.start(
                     {}, // Default camera

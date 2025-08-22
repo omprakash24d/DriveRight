@@ -18,32 +18,35 @@ export async function generateMetadata(
   { params }: Props,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const course = await getCourse(params.id);
-  const settings = await getSiteSettings();
-  const appBaseUrl = schoolConfig.appBaseUrl;
+  const courseResult = await getCourse(params.id);
 
-  if (!course) {
+  if (!courseResult.success) {
     return {
       title: "Course Not Found",
       description: "The course you are looking for could not be found.",
     };
   }
 
+  const course = courseResult.data;
+
+  const settings = await getSiteSettings();
+  const appBaseUrl = schoolConfig.appBaseUrl;
   const previousImages = (await parent).openGraph?.images || [];
 
   return {
     title: `${course.title} - Professional Driving Course`,
     description: `${course.description} Join ${settings.schoolName} for comprehensive ${course.title} training in Arwal, Bihar. Expert instructors, modern vehicles, and proven teaching methods.`,
     keywords: [
-      course.title.toLowerCase(),
-      `${course.title} course`,
-      `${course.title} training`,
-      `${course.title} lessons`,
+      typeof course?.title === "string" ? course.title.toLowerCase() : "",
+      `${course?.title || "driving"} course`,
+      `${course?.title || "driving"} training`,
+      `${course?.title || "driving"} lessons`,
       "driving course Arwal",
       "professional driving training",
       "certified driving instructors",
       settings.schoolName,
     ],
+
     openGraph: {
       title: `${course.title} | ${settings.schoolName}`,
       description: `Professional ${course.title} training with expert instructors. Comprehensive course designed for safe and confident driving.`,
@@ -68,11 +71,11 @@ export default async function CourseDetailPage({
 }: {
   params: { id: string };
 }) {
-  let course: Awaited<ReturnType<typeof getCourse>>;
+  let courseResult: Awaited<ReturnType<typeof getCourse>>;
   let settings: Awaited<ReturnType<typeof getSiteSettings>>;
 
   try {
-    [course, settings] = await Promise.all([
+    [courseResult, settings] = await Promise.all([
       getCourse(params.id),
       getSiteSettings(),
     ]);
@@ -82,9 +85,11 @@ export default async function CourseDetailPage({
     return <div>Error loading course. Please try again later.</div>;
   }
 
-  if (!course) {
+  if (!courseResult.success) {
     notFound();
   }
+
+  const course = courseResult.data;
 
   const totalLessons =
     course.modules?.reduce((acc, module) => acc + module.lessons.length, 0) ||
@@ -144,7 +149,11 @@ export default async function CourseDetailPage({
                 </p>
                 <p className="text-muted-foreground">Lifetime access</p>
                 <div className="mt-6">
-                  <CourseEnrollButton course={course} />
+                  <CourseEnrollButton
+                    courseId={course.id}
+                    courseTitle={course.title}
+                    coursePrice={course.price}
+                  />
                 </div>
               </CardContent>
             </Card>

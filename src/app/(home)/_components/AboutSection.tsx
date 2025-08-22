@@ -24,10 +24,10 @@ export function AboutSection({ settings }: AboutSectionProps) {
   return (
     <section
       id="about"
-      className="w-full py-20 md:py-24 bg-background"
+      className="w-full section-padding bg-background"
       aria-labelledby="about-title"
     >
-      <div className="container mx-auto px-4 md:px-6 grid md:grid-cols-2 gap-12 items-center">
+      <div className="container mx-auto container-padding grid md:grid-cols-2 gap-12 items-center">
         <div>
           <Image
             src="/images/3.jpeg"
@@ -35,21 +35,18 @@ export function AboutSection({ settings }: AboutSectionProps) {
             data-ai-hint="school building"
             width={600}
             height={400}
-            className="rounded-lg shadow-xl object-cover w-full h-auto"
+            className="rounded-xl card-elevated object-cover w-full h-auto"
           />
         </div>
         <div className="order-first md:order-last">
-          <h2
-            id="about-title"
-            className="text-3xl md:text-4xl font-bold tracking-tight mb-4"
-          >
+          <h2 id="about-title" className="heading-lg mb-4">
             {homepageAboutTitle}
           </h2>
           <div className="space-y-4 text-muted-foreground mb-8">
             <p>{homepageAboutText1}</p>
             <p>{homepageAboutText2}</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6 border-t">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6 border-t border-border">
             {homepageStats.map((stat, index) => {
               const IconComponent = iconMap[stat.icon] || TrendingUp;
               return (

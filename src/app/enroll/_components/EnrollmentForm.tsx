@@ -22,6 +22,7 @@ import {
   indianStates,
   MAX_FILE_SIZE,
 } from "@/lib/constants";
+import { getPriceInfo } from "@/lib/priceUtils";
 import { resizeImage } from "@/lib/utils";
 import { getCourses, type Course } from "@/services/coursesService";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -144,17 +145,26 @@ export function EnrollmentFormComponent() {
 
   const isFreeCourse = useMemo(() => {
     if (!selectedCourse) return true;
-    return (
-      selectedCourse.price.toLowerCase() === "free" ||
-      !/^\d/.test(selectedCourse.price)
-    );
+    return getPriceInfo(selectedCourse.price).isFree;
   }, [selectedCourse]);
 
   useEffect(() => {
     setIsCoursesLoading(true);
     getCourses()
-      .then(setCourses)
+      .then((result) => {
+        if (result && result.success && Array.isArray(result.data)) {
+          setCourses(result.data);
+        } else {
+          setCourses([]);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not load course details.",
+          });
+        }
+      })
       .catch(() => {
+        setCourses([]);
         toast({
           variant: "destructive",
           title: "Error",
@@ -306,7 +316,9 @@ export function EnrollmentFormComponent() {
           throw new Error("Course price is not available.");
 
         const amountInPaise =
-          parseInt(selectedCourse.price.replace(/[^0-9]/g, "")) * 100;
+          parseInt(
+            String(selectedCourse.price || "").replace(/[^0-9]/g, "") || "0"
+          ) * 100;
         if (isNaN(amountInPaise) || amountInPaise <= 0)
           throw new Error("Invalid course price.");
 

@@ -1,6 +1,7 @@
 import { Chatbot } from "@/components/Chatbot";
 import { Footer } from "@/components/Footer";
 import { HeaderWrapper } from "@/components/HeaderWrapper";
+import RazorpayScript from "@/components/RazorpayScript";
 import { SiteWrapper } from "@/components/SiteWrapper";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
@@ -216,6 +217,7 @@ export default async function RootLayout({
             </SiteWrapper>
             <Toaster />
             <Chatbot />
+            <RazorpayScript />
           </ThemeProvider>
         </AuthProvider>
       </body>

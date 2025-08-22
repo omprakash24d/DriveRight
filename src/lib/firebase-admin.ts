@@ -53,7 +53,7 @@ export function getAdminApp(): admin.app.App {
             projectId: projectId,
         });
         
-        console.log(`Firebase Admin initialized successfully for project: ${projectId}, bucket: ${storageBucket}`);
+
         return adminAppInstance;
     } catch (error: any) {
         const errorMessage = "Firebase Admin SDK failed to initialize due to invalid credentials. Server-side authentication will not work.";

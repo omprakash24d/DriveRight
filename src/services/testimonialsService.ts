@@ -17,7 +17,6 @@ const TESTIMONIALS_COLLECTION = 'testimonials';
 // Fetch all testimonials from Firestore
 export async function getTestimonials(): Promise<Testimonial[]> {
   if (!db.app) {
-    console.warn("Firebase not initialized during build. Returning empty testimonials array.");
     return [];
   }
   try {
@@ -33,7 +32,6 @@ export async function getTestimonials(): Promise<Testimonial[]> {
       ...(doc.data() as Omit<Testimonial, 'id'>)
     }));
   } catch (error) {
-    console.error("Error fetching testimonials, returning empty array:", error);
     return [];
   }
 }
@@ -48,11 +46,9 @@ export async function getTestimonial(id: string): Promise<Testimonial | null> {
         if (docSnap.exists()) {
             return { id: docSnap.id, ...(docSnap.data() as Omit<Testimonial, 'id'>) };
         } else {
-            console.warn("No testimonial document found for ID:", id);
             return null;
         }
     } catch (error) {
-        console.error("Error fetching testimonial:", error);
         return null;
     }
 }
@@ -60,7 +56,6 @@ export async function getTestimonial(id: string): Promise<Testimonial | null> {
 // Add a new testimonial to Firestore
 export async function addTestimonial(testimonialData: Omit<Testimonial, 'id'>) {
     if (!db.app) {
-        console.warn("Firebase not initialized, cannot add testimonial");
         throw new Error("Database connection not available");
     }
     try {
@@ -68,7 +63,6 @@ export async function addTestimonial(testimonialData: Omit<Testimonial, 'id'>) {
         await addLog('Added Testimonial', `From: ${testimonialData.name}`);
         return docRef.id;
     } catch (error) {
-        console.error("Error adding testimonial: ", error);
         throw new Error("Could not add testimonial to the database.");
     }
 }
@@ -76,7 +70,6 @@ export async function addTestimonial(testimonialData: Omit<Testimonial, 'id'>) {
 // Update an existing testimonial in Firestore
 export async function updateTestimonial(id: string, testimonialData: Partial<Omit<Testimonial, 'id'>>) {
     if (!db.app) {
-        console.warn("Firebase not initialized, cannot update testimonial");
         throw new Error("Database connection not available");
     }
     try {
@@ -84,7 +77,6 @@ export async function updateTestimonial(id: string, testimonialData: Partial<Omi
         await updateDoc(docRef, testimonialData);
         await addLog('Updated Testimonial', `ID: ${id}`);
     } catch (error) {
-        console.error("Error updating testimonial: ", error);
         throw new Error("Could not update testimonial in the database.");
     }
 }
@@ -92,7 +84,6 @@ export async function updateTestimonial(id: string, testimonialData: Partial<Omi
 // Delete a testimonial from Firestore
 export async function deleteTestimonial(id: string): Promise<void> {
     if (!db.app) {
-        console.warn("Firebase not initialized, cannot delete testimonial");
         throw new Error("Database connection not available");
     }
     try {
@@ -103,7 +94,6 @@ export async function deleteTestimonial(id: string): Promise<void> {
         await deleteDoc(docRef);
         await addLog('Deleted Testimonial', `From: ${testimonialName}`);
     } catch (error) {
-        console.error("Error deleting testimonial: ", error);
         throw new Error("Could not delete testimonial from the database.");
     }
 }
@@ -111,7 +101,6 @@ export async function deleteTestimonial(id: string): Promise<void> {
 // Seed the database with default testimonials
 export async function seedDefaultTestimonials(): Promise<number> {
     if (!db.app) {
-        console.warn("Firebase not initialized, cannot seed testimonials");
         return 0;
     }
     const defaultTestimonials: Omit<Testimonial, 'id'>[] = [
@@ -152,7 +141,6 @@ export async function seedDefaultTestimonials(): Promise<number> {
         
         return toAdd.length;
     } catch (error) {
-        console.error("Error seeding default testimonials: ", error);
         throw new Error("Could not seed default testimonials.");
     }
 }

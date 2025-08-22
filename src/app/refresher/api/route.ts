@@ -1,11 +1,11 @@
 
+import { logSubmission } from '@/app/contact/_lib/logging';
+import { db } from '@/lib/firebase';
+import { sanitize } from '@/lib/utils';
+import { addDoc, collection, Timestamp } from 'firebase/firestore';
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { sendRefresherAdminEmail, sendRefresherConfirmationEmail } from '../_lib/email-service';
-import { logSubmission } from '@/app/contact/_lib/logging';
-import { addDoc, collection, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { sanitize } from '@/lib/utils';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_DOCUMENT_TYPES = ["image/jpeg", "image/png", "application/pdf"];
@@ -29,7 +29,6 @@ export async function POST(req: NextRequest) {
     const parsed = formSchema.safeParse(data);
 
     if (!parsed.success) {
-      console.log(parsed.error.flatten().fieldErrors);
       return NextResponse.json(
         { message: 'Invalid input.', errors: parsed.error.flatten().fieldErrors },
         { status: 400 }

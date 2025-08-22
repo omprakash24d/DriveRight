@@ -1,6 +1,7 @@
 // lib/seo-utils.ts - SEO utilities and schema markup generators
 
 import { schoolConfig } from './config';
+import { getPriceInfo } from "./priceUtils";
 
 export interface SEOData {
   title: string;
@@ -250,7 +251,7 @@ export function generateCourseSchema(course: any, schoolName: string): CourseSch
     timeRequired: course.duration || "4-6 weeks",
     offers: {
       "@type": "Offer",
-      price: course.price === 'Free' ? "0" : course.price?.replace(/[^\d]/g, '') || "0",
+      price: String(getPriceInfo(course.price).numericPrice),
       priceCurrency: "INR",
       availability: "https://schema.org/InStock"
     }

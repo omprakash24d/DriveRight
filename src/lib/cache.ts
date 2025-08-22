@@ -23,7 +23,7 @@ const initializeRedis = async (): Promise<void> => {
       const redisModule = await eval('import("ioredis")').catch(() => null);
       if (redisModule?.Redis) {
         redis = new redisModule.Redis(process.env.REDIS_URL);
-        console.log('Redis cache initialized successfully');
+
       } else {
         console.info('Redis module not available, using memory cache');
       }

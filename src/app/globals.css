@@ -3,88 +3,91 @@
 @tailwind utilities;
 
 body {
-  font-family: var(--font-body), 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-body), "Inter", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-display: swap;
 }
 
 @layer base {
   :root {
-    --background: 210 20% 95%;
-    --foreground: 210 10% 23%;
-    --card: 210 20% 98%;
-    --card-foreground: 210 10% 23%;
-    --popover: 210 20% 98%;
-    --popover-foreground: 210 10% 23%;
-    --primary: 210 67% 46%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 60% 90%;
-    --secondary-foreground: 210 10% 23%;
-    --muted: 210 20% 90%;
-    --muted-foreground: 210 10% 45%;
-    --accent: 180 50% 50%;
-    --accent-foreground: 180 90% 15%;
-    --destructive: 0 84.2% 60.2%;
+    /* Light theme colors - clean and minimal */
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 13% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 13% 11%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-    --border: 210 20% 88%;
-    --input: 210 20% 88%;
-    --ring: 210 67% 46%;
-    --radius: 0.5rem;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;
+    --radius: 0.75rem;
 
-    /* Chart Colors */
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    /* Chart Colors - consistent across themes */
+    --chart-1: 221 83% 53%;
+    --chart-2: 142 76% 36%;
+    --chart-3: 262 83% 58%;
+    --chart-4: 336 75% 40%;
+    --chart-5: 48 96% 53%;
 
-    /* Sidebar Colors */
-    --sidebar-background: 210 20% 98%;
-    --sidebar-foreground: 210 10% 23%;
-    --sidebar-primary: 210 67% 46%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 60% 90%;
-    --sidebar-accent-foreground: 210 10% 23%;
-    --sidebar-border: 210 20% 88%;
-    --sidebar-ring: 210 67% 46%;
+    /* Sidebar Colors - minimal light theme */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 240 10% 3.9%;
+    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 222 13% 11%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 221 83% 53%;
   }
 
   .dark {
-    --background: 210 10% 15%;
-    --foreground: 210 20% 95%;
-    --card: 210 10% 20%;
-    --card-foreground: 210 20% 95%;
-    --popover: 210 10% 20%;
-    --popover-foreground: 210 20% 95%;
-    --primary: 210 67% 46%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 10% 25%;
-    --secondary-foreground: 210 20% 95%;
-    --muted: 210 10% 25%;
-    --muted-foreground: 210 20% 65%;
-    --accent: 180 50% 50%;
-    --accent-foreground: 180 90% 15%;
-    --destructive: 0 72% 56%;
+    /* Dark theme colors - clean and minimal */
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-    --border: 210 10% 25%;
-    --input: 210 10% 25%;
-    --ring: 210 67% 46%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 221 83% 53%;
 
-    /* Chart Colors */
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    /* Chart Colors - adjusted for dark theme */
+    --chart-1: 221 83% 53%;
+    --chart-2: 142 76% 36%;
+    --chart-3: 262 83% 58%;
+    --chart-4: 336 75% 40%;
+    --chart-5: 48 96% 53%;
 
-    /* Sidebar Colors */
-    --sidebar-background: 210 10% 15%;
-    --sidebar-foreground: 210 20% 95%;
-    --sidebar-primary: 210 67% 46%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 10% 25%;
-    --sidebar-accent-foreground: 210 20% 95%;
-    --sidebar-border: 210 10% 25%;
-    --sidebar-ring: 210 67% 46%;
+    /* Sidebar Colors - minimal dark theme */
+    --sidebar-background: 240 10% 3.9%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 221 83% 53%;
   }
 }
 
@@ -97,11 +100,135 @@ body {
   }
 }
 
+/* Design System Components */
+@layer components {
+  /* Consistent Card Styles */
+  .card-minimal {
+    @apply bg-card border border-border rounded-xl shadow-sm hover:shadow-md transition-all duration-200;
+  }
+
+  .card-elevated {
+    @apply bg-card border border-border rounded-xl shadow-lg hover:shadow-xl transition-all duration-200;
+  }
+
+  /* Button Variants */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-6 py-3 font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border rounded-lg px-6 py-3 font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+  }
+
+  /* Consistent Section Spacing */
+  .section-padding {
+    @apply py-16 md:py-24;
+  }
+
+  .container-padding {
+    @apply px-4 md:px-6 lg:px-8;
+  }
+
+  /* Typography Hierarchy */
+  .heading-xl {
+    @apply text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight;
+  }
+
+  .heading-lg {
+    @apply text-3xl md:text-4xl font-bold tracking-tight;
+  }
+
+  .heading-md {
+    @apply text-2xl md:text-3xl font-semibold tracking-tight;
+  }
+
+  .heading-sm {
+    @apply text-xl md:text-2xl font-semibold tracking-tight;
+  }
+
+  /* Form Elements */
+  .input-field {
+    @apply w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  /* Status Indicators */
+  .status-success {
+    @apply bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800;
+  }
+
+  .status-warning {
+    @apply bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950 dark:text-yellow-300 dark:border-yellow-800;
+  }
+
+  .status-error {
+    @apply bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800;
+  }
+}
+
+/* Accessibility improvements */
+@layer utilities {
+  /* Respect user's motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Improve focus visibility */
+  *:focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+  }
+
+  /* Screen reader only content */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Minimum touch target size for mobile */
+  @media (max-width: 768px) {
+    button,
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    a[role="button"],
+    .touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .card {
+      border: 2px solid;
+    }
+
+    button {
+      border: 2px solid;
+    }
+  }
+}
+
 @media print {
   body * {
     visibility: hidden;
   }
-  .printable-certificate, .printable-certificate * {
+  .printable-certificate,
+  .printable-certificate * {
     visibility: visible;
   }
   .printable-certificate {
@@ -122,107 +249,309 @@ body {
   .progress-bar {
     width: var(--progress-width, 0%);
   }
-  
+
   /* Data attribute based progress bars */
-  [data-progress="0"] { width: 0%; }
-  [data-progress="1"] { width: 1%; }
-  [data-progress="2"] { width: 2%; }
-  [data-progress="3"] { width: 3%; }
-  [data-progress="4"] { width: 4%; }
-  [data-progress="5"] { width: 5%; }
-  [data-progress="6"] { width: 6%; }
-  [data-progress="7"] { width: 7%; }
-  [data-progress="8"] { width: 8%; }
-  [data-progress="9"] { width: 9%; }
-  [data-progress="10"] { width: 10%; }
-  [data-progress="11"] { width: 11%; }
-  [data-progress="12"] { width: 12%; }
-  [data-progress="13"] { width: 13%; }
-  [data-progress="14"] { width: 14%; }
-  [data-progress="15"] { width: 15%; }
-  [data-progress="16"] { width: 16%; }
-  [data-progress="17"] { width: 17%; }
-  [data-progress="18"] { width: 18%; }
-  [data-progress="19"] { width: 19%; }
-  [data-progress="20"] { width: 20%; }
-  [data-progress="21"] { width: 21%; }
-  [data-progress="22"] { width: 22%; }
-  [data-progress="23"] { width: 23%; }
-  [data-progress="24"] { width: 24%; }
-  [data-progress="25"] { width: 25%; }
-  [data-progress="26"] { width: 26%; }
-  [data-progress="27"] { width: 27%; }
-  [data-progress="28"] { width: 28%; }
-  [data-progress="29"] { width: 29%; }
-  [data-progress="30"] { width: 30%; }
-  [data-progress="31"] { width: 31%; }
-  [data-progress="32"] { width: 32%; }
-  [data-progress="33"] { width: 33%; }
-  [data-progress="34"] { width: 34%; }
-  [data-progress="35"] { width: 35%; }
-  [data-progress="36"] { width: 36%; }
-  [data-progress="37"] { width: 37%; }
-  [data-progress="38"] { width: 38%; }
-  [data-progress="39"] { width: 39%; }
-  [data-progress="40"] { width: 40%; }
-  [data-progress="41"] { width: 41%; }
-  [data-progress="42"] { width: 42%; }
-  [data-progress="43"] { width: 43%; }
-  [data-progress="44"] { width: 44%; }
-  [data-progress="45"] { width: 45%; }
-  [data-progress="46"] { width: 46%; }
-  [data-progress="47"] { width: 47%; }
-  [data-progress="48"] { width: 48%; }
-  [data-progress="49"] { width: 49%; }
-  [data-progress="50"] { width: 50%; }
-  [data-progress="51"] { width: 51%; }
-  [data-progress="52"] { width: 52%; }
-  [data-progress="53"] { width: 53%; }
-  [data-progress="54"] { width: 54%; }
-  [data-progress="55"] { width: 55%; }
-  [data-progress="56"] { width: 56%; }
-  [data-progress="57"] { width: 57%; }
-  [data-progress="58"] { width: 58%; }
-  [data-progress="59"] { width: 59%; }
-  [data-progress="60"] { width: 60%; }
-  [data-progress="61"] { width: 61%; }
-  [data-progress="62"] { width: 62%; }
-  [data-progress="63"] { width: 63%; }
-  [data-progress="64"] { width: 64%; }
-  [data-progress="65"] { width: 65%; }
-  [data-progress="66"] { width: 66%; }
-  [data-progress="67"] { width: 67%; }
-  [data-progress="68"] { width: 68%; }
-  [data-progress="69"] { width: 69%; }
-  [data-progress="70"] { width: 70%; }
-  [data-progress="71"] { width: 71%; }
-  [data-progress="72"] { width: 72%; }
-  [data-progress="73"] { width: 73%; }
-  [data-progress="74"] { width: 74%; }
-  [data-progress="75"] { width: 75%; }
-  [data-progress="76"] { width: 76%; }
-  [data-progress="77"] { width: 77%; }
-  [data-progress="78"] { width: 78%; }
-  [data-progress="79"] { width: 79%; }
-  [data-progress="80"] { width: 80%; }
-  [data-progress="81"] { width: 81%; }
-  [data-progress="82"] { width: 82%; }
-  [data-progress="83"] { width: 83%; }
-  [data-progress="84"] { width: 84%; }
-  [data-progress="85"] { width: 85%; }
-  [data-progress="86"] { width: 86%; }
-  [data-progress="87"] { width: 87%; }
-  [data-progress="88"] { width: 88%; }
-  [data-progress="89"] { width: 89%; }
-  [data-progress="90"] { width: 90%; }
-  [data-progress="91"] { width: 91%; }
-  [data-progress="92"] { width: 92%; }
-  [data-progress="93"] { width: 93%; }
-  [data-progress="94"] { width: 94%; }
-  [data-progress="95"] { width: 95%; }
-  [data-progress="96"] { width: 96%; }
-  [data-progress="97"] { width: 97%; }
-  [data-progress="98"] { width: 98%; }
-  [data-progress="99"] { width: 99%; }
-  [data-progress="100"] { width: 100%; }
+  [data-progress="0"] {
+    width: 0%;
+  }
+  [data-progress="1"] {
+    width: 1%;
+  }
+  [data-progress="2"] {
+    width: 2%;
+  }
+  [data-progress="3"] {
+    width: 3%;
+  }
+  [data-progress="4"] {
+    width: 4%;
+  }
+  [data-progress="5"] {
+    width: 5%;
+  }
+  [data-progress="6"] {
+    width: 6%;
+  }
+  [data-progress="7"] {
+    width: 7%;
+  }
+  [data-progress="8"] {
+    width: 8%;
+  }
+  [data-progress="9"] {
+    width: 9%;
+  }
+  [data-progress="10"] {
+    width: 10%;
+  }
+  [data-progress="11"] {
+    width: 11%;
+  }
+  [data-progress="12"] {
+    width: 12%;
+  }
+  [data-progress="13"] {
+    width: 13%;
+  }
+  [data-progress="14"] {
+    width: 14%;
+  }
+  [data-progress="15"] {
+    width: 15%;
+  }
+  [data-progress="16"] {
+    width: 16%;
+  }
+  [data-progress="17"] {
+    width: 17%;
+  }
+  [data-progress="18"] {
+    width: 18%;
+  }
+  [data-progress="19"] {
+    width: 19%;
+  }
+  [data-progress="20"] {
+    width: 20%;
+  }
+  [data-progress="21"] {
+    width: 21%;
+  }
+  [data-progress="22"] {
+    width: 22%;
+  }
+  [data-progress="23"] {
+    width: 23%;
+  }
+  [data-progress="24"] {
+    width: 24%;
+  }
+  [data-progress="25"] {
+    width: 25%;
+  }
+  [data-progress="26"] {
+    width: 26%;
+  }
+  [data-progress="27"] {
+    width: 27%;
+  }
+  [data-progress="28"] {
+    width: 28%;
+  }
+  [data-progress="29"] {
+    width: 29%;
+  }
+  [data-progress="30"] {
+    width: 30%;
+  }
+  [data-progress="31"] {
+    width: 31%;
+  }
+  [data-progress="32"] {
+    width: 32%;
+  }
+  [data-progress="33"] {
+    width: 33%;
+  }
+  [data-progress="34"] {
+    width: 34%;
+  }
+  [data-progress="35"] {
+    width: 35%;
+  }
+  [data-progress="36"] {
+    width: 36%;
+  }
+  [data-progress="37"] {
+    width: 37%;
+  }
+  [data-progress="38"] {
+    width: 38%;
+  }
+  [data-progress="39"] {
+    width: 39%;
+  }
+  [data-progress="40"] {
+    width: 40%;
+  }
+  [data-progress="41"] {
+    width: 41%;
+  }
+  [data-progress="42"] {
+    width: 42%;
+  }
+  [data-progress="43"] {
+    width: 43%;
+  }
+  [data-progress="44"] {
+    width: 44%;
+  }
+  [data-progress="45"] {
+    width: 45%;
+  }
+  [data-progress="46"] {
+    width: 46%;
+  }
+  [data-progress="47"] {
+    width: 47%;
+  }
+  [data-progress="48"] {
+    width: 48%;
+  }
+  [data-progress="49"] {
+    width: 49%;
+  }
+  [data-progress="50"] {
+    width: 50%;
+  }
+  [data-progress="51"] {
+    width: 51%;
+  }
+  [data-progress="52"] {
+    width: 52%;
+  }
+  [data-progress="53"] {
+    width: 53%;
+  }
+  [data-progress="54"] {
+    width: 54%;
+  }
+  [data-progress="55"] {
+    width: 55%;
+  }
+  [data-progress="56"] {
+    width: 56%;
+  }
+  [data-progress="57"] {
+    width: 57%;
+  }
+  [data-progress="58"] {
+    width: 58%;
+  }
+  [data-progress="59"] {
+    width: 59%;
+  }
+  [data-progress="60"] {
+    width: 60%;
+  }
+  [data-progress="61"] {
+    width: 61%;
+  }
+  [data-progress="62"] {
+    width: 62%;
+  }
+  [data-progress="63"] {
+    width: 63%;
+  }
+  [data-progress="64"] {
+    width: 64%;
+  }
+  [data-progress="65"] {
+    width: 65%;
+  }
+  [data-progress="66"] {
+    width: 66%;
+  }
+  [data-progress="67"] {
+    width: 67%;
+  }
+  [data-progress="68"] {
+    width: 68%;
+  }
+  [data-progress="69"] {
+    width: 69%;
+  }
+  [data-progress="70"] {
+    width: 70%;
+  }
+  [data-progress="71"] {
+    width: 71%;
+  }
+  [data-progress="72"] {
+    width: 72%;
+  }
+  [data-progress="73"] {
+    width: 73%;
+  }
+  [data-progress="74"] {
+    width: 74%;
+  }
+  [data-progress="75"] {
+    width: 75%;
+  }
+  [data-progress="76"] {
+    width: 76%;
+  }
+  [data-progress="77"] {
+    width: 77%;
+  }
+  [data-progress="78"] {
+    width: 78%;
+  }
+  [data-progress="79"] {
+    width: 79%;
+  }
+  [data-progress="80"] {
+    width: 80%;
+  }
+  [data-progress="81"] {
+    width: 81%;
+  }
+  [data-progress="82"] {
+    width: 82%;
+  }
+  [data-progress="83"] {
+    width: 83%;
+  }
+  [data-progress="84"] {
+    width: 84%;
+  }
+  [data-progress="85"] {
+    width: 85%;
+  }
+  [data-progress="86"] {
+    width: 86%;
+  }
+  [data-progress="87"] {
+    width: 87%;
+  }
+  [data-progress="88"] {
+    width: 88%;
+  }
+  [data-progress="89"] {
+    width: 89%;
+  }
+  [data-progress="90"] {
+    width: 90%;
+  }
+  [data-progress="91"] {
+    width: 91%;
+  }
+  [data-progress="92"] {
+    width: 92%;
+  }
+  [data-progress="93"] {
+    width: 93%;
+  }
+  [data-progress="94"] {
+    width: 94%;
+  }
+  [data-progress="95"] {
+    width: 95%;
+  }
+  [data-progress="96"] {
+    width: 96%;
+  }
+  [data-progress="97"] {
+    width: 97%;
+  }
+  [data-progress="98"] {
+    width: 98%;
+  }
+  [data-progress="99"] {
+    width: 99%;
+  }
+  [data-progress="100"] {
+    width: 100%;
+  }
 }

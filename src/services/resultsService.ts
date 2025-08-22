@@ -106,7 +106,7 @@ export async function addResult(resultData: Omit<TestResult, 'id'>) {
         if (resultData.status === 'Pass') {
            // We are logging that it should be created, but not creating it automatically
            // to enforce manual creation from the admin panel for better control.
-           console.log(`Result for ${resultData.studentName} is 'Pass'. A certificate can now be generated from the admin panel.`);
+
         }
 
         return docRef.id;
@@ -139,7 +139,7 @@ export async function deleteResult(id: string): Promise<void> {
                 await deleteFromAdminAPI('results', id);
                 return;
             } catch (adminError) {
-                console.log('Admin API not available, falling back to client SDK');
+
                 // Fall through to client SDK approach
             }
         } else {
@@ -149,7 +149,7 @@ export async function deleteResult(id: string): Promise<void> {
                 await deleteResultAdmin(id);
                 return;
             } catch (adminError) {
-                console.log('Admin server function failed, falling back to client SDK');
+
                 // Fall through to client SDK approach
             }
         }

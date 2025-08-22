@@ -1,20 +1,25 @@
-
 "use client";
 
-import { useForm, type SubmitHandler } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form } from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2, PlusCircle, ArrowLeft } from "lucide-react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { addCourse } from "@/services/coursesService";
 import { InputField } from "@/components/form/input-field";
 import { TextareaField } from "@/components/form/textarea-field";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Form } from "@/components/ui/form";
+import { useToast } from "@/hooks/use-toast";
+import { addCourse } from "@/services/coursesService";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowLeft, Loader2, PlusCircle } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm, type SubmitHandler } from "react-hook-form";
+import { z } from "zod";
 
 const courseSchema = z.object({
   title: z.string().min(2, "Title is required."),
@@ -45,7 +50,11 @@ export default function NewCoursePage() {
   const onSubmit: SubmitHandler<CourseFormValues> = async (data) => {
     setIsLoading(true);
     try {
-      await addCourse(data);
+      await addCourse({
+        ...data,
+        modules: [],
+        isDeleted: false,
+      });
       toast({
         title: "Course Added Successfully",
         description: `${data.title} has been added. You can now add modules and lessons by editing it.`,
@@ -65,7 +74,7 @@ export default function NewCoursePage() {
 
   return (
     <div>
-       <div className="mb-6">
+      <div className="mb-6">
         <Button asChild variant="outline">
           <Link href="/admin/courses">
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -77,7 +86,8 @@ export default function NewCoursePage() {
         <CardHeader>
           <CardTitle>Add New Course</CardTitle>
           <CardDescription>
-            Fill in the details below to create a new course. You can add modules and lessons after creation.
+            Fill in the details below to create a new course. You can add
+            modules and lessons after creation.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -124,7 +134,7 @@ export default function NewCoursePage() {
                 description="Enter any valid icon name from lucide.dev."
                 isRequired
               />
-              
+
               <div className="flex justify-end">
                 <Button type="submit" disabled={isLoading}>
                   {isLoading ? (

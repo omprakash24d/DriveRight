@@ -1,5 +1,5 @@
 
-import { logSubmission } from '@/app/contact/_lib/logging'; // Re-using contact form logger
+import { logSubmission } from '@/app/contact/_lib/logging'; // Using contact form logger
 import { ACCEPTED_DOCUMENT_TYPES, MAX_FILE_SIZE } from '@/lib/constants';
 import { db } from '@/lib/firebase';
 import { uploadFileAdmin } from '@/lib/server-utils';
@@ -61,7 +61,6 @@ export async function POST(req: NextRequest) {
     const parsed = formSchemaServer.safeParse(data);
 
     if (!parsed.success) {
-      console.log("Server-side validation failed:", parsed.error.flatten().fieldErrors);
       return NextResponse.json(
         { message: 'Invalid input.', errors: parsed.error.flatten().fieldErrors },
         { status: 400 }
@@ -105,10 +104,9 @@ export async function POST(req: NextRequest) {
       const photoFile = new File([photoBlob], 'photo_cropped.jpg', { type: 'image/jpeg' });
 
       // --- Upload images to Firebase Storage using Admin SDK ---
-      console.log(`Uploading files: photo (${photoFile.size} bytes), idProof (${idProof.size} bytes)`);
       photoCroppedUrl = await uploadFileAdmin(photoFile, `enrollments/${uniqueId}/photo_cropped.jpg`);
       idProofUrl = await uploadFileAdmin(idProof, `enrollments/${uniqueId}/id_proof.${idProof.name.split('.').pop()}`);
-      console.log(`Upload successful: photo URL: ${photoCroppedUrl}, idProof URL: ${idProofUrl}`);
+
     } catch (uploadError: any) {
       console.error('Firebase Storage upload error:', uploadError);
       await logSubmission({

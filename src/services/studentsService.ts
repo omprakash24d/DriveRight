@@ -106,7 +106,6 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
         }
         return null;
     } catch (error) {
-        console.error("Error fetching user profile:", error);
         return null;
     }
 }
@@ -132,10 +131,11 @@ export async function updateUserProfile(userId: string, data: { name?: string, a
 
 export async function enrollUserInCourse(userId: string, courseId: string): Promise<void> {
     if (!db.app) throw new Error("Firebase not initialized.");
-    const course = await getCourse(courseId);
-    if (!course) {
+    const courseResult = await getCourse(courseId);
+    if (!courseResult.success) {
         throw new Error("Course not found, cannot enroll.");
     }
+    const course = courseResult.data;
     const enrollmentRef = doc(db, USERS_COLLECTION, userId, 'enrolledCourses', courseId);
     await setDoc(enrollmentRef, {
         title: course.title,
@@ -177,7 +177,6 @@ export async function getStudents(): Promise<Student[]> {
     try {
       return await fetchFromAdminAPI('students');
     } catch (adminError) {
-      console.warn('Admin API not available, falling back to client SDK');
       // Return empty array instead of trying client SDK on server
       return [];
     }
@@ -199,7 +198,6 @@ export async function getStudents(): Promise<Student[]> {
       ...(doc.data() as Omit<Student, 'id'>)
     }));
   } catch (error) {
-    console.error("Error fetching students:", error);
     return [];
   }
 }
@@ -214,11 +212,9 @@ export async function getStudent(id: string): Promise<Student | null> {
     if (docSnap.exists()) {
       return { id: docSnap.id, ...(docSnap.data() as Omit<Student, 'id'>) };
     } else {
-      console.warn(`No student document found with id: ${id}`);
       return null;
     }
   } catch (error) {
-    console.error(`Error fetching student with id ${id}:`, error);
     return null;
   }
 }
@@ -235,7 +231,6 @@ export async function addStudent(studentData: Omit<Student, 'id' | 'joined'>) {
         await addLog('Added Student', `Name: ${studentData.name}`);
         return docRef.id;
     } catch (error) {
-        console.error("Error adding student: ", error);
         throw new Error("Could not add student to the database.");
     }
 }
@@ -251,7 +246,7 @@ export async function createStudentFromEnrollment(studentData: { name: string; e
     
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
-      console.log(`Student with email ${studentData.email} already exists.`);
+
       // Update existing student with avatar if it's new
       const studentDoc = querySnapshot.docs[0];
       if (studentData.avatar && !studentDoc.data().avatar) {
@@ -273,7 +268,6 @@ export async function updateStudent(id: string, studentData: Partial<Omit<Studen
         await updateDoc(docRef, studentData);
         await addLog('Updated Student', `ID: ${id}`);
     } catch (error) {
-        console.error("Error updating student: ", error);
         throw new Error("Could not update student in the database.");
     }
 }
@@ -289,7 +283,7 @@ export async function deleteStudent(id: string): Promise<void> {
                 await addLog('Deleted Student', `ID: ${id} (via admin API)`);
                 return;
             } catch (adminError) {
-                console.log('Admin API not available, falling back to client SDK');
+
                 // Fall through to client SDK approach
             }
         } else {
@@ -299,7 +293,7 @@ export async function deleteStudent(id: string): Promise<void> {
                 await deleteStudentAdmin(id);
                 return;
             } catch (adminError) {
-                console.log('Admin server function failed, falling back to client SDK');
+
                 // Fall through to client SDK approach
             }
         }
@@ -313,7 +307,6 @@ export async function deleteStudent(id: string): Promise<void> {
         await addLog('Deleted Student', `ID: ${id} (via client SDK)`);
         
     } catch (error) {
-        console.error("Error deleting student: ", error);
         if (error instanceof Error && error.message.includes('admin API delete failed: 401')) {
             throw new Error("Delete student functionality requires admin privileges");
         }
@@ -350,7 +343,6 @@ export async function seedDefaultStudents(): Promise<number> {
 
         return studentsToAdd.length;
     } catch (error) {
-        console.error("Error seeding default students:", error);
         throw new Error("Could not seed default students.");
     }
 }
@@ -362,7 +354,6 @@ export async function getStudentsAdmin(): Promise<StudentBase[]> {
     try {
       return await fetchFromAdminAPI('students');
     } catch (adminError) {
-      console.warn('Admin API not available:', adminError);
       // Return empty array instead of trying client SDK on server
       return [];
     }

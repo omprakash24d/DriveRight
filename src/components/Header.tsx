@@ -1,16 +1,22 @@
-
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { Car, Menu, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from "@/components/ui/sheet";
-import { ThemeToggle } from "./theme-toggle";
-import { NavItem } from "./NavItem";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { useAuth } from "@/context/AuthContext";
-import { UserNav } from "./UserNav";
 import type { SiteSettings } from "@/services/settingsService";
+import { Car, Menu } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+import { NavItem } from "./NavItem";
+import { ThemeToggle } from "./theme-toggle";
+import { UserNav } from "./UserNav";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -51,82 +57,108 @@ export function Header({ settings }: { settings: SiteSettings }) {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
+      <div className="container mx-auto flex h-16 items-center justify-between container-padding">
         <Link href="/" className="flex items-center gap-2 font-bold text-lg">
           <Car className="h-6 w-6 text-primary" />
           <span>{settings.schoolName}</span>
         </Link>
         <div className="flex items-center gap-2">
-            <nav className="hidden md:flex items-center gap-2">
-              {navLinks.map((item) => (
-                <NavItem key={item.label || item.href} item={item} isMobile={false} />
-              ))}
-            </nav>
-            
-            <ThemeToggle />
+          <nav className="hidden md:flex items-center gap-2">
+            {navLinks.map((item) => (
+              <NavItem
+                key={item.label || item.href}
+                item={item}
+                isMobile={false}
+              />
+            ))}
+          </nav>
 
-            {!isLoading && (
-              <div className="hidden md:flex items-center gap-2">
-                {user ? (
-                  <UserNav />
-                ) : (
-                  <>
-                    <Button asChild variant="ghost">
-                      <Link href="/login">Login</Link>
-                    </Button>
-                    <Button asChild>
-                      <Link href="/signup">Sign Up</Link>
-                    </Button>
-                  </>
-                )}
-              </div>
-            )}
+          <ThemeToggle />
 
-            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+          {!isLoading && (
+            <div className="hidden md:flex items-center gap-2">
+              {user ? (
+                <UserNav />
+              ) : (
+                <>
+                  <Button asChild variant="ghost">
+                    <Link href="/login">Login</Link>
+                  </Button>
+                  <Button asChild>
+                    <Link href="/signup">Sign Up</Link>
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="md:hidden">
+              <Button variant="outline" size="icon" className="md:hidden">
                 <Menu className="h-6 w-6" />
                 <span className="sr-only">Open navigation menu</span>
-                </Button>
+              </Button>
             </SheetTrigger>
             <SheetContent side="left">
-                <SheetHeader className="mb-6">
-                   <SheetTitle asChild>
-                     <Link href="/" className="flex items-center gap-2 font-bold text-lg" onClick={() => setIsMobileMenuOpen(false)}>
-                        <Car className="h-6 w-6 text-primary" />
-                        <span>{settings.schoolName}</span>
-                    </Link>
-                   </SheetTitle>
-                  <SheetDescription className="sr-only">Main navigation for the website.</SheetDescription>
-                </SheetHeader>
-                <div className="flex flex-col gap-4">
-                    {navLinks.map((item) => (
-                      <NavItem
-                        key={item.label || item.href}
-                        item={item}
-                        isMobile={true}
-                        closeSheet={() => setIsMobileMenuOpen(false)}
-                      />
-                    ))}
-                    <hr className="my-4" />
-                    {!isLoading && (
-                      user ? (
-                        <>
-                           <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium text-muted-foreground transition-colors hover:text-primary">Dashboard</Link>
-                           <UserNav isMobile={true}/>
-                        </>
-                      ) : (
-                        <>
-                           <Link href="/login" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium text-muted-foreground transition-colors hover:text-primary">Login</Link>
-                           <Button asChild>
-                              <Link href="/signup" onClick={() => setIsMobileMenuOpen(false)}>Sign Up</Link>
-                           </Button>
-                        </>
-                      )
-                    )}
-                </div>
+              <SheetHeader className="mb-6">
+                <SheetTitle asChild>
+                  <Link
+                    href="/"
+                    className="flex items-center gap-2 font-bold text-lg"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Car className="h-6 w-6 text-primary" />
+                    <span>{settings.schoolName}</span>
+                  </Link>
+                </SheetTitle>
+                <SheetDescription className="sr-only">
+                  Main navigation for the website.
+                </SheetDescription>
+              </SheetHeader>
+              <div className="flex flex-col gap-4">
+                {navLinks.map((item) => (
+                  <NavItem
+                    key={item.label || item.href}
+                    item={item}
+                    isMobile={true}
+                    closeSheet={() => setIsMobileMenuOpen(false)}
+                  />
+                ))}
+                <hr className="my-4" />
+                {!isLoading &&
+                  (user ? (
+                    <>
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="text-lg font-medium text-muted-foreground transition-colors hover:text-primary"
+                      >
+                        Dashboard
+                      </Link>
+                      <UserNav isMobile={true} />
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        href="/login"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="text-lg font-medium text-muted-foreground transition-colors hover:text-primary"
+                      >
+                        Login
+                      </Link>
+                      <Button asChild>
+                        <Link
+                          href="/signup"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Sign Up
+                        </Link>
+                      </Button>
+                    </>
+                  ))}
+              </div>
             </SheetContent>
-            </Sheet>
+          </Sheet>
         </div>
       </div>
     </header>

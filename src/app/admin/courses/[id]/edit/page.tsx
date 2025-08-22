@@ -1,32 +1,45 @@
-
 "use client";
 
-import { useForm, useFieldArray, type SubmitHandler } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { nanoid } from 'nanoid';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form } from "@/components/ui/form";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2, Save, ArrowLeft, PlusCircle, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
-import Link from "next/link";
-import { Skeleton } from "@/components/ui/skeleton";
-import { getCourse } from "@/services/coursesService";
 import { InputField } from "@/components/form/input-field";
 import { TextareaField } from "@/components/form/textarea-field";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Form } from "@/components/ui/form";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { getCourse } from "@/services/coursesService";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowLeft, Loader2, PlusCircle, Save, Trash2 } from "lucide-react";
+import { nanoid } from "nanoid";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useFieldArray, useForm, type SubmitHandler } from "react-hook-form";
+import { z } from "zod";
 import { updateCourseAction } from "../../actions";
 
 const attachmentSchema = z.object({
   id: z.string(),
   name: z.string().min(1, "Attachment name is required."),
-  url: z.string().min(1, "URL is required.").refine(
-    (val) => val.trim() === '#' || z.string().url().safeParse(val).success,
-    { message: "Must be a valid URL or use '#' for no link." }
-  ),
+  url: z
+    .string()
+    .min(1, "URL is required.")
+    .refine(
+      (val) => val.trim() === "#" || z.string().url().safeParse(val).success,
+      { message: "Must be a valid URL or use '#' for no link." }
+    ),
 });
 
 const lessonSchema = z.object({
@@ -71,10 +84,14 @@ export default function EditCoursePage() {
       description: "",
       price: "",
       value: "",
-    }
+    },
   });
-  
-  const { fields: moduleFields, append: appendModule, remove: removeModule } = useFieldArray({
+
+  const {
+    fields: moduleFields,
+    append: appendModule,
+    remove: removeModule,
+  } = useFieldArray({
     control: form.control,
     name: "modules",
   });
@@ -83,20 +100,25 @@ export default function EditCoursePage() {
     if (courseId) {
       setIsFetching(true);
       getCourse(courseId)
-        .then(course => {
-            if (course) {
-                form.reset({
-                  ...course,
-                  modules: course.modules || [],
-                });
-            } else {
-                toast({ variant: "destructive", title: "Course not found" })
-                router.push("/admin/courses");
-            }
+        .then((result) => {
+          if (result.success) {
+            const course = result.data;
+            form.reset({
+              ...course,
+              modules: course.modules || [],
+            });
+          } else {
+            toast({ variant: "destructive", title: "Course not found" });
+            router.push("/admin/courses");
+          }
         })
-        .catch(error => {
-            console.error(error);
-            toast({ variant: "destructive", title: "Error", description: "Failed to fetch course data." })
+        .catch((error) => {
+          console.error(error);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to fetch course data.",
+          });
         })
         .finally(() => setIsFetching(false));
     }
@@ -105,37 +127,87 @@ export default function EditCoursePage() {
   const onSubmit: SubmitHandler<CourseFormValues> = async (data) => {
     setIsLoading(true);
     try {
-        const result = await updateCourseAction(courseId, data);
-        if (result.success) {
-            toast({ title: "Course Updated Successfully" });
-            router.push("/admin/courses");
-        } else {
-            throw new Error(result.error);
-        }
+      const result = await updateCourseAction(courseId, data);
+      if (result.success) {
+        toast({ title: "Course Updated Successfully" });
+        router.push("/admin/courses");
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error: any) {
-        toast({ variant: "destructive", title: "Update Failed", description: error.message });
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: error.message,
+      });
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
   if (isFetching) {
-    return <div><Skeleton className="h-10 w-48 mb-6" /><Card><CardHeader><Skeleton className="h-8 w-1/2" /></CardHeader><CardContent><Skeleton className="h-40 w-full" /></CardContent></Card></div>
+    return (
+      <div>
+        <Skeleton className="h-10 w-48 mb-6" />
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-8 w-1/2" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-40 w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
     <div>
-      <div className="mb-6"><Button asChild variant="outline"><Link href="/admin/courses"><ArrowLeft />Back to All Courses</Link></Button></div>
+      <div className="mb-6">
+        <Button asChild variant="outline">
+          <Link href="/admin/courses">
+            <ArrowLeft />
+            Back to All Courses
+          </Link>
+        </Button>
+      </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <Card>
-            <CardHeader><CardTitle>Course Details</CardTitle><CardDescription>Update the core information for this course.</CardDescription></CardHeader>
+            <CardHeader>
+              <CardTitle>Course Details</CardTitle>
+              <CardDescription>
+                Update the core information for this course.
+              </CardDescription>
+            </CardHeader>
             <CardContent className="space-y-6">
-              <InputField control={form.control} name="title" label="Title" isRequired />
-              <TextareaField control={form.control} name="description" label="Description" rows={4} isRequired />
+              <InputField
+                control={form.control}
+                name="title"
+                label="Title"
+                isRequired
+              />
+              <TextareaField
+                control={form.control}
+                name="description"
+                label="Description"
+                rows={4}
+                isRequired
+              />
               <div className="grid md:grid-cols-2 gap-6">
-                <InputField control={form.control} name="price" label="Price" placeholder="e.g., Free or ₹15,000" isRequired />
-                <InputField control={form.control} name="value" label="Enroll Link Value" isRequired />
+                <InputField
+                  control={form.control}
+                  name="price"
+                  label="Price"
+                  placeholder="e.g., Free or ₹15,000"
+                  isRequired
+                />
+                <InputField
+                  control={form.control}
+                  name="value"
+                  label="Enroll Link Value"
+                  isRequired
+                />
               </div>
               <InputField
                 control={form.control}
@@ -151,20 +223,52 @@ export default function EditCoursePage() {
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <div><CardTitle>Course Content</CardTitle><CardDescription>Manage modules and lessons for this course.</CardDescription></div>
-                <Button type="button" variant="outline" onClick={() => appendModule({ id: nanoid(), title: '', lessons: [] })}><PlusCircle /> Add Module</Button>
+                <div>
+                  <CardTitle>Course Content</CardTitle>
+                  <CardDescription>
+                    Manage modules and lessons for this course.
+                  </CardDescription>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    appendModule({ id: nanoid(), title: "", lessons: [] })
+                  }
+                >
+                  <PlusCircle /> Add Module
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
               <Accordion type="multiple" className="w-full space-y-4">
                 {moduleFields.map((moduleItem, moduleIndex) => (
-                  <AccordionItem value={moduleItem.id} key={moduleItem.id} className="border rounded-md p-4 bg-muted/30">
+                  <AccordionItem
+                    value={moduleItem.id}
+                    key={moduleItem.id}
+                    className="border rounded-md p-4 bg-muted/30"
+                  >
                     <div className="flex items-center justify-between">
-                      <AccordionTrigger className="flex-1 text-lg font-semibold hover:no-underline">Module {moduleIndex + 1}: {form.watch(`modules.${moduleIndex}.title`)}</AccordionTrigger>
-                      <Button type="button" variant="ghost" size="icon" onClick={() => removeModule(moduleIndex)}><Trash2 className="text-destructive" /></Button>
+                      <AccordionTrigger className="flex-1 text-lg font-semibold hover:no-underline">
+                        Module {moduleIndex + 1}:{" "}
+                        {form.watch(`modules.${moduleIndex}.title`)}
+                      </AccordionTrigger>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeModule(moduleIndex)}
+                      >
+                        <Trash2 className="text-destructive" />
+                      </Button>
                     </div>
                     <AccordionContent className="pt-4 space-y-4">
-                      <InputField control={form.control} name={`modules.${moduleIndex}.title`} label="Module Title" isRequired />
+                      <InputField
+                        control={form.control}
+                        name={`modules.${moduleIndex}.title`}
+                        label="Module Title"
+                        isRequired
+                      />
                       <LessonArray moduleIndex={moduleIndex} form={form} />
                     </AccordionContent>
                   </AccordionItem>
@@ -172,18 +276,29 @@ export default function EditCoursePage() {
               </Accordion>
             </CardContent>
           </Card>
-          
-          <div className="flex justify-end"><Button type="submit" disabled={isLoading}>{isLoading ? <Loader2 className="animate-spin" /> : <Save />}Save Changes</Button></div>
+
+          <div className="flex justify-end">
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? <Loader2 className="animate-spin" /> : <Save />}Save
+              Changes
+            </Button>
+          </div>
         </form>
       </Form>
     </div>
   );
 }
 
-function LessonArray({ moduleIndex, form }: { moduleIndex: number, form: any }) {
+function LessonArray({
+  moduleIndex,
+  form,
+}: {
+  moduleIndex: number;
+  form: any;
+}) {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: `modules.${moduleIndex}.lessons`
+    name: `modules.${moduleIndex}.lessons`,
   });
   return (
     <div className="space-y-4 pl-4 border-l-2 ml-2">
@@ -192,37 +307,113 @@ function LessonArray({ moduleIndex, form }: { moduleIndex: number, form: any }) 
         <Card key={lesson.id} className="p-4 bg-background">
           <div className="flex justify-between items-center mb-4">
             <h5 className="font-semibold">Lesson {lessonIndex + 1}</h5>
-            <Button type="button" variant="ghost" size="sm" onClick={() => remove(lessonIndex)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => remove(lessonIndex)}
+            >
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
           </div>
           <div className="space-y-4">
-            <InputField control={form.control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.title`} label="Title" isRequired />
-            <InputField control={form.control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.videoUrl`} label="Video URL" isRequired />
-            <TextareaField control={form.control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.description`} label="Description" isRequired />
-            <AttachmentArray moduleIndex={moduleIndex} lessonIndex={lessonIndex} form={form} />
+            <InputField
+              control={form.control}
+              name={`modules.${moduleIndex}.lessons.${lessonIndex}.title`}
+              label="Title"
+              isRequired
+            />
+            <InputField
+              control={form.control}
+              name={`modules.${moduleIndex}.lessons.${lessonIndex}.videoUrl`}
+              label="Video URL"
+              isRequired
+            />
+            <TextareaField
+              control={form.control}
+              name={`modules.${moduleIndex}.lessons.${lessonIndex}.description`}
+              label="Description"
+              isRequired
+            />
+            <AttachmentArray
+              moduleIndex={moduleIndex}
+              lessonIndex={lessonIndex}
+              form={form}
+            />
           </div>
         </Card>
       ))}
-      <Button type="button" size="sm" variant="outline" onClick={() => append({ id: nanoid(), title: '', videoUrl: '', description: '', attachments: [] })}>Add Lesson</Button>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        onClick={() =>
+          append({
+            id: nanoid(),
+            title: "",
+            videoUrl: "",
+            description: "",
+            attachments: [],
+          })
+        }
+      >
+        Add Lesson
+      </Button>
     </div>
   );
 }
 
-function AttachmentArray({ moduleIndex, lessonIndex, form }: { moduleIndex: number, lessonIndex: number, form: any}) {
-    const { fields, append, remove } = useFieldArray({
-        control: form.control,
-        name: `modules.${moduleIndex}.lessons.${lessonIndex}.attachments`
-    });
-    return (
-        <div className="space-y-2">
-             <h6 className="font-semibold text-sm">Attachments</h6>
-            {fields.map((attachment, attachmentIndex) => (
-                <div key={attachment.id} className="flex items-end gap-2 p-2 border rounded-md">
-                   <InputField control={form.control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.attachments.${attachmentIndex}.name`} label="Name" isRequired />
-                   <InputField control={form.control} name={`modules.${moduleIndex}.lessons.${lessonIndex}.attachments.${attachmentIndex}.url`} label="URL" isRequired />
-                   <Button type="button" variant="ghost" size="icon" onClick={() => remove(attachmentIndex)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                </div>
-            ))}
-            <Button type="button" size="sm" variant="outline" onClick={() => append({ id: nanoid(), name: '', url: ''})}>Add Attachment</Button>
+function AttachmentArray({
+  moduleIndex,
+  lessonIndex,
+  form,
+}: {
+  moduleIndex: number;
+  lessonIndex: number;
+  form: any;
+}) {
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: `modules.${moduleIndex}.lessons.${lessonIndex}.attachments`,
+  });
+  return (
+    <div className="space-y-2">
+      <h6 className="font-semibold text-sm">Attachments</h6>
+      {fields.map((attachment, attachmentIndex) => (
+        <div
+          key={attachment.id}
+          className="flex items-end gap-2 p-2 border rounded-md"
+        >
+          <InputField
+            control={form.control}
+            name={`modules.${moduleIndex}.lessons.${lessonIndex}.attachments.${attachmentIndex}.name`}
+            label="Name"
+            isRequired
+          />
+          <InputField
+            control={form.control}
+            name={`modules.${moduleIndex}.lessons.${lessonIndex}.attachments.${attachmentIndex}.url`}
+            label="URL"
+            isRequired
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => remove(attachmentIndex)}
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
         </div>
-    )
+      ))}
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        onClick={() => append({ id: nanoid(), name: "", url: "" })}
+      >
+        Add Attachment
+      </Button>
+    </div>
+  );
 }

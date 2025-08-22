@@ -50,7 +50,7 @@ export async function getInstructor(id: string): Promise<Instructor | null> {
         if (docSnap.exists()) {
             return { id: docSnap.id, ...(docSnap.data() as Omit<Instructor, 'id'>) };
         } else {
-            console.log("No such instructor document!");
+
             return null;
         }
     } catch (error) {
@@ -95,7 +95,7 @@ export async function deleteInstructor(id: string): Promise<void> {
                 await deleteFromAdminAPI('instructors', id);
                 return;
             } catch (adminError) {
-                console.log('Admin API not available, falling back to client SDK');
+
                 // Fall through to client SDK approach
             }
         } else {
@@ -105,7 +105,7 @@ export async function deleteInstructor(id: string): Promise<void> {
                 await deleteInstructorAdmin(id);
                 return;
             } catch (adminError) {
-                console.log('Admin server function failed, falling back to client SDK');
+
                 // Fall through to client SDK approach
             }
         }

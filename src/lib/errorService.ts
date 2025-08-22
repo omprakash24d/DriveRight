@@ -1,72 +1,48 @@
-import * as Sentry from '@sentry/nextjs';
-
 export class ErrorService {
   static logError(message: string, error?: Error | unknown, context?: Record<string, any>) {
-    // Always log to console for development visibility
-    console.error(message, error);
-    
-    // Send to Sentry if available and not in development (to avoid noise)
-    if (process.env.NEXT_PUBLIC_SENTRY_DSN && process.env.NODE_ENV === 'production') {
-      Sentry.withScope((scope) => {
-        if (context) {
-          scope.setContext('errorContext', context);
-        }
-        if (error instanceof Error) {
-          Sentry.captureException(error);
-        } else {
-          Sentry.captureMessage(message, 'error');
-        }
-      });
-    }
+    // Always log to console with rich formatting
+    console.error('🚨 Error:', {
+      message,
+      error: error instanceof Error ? {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      } : error,
+      context,
+      timestamp: new Date().toISOString(),
+    });
   }
 
   static logWarning(message: string, context?: Record<string, any>) {
-    console.warn(message);
-    
-    if (process.env.NEXT_PUBLIC_SENTRY_DSN && process.env.NODE_ENV === 'production') {
-      Sentry.withScope((scope) => {
-        if (context) {
-          scope.setContext('warningContext', context);
-        }
-        Sentry.captureMessage(message, 'warning');
-      });
-    }
+    console.warn('⚠️ Warning:', {
+      message,
+      context,
+      timestamp: new Date().toISOString(),
+    });
   }
 
   static logInfo(message: string, context?: Record<string, any>) {
-    console.log(message);
-    
-    // Only send important info messages to Sentry in production
-    if (process.env.NEXT_PUBLIC_SENTRY_DSN && 
-        process.env.NODE_ENV === 'production' && 
-        context?.important === true) {
-      Sentry.withScope((scope) => {
-        if (context) {
-          scope.setContext('infoContext', context);
-        }
-        Sentry.captureMessage(message, 'info');
-      });
-    }
+    console.info('ℹ️ Info:', {
+      message,
+      context,
+      timestamp: new Date().toISOString(),
+    });
   }
 
   static setUserContext(userId: string, email?: string, role?: string) {
-    if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
-      Sentry.setUser({
-        id: userId,
-        email: email,
-        role: role,
-      });
-    }
+    console.info('👤 User Context Set:', {
+      userId,
+      email,
+      role,
+      timestamp: new Date().toISOString(),
+    });
   }
 
   static trackPerformance(name: string, data?: Record<string, any>) {
-    if (process.env.NEXT_PUBLIC_SENTRY_DSN && process.env.NODE_ENV === 'production') {
-      Sentry.addBreadcrumb({
-        message: name,
-        category: 'performance',
-        data: data,
-        level: 'info',
-      });
-    }
+    console.info('📊 Performance:', {
+      operation: name,
+      data,
+      timestamp: new Date().toISOString(),
+    });
   }
 }

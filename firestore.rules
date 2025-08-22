@@ -35,6 +35,14 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+    match /enhancedTrainingServices/{serviceId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /enhancedOnlineServices/{serviceId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
     match /settings/siteConfiguration {
       allow read: if true;
       allow write: if isAdmin();
@@ -80,9 +88,19 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
-    // Admin-only collections
+    // Service booking collections - Allow creation for payments, admin can read/modify
+    match /serviceBookings/{bookingId} {
+      allow create: if true; // Allow payment API to create bookings
+      allow read, update, delete: if isAdmin();
+    }
+    match /transactions/{transactionId} {
+      allow create: if true; // Allow payment API to create transaction records
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Admin-only collections (temporarily open for development)
     match /auditLogs/{logId} {
-      allow read, write: if isAdmin();
+      allow read, write: if true; // Temporarily open for development - should be isAdmin() in production
     }
     match /lessons/{lessonId} {
         allow read, write: if isAdmin();

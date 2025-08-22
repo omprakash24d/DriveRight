@@ -1,7 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { SiteSettings } from "@/services/settingsService";
-import { Phone, Mail, MapPin, MessageCircle } from "lucide-react";
+import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import Link from "next/link";
 
 interface ContactInfoProps {
@@ -22,34 +22,48 @@ export function ContactInfo({ settings }: ContactInfoProps) {
           </div>
           <div className="flex items-center gap-4">
             <Phone className="h-5 w-5 text-primary flex-shrink-0" />
-            <a href={`tel:${settings.phone}`} className="hover:text-primary">{settings.phone}</a>
+            <a href={`tel:${settings.phone}`} className="hover:text-primary">
+              {settings.phone}
+            </a>
           </div>
           <div className="flex items-center gap-4">
             <Mail className="h-5 w-5 text-primary flex-shrink-0" />
-            <a href={`mailto:${settings.contactEmail}`} className="hover:text-primary">{settings.contactEmail}</a>
+            <a
+              href={`mailto:${settings.contactEmail}`}
+              className="hover:text-primary"
+            >
+              {settings.contactEmail}
+            </a>
           </div>
-           <div className="pt-4">
+          <div className="pt-4">
             <Button asChild className="w-full sm:w-auto">
-              <Link href={`https://wa.me/${settings.whatsappNumber}`} target="_blank" rel="noopener noreferrer">
+              <Link
+                href={`https://wa.me/${settings.whatsappNumber}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <MessageCircle className="mr-2" /> Message on WhatsApp
               </Link>
             </Button>
           </div>
         </CardContent>
       </Card>
-      
+
       <div className="overflow-hidden rounded-lg shadow-xl border h-[400px]">
-          <iframe
-              src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(settings.address)}`}
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              allowFullScreen={true}
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              title={`${settings.schoolName} Location`}
-              aria-label={`Google Maps location of ${settings.schoolName}`}
-            ></iframe>
+        <iframe
+          src={`https://www.google.com/maps/embed/v1/place?key=${
+            process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+          }&q=${encodeURIComponent(settings.address)}`}
+          width="100%"
+          height="100%"
+          style={{ border: 0 }}
+          allowFullScreen={true}
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+          title={`${settings.schoolName} Location`}
+          aria-label={`Google Maps location of ${settings.schoolName}`}
+          allow="geolocation"
+        ></iframe>
       </div>
     </div>
   );

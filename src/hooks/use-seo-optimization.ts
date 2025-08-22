@@ -208,7 +208,7 @@ export function useSEOOptimization(options: SEOOptimizationOptions = {}) {
       scripts.forEach((script, index) => {
         try {
           const data = JSON.parse(script.textContent || '');
-          console.log(`✅ Valid JSON-LD schema #${index + 1}:`, data);
+
           
           // Basic validation
           if (!data['@context'] || !data['@type']) {

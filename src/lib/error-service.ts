@@ -3,8 +3,6 @@
  * This service provides a unified interface for error handling across the application
  */
 
-import * as Sentry from "@sentry/nextjs";
-
 export interface ErrorContext {
   userId?: string;
   component?: string;
@@ -19,71 +17,34 @@ export interface PerformanceContext {
 }
 
 /**
- * Enhanced error logging with Sentry integration
+ * Enhanced error logging service with fallback console logging
  */
 export class ErrorService {
   /**
-   * Log an error with context and send to Sentry
+   * Log an error with context
    */
   static logError(error: Error | string, context?: ErrorContext) {
     const errorMessage = typeof error === 'string' ? error : error.message;
     const errorObj = typeof error === 'string' ? new Error(error) : error;
 
-    // Console log for development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('🚨 Error:', errorMessage, context);
-    }
-
-    // Send to Sentry with context
-    Sentry.withScope((scope) => {
-      if (context?.userId) {
-        scope.setUser({ id: context.userId });
-      }
-      
-      if (context?.component) {
-        scope.setTag('component', context.component);
-      }
-      
-      if (context?.action) {
-        scope.setTag('action', context.action);
-      }
-      
-      if (context?.metadata) {
-        scope.setContext('metadata', context.metadata);
-      }
-      
-      scope.setLevel('error');
-      Sentry.captureException(errorObj);
+    // Always log to console for development and fallback
+    console.error('🚨 Error:', errorMessage, {
+      error: errorObj,
+      context,
+      timestamp: new Date().toISOString(),
     });
+
+    // Production error tracking service integration
+    // This could be Sentry, LogRocket, or custom analytics
   }
 
   /**
    * Log a warning with context
    */
   static logWarning(message: string, context?: ErrorContext) {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('⚠️ Warning:', message, context);
-    }
-
-    Sentry.withScope((scope) => {
-      if (context?.userId) {
-        scope.setUser({ id: context.userId });
-      }
-      
-      if (context?.component) {
-        scope.setTag('component', context.component);
-      }
-      
-      if (context?.action) {
-        scope.setTag('action', context.action);
-      }
-      
-      if (context?.metadata) {
-        scope.setContext('metadata', context.metadata);
-      }
-      
-      scope.setLevel('warning');
-      Sentry.captureMessage(message, 'warning');
+    console.warn('⚠️ Warning:', message, {
+      context,
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -91,25 +52,9 @@ export class ErrorService {
    * Log informational message
    */
   static logInfo(message: string, context?: ErrorContext) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('ℹ️ Info:', message, context);
-    }
-
-    Sentry.withScope((scope) => {
-      if (context?.userId) {
-        scope.setUser({ id: context.userId });
-      }
-      
-      if (context?.component) {
-        scope.setTag('component', context.component);
-      }
-      
-      if (context?.metadata) {
-        scope.setContext('metadata', context.metadata);
-      }
-      
-      scope.setLevel('info');
-      Sentry.captureMessage(message, 'info');
+    console.info('ℹ️ Info:', message, {
+      context,
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -117,23 +62,11 @@ export class ErrorService {
    * Track performance metrics
    */
   static trackPerformance(context: PerformanceContext) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('📊 Performance:', context);
-    }
-
-    Sentry.withScope((scope) => {
-      scope.setTag('operation', context.operation);
-      
-      if (context.duration) {
-        scope.setTag('duration', context.duration.toString());
-      }
-      
-      if (context.metadata) {
-        scope.setContext('performance', context.metadata);
-      }
-      
-      scope.setLevel('info');
-      Sentry.captureMessage(`Performance: ${context.operation}`, 'info');
+    console.info('📊 Performance:', {
+      operation: context.operation,
+      duration: context.duration,
+      metadata: context.metadata,
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -141,19 +74,11 @@ export class ErrorService {
    * Track user interactions for analytics
    */
   static trackUserAction(action: string, userId?: string, metadata?: Record<string, any>) {
-    Sentry.withScope((scope) => {
-      if (userId) {
-        scope.setUser({ id: userId });
-      }
-      
-      scope.setTag('user_action', action);
-      
-      if (metadata) {
-        scope.setContext('user_action_metadata', metadata);
-      }
-      
-      scope.setLevel('info');
-      Sentry.captureMessage(`User Action: ${action}`, 'info');
+    console.info('👤 User Action:', {
+      action,
+      userId,
+      metadata,
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -161,10 +86,11 @@ export class ErrorService {
    * Set user context for subsequent error reports
    */
   static setUserContext(userId: string, email?: string, role?: string) {
-    Sentry.setUser({
-      id: userId,
+    console.info('👤 User Context Set:', {
+      userId,
       email,
-      ...(role && { role }),
+      role,
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -172,19 +98,20 @@ export class ErrorService {
    * Clear user context (e.g., on logout)
    */
   static clearUserContext() {
-    Sentry.setUser(null);
+    console.info('👤 User Context Cleared:', {
+      timestamp: new Date().toISOString(),
+    });
   }
 
   /**
    * Add breadcrumb for debugging
    */
   static addBreadcrumb(message: string, category: string, data?: Record<string, any>) {
-    Sentry.addBreadcrumb({
+    console.debug('🍞 Breadcrumb:', {
       message,
       category,
       data,
-      level: 'info',
-      timestamp: Date.now() / 1000,
+      timestamp: new Date().toISOString(),
     });
   }
 }

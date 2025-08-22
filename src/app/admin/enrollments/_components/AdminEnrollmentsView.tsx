@@ -34,6 +34,7 @@ import {
   Calendar,
   Download,
   FileCheck,
+  FileText,
   Loader2,
   Mail,
   MapPin,
@@ -448,13 +449,27 @@ export function AdminEnrollmentsView({
                                             target="_blank"
                                             rel="noopener noreferrer"
                                           >
-                                            <Image
-                                              src={enrollment.idProofUrl}
-                                              alt="Applicant's ID proof"
-                                              width={128}
-                                              height={128}
-                                              className="rounded-lg border object-contain aspect-square hover:opacity-80 transition-opacity"
-                                            />
+                                            {enrollment.idProofUrl
+                                              .toLowerCase()
+                                              .includes(".pdf") ? (
+                                              <div className="h-[128px] w-[128px] bg-red-50 border border-red-200 rounded-lg flex flex-col items-center justify-center text-center p-2 hover:bg-red-100 transition-colors">
+                                                <FileText className="h-8 w-8 text-red-600 mb-2" />
+                                                <p className="text-xs text-red-700 font-medium">
+                                                  PDF Document
+                                                </p>
+                                                <p className="text-xs text-red-600">
+                                                  Click to view
+                                                </p>
+                                              </div>
+                                            ) : (
+                                              <Image
+                                                src={enrollment.idProofUrl}
+                                                alt="Applicant's ID proof"
+                                                width={128}
+                                                height={128}
+                                                className="rounded-lg border object-contain aspect-square hover:opacity-80 transition-opacity"
+                                              />
+                                            )}
                                           </Link>
                                         ) : (
                                           <div className="h-[128px] w-[128px] bg-muted rounded-lg flex flex-col items-center justify-center text-center p-2">

@@ -3,10 +3,15 @@ import {
   generateLocalBusinessSchema,
   generateOrganizationSchema,
 } from "@/lib/seo-utils";
+import {
+  getOnlineServices,
+  getTrainingServices,
+} from "@/services/quickServicesService";
 import { getSiteSettings } from "@/services/settingsService";
 import { getTestimonials } from "@/services/testimonialsService";
 import type { Metadata } from "next";
 import { DrivingTipsBlog } from "./_components/DrivingTipsBlog";
+import { ServiceCards } from "./_components/ServiceCards";
 import { ServicesHero } from "./_components/ServicesHero";
 import { ServicesTestimonials } from "./_components/ServicesTestimonials";
 
@@ -54,8 +59,111 @@ export default async function ServicesPage() {
   const settings = await getSiteSettings();
   const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:9002";
 
-  // Fetch testimonials from Firebase
+  // Fetch services data from Firebase
+  let trainingServices: any[] = [];
+  let onlineServices: any[] = [];
   let testimonials: any[] = [];
+
+  try {
+    trainingServices = await getTrainingServices();
+  } catch (error) {
+    console.error("Error fetching training services:", error);
+    // Fallback data
+    trainingServices = [
+      {
+        id: "1",
+        icon: "Truck",
+        title: "Heavy Motor Training",
+        description:
+          "Comprehensive training for heavy vehicles including trucks and buses, preparing you for professional driving.",
+        services: [
+          "New Enrollment",
+          "HMV Training Only",
+          "Refresher Course",
+          "License Renewal",
+        ],
+        ctaText: "Enroll in HMV",
+        ctaHref: "/enroll?vehicleType=hmv",
+      },
+      {
+        id: "2",
+        icon: "Car",
+        title: "LMV Training",
+        description:
+          "Everything you need to get your Light Motor Vehicle license, from learning to test.",
+        services: [
+          "New Enrollment",
+          "LMV Training",
+          "LMV Learning",
+          "LMV Driving License",
+        ],
+        ctaText: "Enroll in LMV",
+        ctaHref: "/enroll?vehicleType=lmv",
+      },
+      {
+        id: "3",
+        icon: "Bike",
+        title: "Motorcycle Training",
+        description:
+          "Specialized training for two-wheelers, focusing on balance, safety, and traffic navigation.",
+        services: [
+          "MCWG New Application",
+          "Balance & Control",
+          "Safety Protocols",
+          "On-road Practice",
+        ],
+        ctaText: "Enroll in MCWG",
+        ctaHref: "/enroll?vehicleType=mcwg",
+      },
+    ];
+  }
+
+  try {
+    onlineServices = await getOnlineServices();
+  } catch (error) {
+    console.error("Error fetching online services:", error);
+    // Fallback data
+    onlineServices = [
+      {
+        id: "1",
+        icon: "FileCheck2",
+        title: "Learning License Exam Pass",
+        description:
+          "Get your LL test passed online. Enter your application number, DOB, and phone to have our team assist you.",
+        ctaText: "Check LL Status",
+        href: "/ll-exam-pass",
+      },
+      {
+        id: "2",
+        icon: "Printer",
+        title: "Driving License Print",
+        description:
+          "Request a print-ready copy of your official driving license via email for any class of vehicle.",
+        ctaText: "Request License Print",
+        href: "/license-print",
+      },
+      {
+        id: "3",
+        icon: "Download",
+        title: "Certificate Download",
+        description:
+          "Passed your test? Download your official driving school document here.",
+        ctaText: "Download Certificate",
+        href: "/certificate/download",
+      },
+      {
+        id: "4",
+        icon: "BadgeCheck",
+        title: "Verify Certificate",
+        description:
+          "Verify the authenticity of any certificate issued by Driving School Arwal.",
+        ctaText: "Verify Certificate",
+        href: "/certificate/verify",
+      },
+    ];
+  }
+
+  // Fetch testimonials from Firebase
   try {
     testimonials = await getTestimonials();
     // Transform Firebase testimonials to match our component interface
@@ -164,45 +272,14 @@ export default async function ServicesPage() {
         {/* Hero Section */}
         <ServicesHero settings={settings} />
 
+        {/* Service Cards */}
+        <ServiceCards
+          trainingServices={trainingServices}
+          onlineServices={onlineServices}
+        />
+
         {/* Service Sections */}
         <div className="container mx-auto px-4 md:px-6 py-16 space-y-20">
-          {/* Basic Service Information */}
-          <section className="text-center space-y-8">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-              Our Driving Training Programs
-            </h2>
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="bg-blue-50 p-8 rounded-xl">
-                <h3 className="text-xl font-bold text-blue-900 mb-4">
-                  MCWG Training
-                </h3>
-                <p className="text-blue-700">
-                  Motorcycle training focusing on balance, safety, and traffic
-                  navigation. Perfect for beginners and experienced riders
-                  looking to get licensed.
-                </p>
-              </div>
-              <div className="bg-green-50 p-8 rounded-xl">
-                <h3 className="text-xl font-bold text-green-900 mb-4">
-                  LMV Training
-                </h3>
-                <p className="text-green-700">
-                  Complete car driving course for light motor vehicles. Learn
-                  from certified instructors with modern fleet vehicles.
-                </p>
-              </div>
-              <div className="bg-orange-50 p-8 rounded-xl">
-                <h3 className="text-xl font-bold text-orange-900 mb-4">
-                  HMV Training
-                </h3>
-                <p className="text-orange-700">
-                  Heavy vehicle training for commercial drivers. Build your
-                  career in transport and logistics industry.
-                </p>
-              </div>
-            </div>
-          </section>
-
           {/* Testimonials Section */}
           <section id="testimonials" aria-labelledby="testimonials-heading">
             <ServicesTestimonials testimonials={testimonials} />

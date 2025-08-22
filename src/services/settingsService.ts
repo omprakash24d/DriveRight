@@ -2,6 +2,7 @@
 import { schoolConfig } from "@/lib/config";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
+import { ReactNode } from "react";
 import { addLog } from "./auditLogService";
 
 export interface HomepageStat {
@@ -18,6 +19,7 @@ export interface WhyChooseUsPoint {
 
 // Define the shape of the settings data
 export interface SiteSettings {
+  siteName: ReactNode;
   schoolName: string;
   contactEmail: string;
   phone: string;
@@ -83,6 +85,7 @@ const defaultWhyChooseUsPoints: WhyChooseUsPoint[] = [
 
 
 const defaultSettings: SiteSettings = {
+    siteName: schoolConfig.name,
     schoolName: schoolConfig.name,
     contactEmail: schoolConfig.contactEmail,
     phone: schoolConfig.phone,

@@ -88,9 +88,11 @@ class MonitoringService {
   private async checkDatabase(): Promise<{ status: string; responseTime?: number }> {
     const start = Date.now();
     try {
-      // Import Firebase Admin here to avoid circular dependencies
+      // Use proper Firebase Admin initialization
+      const { getAdminApp } = await import('@/lib/firebase-admin');
+      const adminApp = getAdminApp();
       const { getFirestore } = await import('firebase-admin/firestore');
-      const db = getFirestore();
+      const db = getFirestore(adminApp);
       
       // Simple read operation to test connectivity
       await db.collection('_health').doc('test').get();
@@ -111,9 +113,11 @@ class MonitoringService {
   private async checkStorage(): Promise<{ status: string; responseTime?: number }> {
     const start = Date.now();
     try {
-      // Check if storage bucket is accessible
+      // Check if storage bucket is accessible using proper Admin initialization
+      const { getAdminApp } = await import('@/lib/firebase-admin');
+      const adminApp = getAdminApp();
       const { getStorage } = await import('firebase-admin/storage');
-      const bucket = getStorage().bucket();
+      const bucket = getStorage(adminApp).bucket();
       
       // Test bucket access
       await bucket.getMetadata();

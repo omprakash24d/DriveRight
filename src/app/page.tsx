@@ -3,14 +3,15 @@ import {
   generateLocalBusinessSchema,
   generateOrganizationSchema,
 } from "@/lib/seo-utils";
+import { EnhancedServicesManager } from "@/services/enhancedServicesService";
 import {
-  getOnlineServices,
-  getTrainingServices,
-} from "@/services/quickServicesService";
+  sampleOnlineServices,
+  sampleTrainingServices,
+} from "@/services/sampleServiceData";
 import { getSiteSettings } from "@/services/settingsService";
 import { getTestimonials } from "@/services/testimonialsService";
 import type { Metadata } from "next";
-import { AboutSection } from "./(home)/_components/AboutSection";
+import { AboutSectionEnhanced } from "./(home)/_components/AboutSection.enhanced";
 import { CtaSection } from "./(home)/_components/CtaSection";
 import { DeveloperNoteSection } from "./(home)/_components/DeveloperNoteSection";
 import { GallerySection } from "./(home)/_components/GallerySection";
@@ -64,8 +65,39 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function Home() {
   const settings = await getSiteSettings();
   const testimonials = await getTestimonials();
-  const trainingServices = await getTrainingServices();
-  const onlineServices = await getOnlineServices();
+
+  // Try to get enhanced services, fall back to sample data, and seed if needed
+  let trainingServices, onlineServices;
+  try {
+    trainingServices = await EnhancedServicesManager.getTrainingServices();
+    onlineServices = await EnhancedServicesManager.getOnlineServices();
+
+    // If no enhanced services exist, try to seed them in development
+    if (trainingServices.length === 0 && onlineServices.length === 0) {
+      if (process.env.NODE_ENV === "development") {
+        try {
+          const seedResult = await EnhancedServicesManager.seedSampleServices();
+
+          // Fetch the newly seeded services
+          trainingServices =
+            await EnhancedServicesManager.getTrainingServices();
+          onlineServices = await EnhancedServicesManager.getOnlineServices();
+        } catch (seedError) {
+          console.warn("⚠️ Auto-seeding failed, using sample data:", seedError);
+          trainingServices = sampleTrainingServices;
+          onlineServices = sampleOnlineServices;
+        }
+      } else {
+        // In production, use sample data if no services exist
+        trainingServices = sampleTrainingServices;
+        onlineServices = sampleOnlineServices;
+      }
+    }
+  } catch (error) {
+    console.warn("Enhanced services not available, using sample data:", error);
+    trainingServices = sampleTrainingServices;
+    onlineServices = sampleOnlineServices;
+  }
 
   // Generate structured data
   const organizationSchema = generateOrganizationSchema(settings);
@@ -126,7 +158,7 @@ export default async function Home() {
           whyChooseUsPoints={settings.whyChooseUsPoints}
         />
         <GallerySection settings={settings} />
-        <AboutSection settings={settings} />
+        <AboutSectionEnhanced settings={settings} />
         <LocationSection settings={settings} />
         <TestimonialsSection testimonials={testimonials} />
         <VideoSection settings={settings} />

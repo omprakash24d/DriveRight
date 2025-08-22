@@ -129,24 +129,10 @@ class ErrorTracker {
     // Integrate with Sentry, DataDog, or other monitoring service
     if (process.env.SENTRY_DSN) {
       try {
-        // Dynamic import to avoid bundling if not needed
-        const Sentry = await import('@sentry/nextjs').catch(() => null);
-        if (Sentry) {
-          errors.forEach(error => {
-            Sentry.captureException(new Error(error.message), {
-              tags: {
-                category: error.context.category,
-                severity: error.context.severity
-              },
-              extra: {
-                context: error.context,
-                metadata: error.metadata
-              }
-            });
-          });
-        }
+        // Sentry integration disabled for production deployment
+        console.warn('Sentry integration is not configured');
       } catch (error) {
-        console.error('Failed to send to Sentry:', error);
+        console.error('Error in Sentry integration:', error);
       }
     }
   }

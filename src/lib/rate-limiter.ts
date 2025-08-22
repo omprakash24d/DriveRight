@@ -85,6 +85,18 @@ export const RATE_LIMITS = {
     message: 'Too many login attempts. Please try again later.'
   }),
   
+  PAYMENT: new RateLimiter({
+    windowMs: 5 * 60 * 1000,  // 5 minutes
+    maxRequests: 3,           // 3 payment attempts per 5 minutes
+    message: 'Too many payment attempts. Please wait before trying again.'
+  }),
+  
+  ADMIN_API: new RateLimiter({
+    windowMs: 60 * 1000,      // 1 minute
+    maxRequests: 30,          // 30 admin requests per minute
+    message: 'Admin API rate limit exceeded.'
+  }),
+  
   API_GENERAL: new RateLimiter({
     windowMs: 60 * 1000,      // 1 minute
     maxRequests: 60,          // 60 requests per minute

@@ -46,7 +46,7 @@ class ComplianceService {
       
       await db.collection('compliance_logs').doc(processingRecord.id).set(processingRecord);
       
-      console.log('Data processing recorded:', processingRecord.id);
+
     } catch (error) {
       console.error('Failed to record data processing:', error);
       // In production, this should trigger an alert
@@ -117,7 +117,7 @@ class ComplianceService {
       // 3. Notify third parties if data was shared
       // 4. Update deletion request status
 
-      console.log('Data deletion request recorded:', deletionRequest.id);
+
     } catch (error) {
       console.error('Failed to handle data deletion request:', error);
       throw new Error('Data deletion request failed');
@@ -207,7 +207,7 @@ class ComplianceService {
         
         if (retentionEnd < new Date()) {
           await doc.ref.delete();
-          console.log('Deleted expired compliance record:', doc.id);
+
         }
       }
     } catch (error) {

@@ -33,6 +33,8 @@ import { nanoid } from "nanoid";
 import { useEffect, useState } from "react";
 import { useFieldArray, useForm, type SubmitHandler } from "react-hook-form";
 import { z } from "zod";
+import { AboutSectionAdmin } from "../_components/AboutSectionAdmin";
+import { DatabaseManagement } from "../_components/DatabaseManagement";
 
 const whyChooseUsPointSchema = z.object({
   icon: z.string().min(1, "Icon name is required."),
@@ -238,22 +240,43 @@ export default function AdminSettingsPage() {
   };
 
   const handleSeed = async (
-    seedFunction: () => Promise<number>,
+    seedFunction: () =>
+      | Promise<{ success: boolean; count?: number; error?: string }>
+      | Promise<number>,
     name: string
   ) => {
     setIsSeeding(true);
     try {
-      const count = await seedFunction();
-      if (count > 0) {
+      const result = await seedFunction();
+
+      // Handle different return types
+      if (typeof result === "number") {
+        // For functions that return just a count
+        if (result > 0) {
+          toast({
+            title: `${name} Seeded`,
+            description: `${result} default ${name.toLowerCase()} have been added.`,
+          });
+        } else {
+          toast({
+            title: "Already Seeded",
+            description: `All default ${name.toLowerCase()} are already in the database.`,
+          });
+        }
+      } else if (result.success && result.count && result.count > 0) {
         toast({
           title: `${name} Seeded`,
-          description: `${count} default ${name.toLowerCase()} have been added.`,
+          description: `${
+            result.count
+          } default ${name.toLowerCase()} have been added.`,
         });
-      } else {
+      } else if (result.success) {
         toast({
           title: "Already Seeded",
           description: `All default ${name.toLowerCase()} are already in the database.`,
         });
+      } else {
+        throw new Error(result.error || "Seeding failed");
       }
     } catch (error) {
       toast({
@@ -366,6 +389,8 @@ export default function AdminSettingsPage() {
         </CardContent>
       </Card>
 
+      <DatabaseManagement />
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <Tabs defaultValue="general">
@@ -373,6 +398,7 @@ export default function AdminSettingsPage() {
               <TabsTrigger value="general">General & Auth</TabsTrigger>
               <TabsTrigger value="homepage">Homepage Main</TabsTrigger>
               <TabsTrigger value="about">About Page</TabsTrigger>
+              <TabsTrigger value="about-section">About Section</TabsTrigger>
               <TabsTrigger value="sections">Section Titles</TabsTrigger>
               <TabsTrigger value="developer">Developer Note</TabsTrigger>
             </TabsList>
@@ -685,6 +711,33 @@ export default function AdminSettingsPage() {
                   />
                 </CardContent>
               </Card>
+            </TabsContent>
+            <TabsContent value="about-section">
+              <AboutSectionAdmin
+                currentSettings={form.getValues()}
+                onSettingsUpdate={async (newSettings) => {
+                  // Update form values
+                  Object.keys(newSettings).forEach((key) => {
+                    form.setValue(key as any, newSettings[key]);
+                  });
+
+                  // Save to Firebase
+                  try {
+                    await saveSiteSettings(newSettings);
+                    toast({
+                      title: "About Section Updated",
+                      description:
+                        "Your about section settings have been saved successfully.",
+                    });
+                  } catch (error) {
+                    toast({
+                      title: "Error",
+                      description: "Failed to save about section settings.",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+              />
             </TabsContent>
             <TabsContent value="developer">
               <Card>

@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { SiteSettings } from "@/services/settingsService";
 import Image from "next/image";
@@ -11,7 +10,7 @@ interface HeroSectionProps {
 
 const HeroSectionComponent = ({ settings }: HeroSectionProps) => {
   return (
-    <section 
+    <section
       className="relative w-full h-[70vh] flex items-center justify-center text-center text-white"
       role="banner"
       aria-labelledby="hero-title"
@@ -26,24 +25,36 @@ const HeroSectionComponent = ({ settings }: HeroSectionProps) => {
         priority
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/20 z-10" />
-      <div className="relative z-20 max-w-4xl mx-auto px-4 md:px-6">
-        <h1 id="hero-title" className="text-4xl md:text-6xl font-bold tracking-tighter mb-4 drop-shadow-lg">
+      <div className="relative z-20 max-w-4xl mx-auto container-padding">
+        <h1
+          id="hero-title"
+          className="heading-xl mb-4 drop-shadow-lg text-white"
+        >
           {settings.homepageHeroTitle}
         </h1>
-        <p className="text-lg md:text-xl text-gray-200 mb-8 drop-shadow-md">
+        <p className="text-lg md:text-xl text-gray-200 mb-8 drop-shadow-md max-w-2xl mx-auto">
           {settings.homepageHeroSubtitle}
         </p>
         <div className="flex flex-wrap gap-4 justify-center">
-          <Button asChild size="lg" className="min-h-[44px]">
+          <Button
+            asChild
+            size="lg"
+            className="btn-primary min-h-[44px] text-white"
+          >
             <Link href="/enroll">Enroll Now</Link>
           </Button>
-          <Button asChild size="lg" variant="outline" className="bg-transparent backdrop-blur-sm hover:bg-white/10 text-white border-white transition-colors min-h-[44px]">
+          <Button
+            asChild
+            size="lg"
+            variant="outline"
+            className="bg-transparent backdrop-blur-sm hover:bg-white/10 text-white border-white transition-colors min-h-[44px]"
+          >
             <Link href="/courses">View Courses</Link>
           </Button>
         </div>
       </div>
     </section>
   );
-}
+};
 
 export const HeroSection = React.memo(HeroSectionComponent);

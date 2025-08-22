@@ -35,13 +35,13 @@ const SECURITY_HEADERS = {
   'X-XSS-Protection': '1; mode=block',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'X-DNS-Prefetch-Control': 'off',
-  'Permissions-Policy': 'camera=self, microphone=self, geolocation=self, payment=self, usb=none',
+  'Permissions-Policy': 'camera=(self), microphone=(self), geolocation=(self), payment=(self "https://checkout.razorpay.com" "https://api.razorpay.com"), usb=()',
 };
 
 // Content Security Policy for production
 const CSP_POLICY = process.env.NODE_ENV === 'production' 
-  ? "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://storage.googleapis.com https://firebasestorage.googleapis.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com; frame-src 'self' https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
-  : "default-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https: wss:;";
+  ? "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google.com https://apis.google.com https://www.googletagmanager.com https://checkout.razorpay.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://storage.googleapis.com https://firebasestorage.googleapis.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://o4509708384468992.ingest.us.sentry.io https://www.google-analytics.com https://checkout.razorpay.com; frame-src 'self' https://www.google.com https://checkout.razorpay.com https://api.razorpay.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
+  : "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://checkout.razorpay.com https://www.google-analytics.com https://ssl.google-analytics.com https://www.gstatic.com https://tagmanager.google.com; script-src-elem 'self' 'unsafe-inline' https://www.googletagmanager.com https://checkout.razorpay.com https://www.google-analytics.com https://ssl.google-analytics.com https://www.gstatic.com https://tagmanager.google.com; worker-src 'self' blob:; img-src 'self' data: https: blob:; font-src 'self' data: https:; style-src 'self' 'unsafe-inline' https:; connect-src 'self' https://www.google-analytics.com https://ssl.google-analytics.com https://analytics.google.com https://checkout.razorpay.com https://api.razorpay.com https://firebaseapp.com https://*.firebaseapp.com https://firestore.googleapis.com https://storage.googleapis.com https://firebase.googleapis.com wss://*.firebaseio.com https://region1.google-analytics.com https://www.googletagmanager.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://o4509708384468992.ingest.us.sentry.io; frame-src 'self' https://checkout.razorpay.com https://api.razorpay.com;";
 
 // Suspicious patterns for security monitoring
 const SUSPICIOUS_PATTERNS = [
@@ -182,15 +182,29 @@ export async function middleware(request: NextRequest) {
     const sessionCookie = request.cookies.get('__session')?.value;
 
     if (!sessionCookie) {
-      // For development: check if Firebase Admin SDK is configured
-      // If not, allow requests to pass through with a warning
+      // Check if Firebase Admin SDK is configured
       const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
       if (!serviceAccountJson || serviceAccountJson.trim() === '') {
-        console.warn('Development mode: Firebase Admin SDK not configured, allowing admin API access');
-        return response;
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Development mode: Firebase Admin SDK not configured');
+          // Still require some form of authentication in development
+          const devToken = request.headers.get('x-dev-admin-token');
+          if (devToken !== process.env.DEV_ADMIN_TOKEN) {
+            return NextResponse.json({ 
+              error: 'Development admin token required',
+              hint: 'Set DEV_ADMIN_TOKEN environment variable'
+            }, { status: 401 });
+          }
+        } else {
+          return NextResponse.json({ 
+            error: 'Unauthorized: Admin authentication not configured' 
+          }, { status: 401 });
+        }
+      } else {
+        return NextResponse.json({ 
+          error: 'Unauthorized: No session cookie provided.' 
+        }, { status: 401 });
       }
-      
-      return NextResponse.json({ error: 'Unauthorized: No session cookie provided.' }, { status: 401 });
     }
 
     try {

@@ -1,0 +1,48 @@
+import React from "react";
+import { Metadata } from "next";
+import CoursesList from "../../components/CoursesList";
+import { getCoursesService } from "../../lib/services/courseService";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { BREADCRUMB_CONFIGS } from "@/lib/constants/breadcrumbs";
+
+export const metadata: Metadata = {
+  title: "Driving Courses | DriveRight Driving School",
+  description: "Explore our comprehensive driving courses designed to help you become a confident and safe driver. Choose from beginner courses, defensive driving, and specialized programs.",
+  keywords: "driving courses, driving lessons, defensive driving, driver education, driving school",
+  openGraph: {
+    title: "Driving Courses | DriveRight Driving School",
+    description: "Comprehensive driving courses for all skill levels. Start your journey to safe driving today.",
+    type: "website",
+  },
+};
+
+export default async function CoursesPage() {
+  // Get courses data
+  const coursesResult = await getCoursesService();
+  const courses = coursesResult.success ? coursesResult.data : [];
+
+  return (
+    <div className="container-fluid">
+      {/* Hero Section */}
+      <section className="py-24 md:py-32">
+        <div className="container-content text-center">
+          <h1 className="heading-xl mb-6">
+            Our Driving Courses
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            Comprehensive driving education programs designed for every learner. 
+            From beginner basics to advanced techniques, we&apos;ll help you become 
+            a confident and safe driver.
+          </p>
+        </div>
+      </section>
+
+      {/* Breadcrumb Navigation */}
+      <div className="mb-8">
+        <Breadcrumb items={BREADCRUMB_CONFIGS.courses} />
+      </div>
+
+      <CoursesList courses={courses} coursesResult={coursesResult} />
+    </div>
+  );
+}
