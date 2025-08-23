@@ -148,11 +148,11 @@ export default async function Home() {
 
       <div className="flex flex-col">
         <HeroSection settings={settings} />
-        {/* <QuickServices
+        <QuickServices
           settings={settings}
           trainingServices={trainingServices}
           onlineServices={onlineServices}
-        /> */}
+        />
         <WhyChooseUs
           settings={settings}
           whyChooseUsPoints={settings.whyChooseUsPoints}

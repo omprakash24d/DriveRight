@@ -54,7 +54,7 @@ export interface TransactionRecord {
   amount: number;
   currency: 'INR' | 'USD';
   status: 'pending' | 'success' | 'failed' | 'cancelled';
-  paymentGateway: 'razorpay' | 'upi' | 'card' | 'netbanking';
+  paymentGateway: 'phonepe' | 'razorpay' | 'upi' | 'card' | 'netbanking';
   gatewayTransactionId?: string;
   gatewayOrderId?: string;
   gatewayPaymentId?: string;
@@ -178,16 +178,39 @@ export class EnhancedServicesManager {
       
       const snapshot = await getDocs(servicesQuery);
       
-      const services = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate(),
-        updatedAt: doc.data().updatedAt?.toDate(),
-        pricing: {
-          ...doc.data().pricing,
-          discountValidUntil: doc.data().pricing?.discountValidUntil?.toDate()
+      const services = snapshot.docs.map(doc => {
+        const data = doc.data();
+        let pricing = data.pricing;
+        
+        // Handle missing pricing data
+        if (!pricing) {
+          console.warn(`Service ${doc.id} has no pricing data`);
+          pricing = {
+            basePrice: 0,
+            currency: 'INR',
+            taxes: { gst: 0, serviceTax: 0, otherCharges: 0 },
+            finalPrice: 0
+          };
+        } else {
+          pricing = {
+            ...pricing,
+            discountValidUntil: pricing.discountValidUntil?.toDate()
+          };
+          
+          // Calculate finalPrice if not present or invalid
+          if (!pricing.finalPrice || pricing.finalPrice <= 0) {
+            pricing.finalPrice = EnhancedServicesManager.calculateFinalPrice(pricing);
+          }
         }
-      })) as EnhancedTrainingService[];
+        
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate(),
+          updatedAt: data.updatedAt?.toDate(),
+          pricing
+        };
+      }) as EnhancedTrainingService[];
       
       // Sort in memory to avoid index requirement
       return services.sort((a, b) => {
@@ -217,16 +240,39 @@ export class EnhancedServicesManager {
       
       const snapshot = await getDocs(servicesQuery);
       
-      const services = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate(),
-        updatedAt: doc.data().updatedAt?.toDate(),
-        pricing: {
-          ...doc.data().pricing,
-          discountValidUntil: doc.data().pricing?.discountValidUntil?.toDate()
+      const services = snapshot.docs.map(doc => {
+        const data = doc.data();
+        let pricing = data.pricing;
+        
+        // Handle missing pricing data
+        if (!pricing) {
+          console.warn(`Service ${doc.id} has no pricing data`);
+          pricing = {
+            basePrice: 0,
+            currency: 'INR',
+            taxes: { gst: 0, serviceTax: 0, otherCharges: 0 },
+            finalPrice: 0
+          };
+        } else {
+          pricing = {
+            ...pricing,
+            discountValidUntil: pricing.discountValidUntil?.toDate()
+          };
+          
+          // Calculate finalPrice if not present or invalid
+          if (!pricing.finalPrice || pricing.finalPrice <= 0) {
+            pricing.finalPrice = EnhancedServicesManager.calculateFinalPrice(pricing);
+          }
         }
-      })) as EnhancedOnlineService[];
+        
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate(),
+          updatedAt: data.updatedAt?.toDate(),
+          pricing
+        };
+      }) as EnhancedOnlineService[];
       
       // Sort in memory to avoid index requirement
       return services.sort((a, b) => {
@@ -344,6 +390,11 @@ export class EnhancedServicesManager {
 
   // Calculate final price with taxes and discounts
   static calculateFinalPrice(pricing: Omit<ServicePricing, 'finalPrice'>): number {
+    if (!pricing || !pricing.basePrice || pricing.basePrice <= 0) {
+      console.warn('Invalid pricing data for calculation:', pricing);
+      return 0;
+    }
+    
     let price = pricing.basePrice;
     
     // Apply discount if valid
@@ -351,15 +402,17 @@ export class EnhancedServicesManager {
       price = price - (price * pricing.discountPercentage / 100);
     }
     
-    // Add taxes
-    if (pricing.taxes.gst) {
-      price += (price * pricing.taxes.gst / 100);
-    }
-    if (pricing.taxes.serviceTax) {
-      price += (price * pricing.taxes.serviceTax / 100);
-    }
-    if (pricing.taxes.otherCharges) {
-      price += pricing.taxes.otherCharges;
+    // Add taxes safely
+    if (pricing.taxes) {
+      if (pricing.taxes.gst && pricing.taxes.gst > 0) {
+        price += (price * pricing.taxes.gst / 100);
+      }
+      if (pricing.taxes.serviceTax && pricing.taxes.serviceTax > 0) {
+        price += (price * pricing.taxes.serviceTax / 100);
+      }
+      if (pricing.taxes.otherCharges && pricing.taxes.otherCharges > 0) {
+        price += pricing.taxes.otherCharges;
+      }
     }
     
     return Math.round(price * 100) / 100; // Round to 2 decimal places

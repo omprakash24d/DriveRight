@@ -1,5 +1,6 @@
 import { usePaymentErrorHandler } from '@/components/PaymentErrorBoundary';
 import { toast } from '@/hooks/use-toast';
+import { PaymentGateway } from '@/types/payment';
 import { useCallback, useState } from 'react';
 import { createBookingOrder, initializePayment } from './paymentService';
 import { AnyService, BookingFormData } from './types';
@@ -20,46 +21,71 @@ export function usePaymentProcessing({
   const [loading, setLoading] = useState(false);
   const { handlePaymentError } = usePaymentErrorHandler();
 
-  const processPayment = useCallback(async (bookingForm: BookingFormData) => {
+  const processPayment = useCallback(async (
+    bookingForm: BookingFormData, 
+    paymentGateway: PaymentGateway = 'phonepe'
+  ) => {
     setLoading(true);
 
     try {
-      const result = await createBookingOrder(service.id, type, bookingForm);
+      const result = await createBookingOrder(service.id, type, bookingForm, paymentGateway);
 
       if (result.success) {
         onClose?.();
 
-        // Initialize Razorpay payment
-        initializePayment(
-          result.data.paymentConfig,
-          (response: any) => {
-            toast({
-              title: "Payment Successful!",
-              description: `Booking confirmed for ${service.title}. Payment ID: ${response.razorpay_payment_id}`,
-            });
-
-            onSuccess?.();
-          },
-          (response: any) => {
-            // Use enhanced service pricing structure
-            const finalPrice = (service.pricing as any)?.finalPrice || 
-                             (service.pricing as any)?.discountPrice || 
-                             service.pricing?.basePrice || 0;
-
-            handlePaymentError(new Error(response.error.description), {
-              serviceId: service.id,
+        if (paymentGateway === 'phonepe') {
+          // For PhonePe, redirect to payment page
+          if (result.data.paymentUrl) {
+            // Store booking details in localStorage for callback handling
+            localStorage.setItem('phonepe_payment_data', JSON.stringify({
               bookingId: result.data.bookingId,
-              amount: finalPrice,
-            });
-
+              transactionId: result.data.transactionId,
+              merchantTransactionId: result.data.merchantTransactionId,
+              serviceTitle: service.title,
+              amount: service.pricing?.finalPrice || service.pricing?.basePrice || 0
+            }));
+            
+            window.location.href = result.data.paymentUrl;
+          } else {
             toast({
-              title: "Payment Failed",
-              description:
-                response.error.description || "Payment could not be processed.",
+              title: "Payment Error",
+              description: "PhonePe payment URL not available. Please try again.",
               variant: "destructive",
             });
           }
-        );
+        } else {
+          // For Razorpay, initialize modal payment (existing logic)
+          initializePayment(
+            result.data,
+            (response: any) => {
+              toast({
+                title: "Payment Successful!",
+                description: `Booking confirmed for ${service.title}. Payment ID: ${response.razorpay_payment_id}`,
+              });
+
+              onSuccess?.();
+            },
+            (response: any) => {
+              // Use enhanced service pricing structure
+              const finalPrice = (service.pricing as any)?.finalPrice || 
+                               (service.pricing as any)?.discountPrice || 
+                               service.pricing?.basePrice || 0;
+
+              handlePaymentError(new Error(response.error.description), {
+                serviceId: service.id,
+                bookingId: result.data.bookingId,
+                amount: finalPrice,
+              });
+
+              toast({
+                title: "Payment Failed",
+                description:
+                  response.error.description || "Payment could not be processed.",
+                variant: "destructive",
+              });
+            }
+          );
+        }
       } else {
         toast({
           title: "Booking Failed",

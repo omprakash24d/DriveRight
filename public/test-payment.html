@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Test Payment Gateways</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      button {
+        margin: 5px;
+        padding: 10px 15px;
+      }
+      .razorpay {
+        background-color: #3b82f6;
+        color: white;
+      }
+      .phonepe {
+        background-color: #6b46c1;
+        color: white;
+      }
+      #result {
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px solid #ccc;
+      }
+      pre {
+        background: #f5f5f5;
+        padding: 10px;
+        overflow: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🎯 Payment Gateway Testing</h1>
+
+    <div>
+      <h3>📋 Service Management:</h3>
+      <button onclick="checkCurrentServices()">Check Current Services</button>
+      <button onclick="createTestServices()">Create Test Services</button>
+    </div>
+
+    <div>
+      <h3>💳 Payment Testing:</h3>
+      <button class="razorpay" onclick="testRazorpayPayment()">
+        Test Razorpay Payment
+      </button>
+      <button class="phonepe" onclick="testPhonePePayment()">
+        Test PhonePe Payment
+      </button>
+    </div>
+
+    <div>
+      <h3>📊 Quick Tests:</h3>
+      <button onclick="testOnlineServiceRazorpay()">
+        Online Service + Razorpay
+      </button>
+      <button onclick="testOnlineServicePhonePe()">
+        Online Service + PhonePe
+      </button>
+    </div>
+
+    <div id="result"></div>
+
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+      let testServiceIds = {};
+
+      async function checkCurrentServices() {
+        updateResult("Checking current services...");
+
+        try {
+          const response = await fetch("/api/test/get-services");
+          const data = await response.json();
+          updateResult(
+            "<h3>✅ Current Services:</h3><pre>" +
+              JSON.stringify(data, null, 2) +
+              "</pre>"
+          );
+        } catch (error) {
+          updateResult("❌ Error checking services: " + error.message);
+        }
+      }
+
+      async function createTestServices() {
+        updateResult("Creating test services...");
+
+        try {
+          const response = await fetch("/api/test/create-services", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+
+          const data = await response.json();
+          testServiceIds = data.data;
+          updateResult(
+            "<h3>✅ Services Created!</h3><pre>" +
+              JSON.stringify(data, null, 2) +
+              "</pre>"
+          );
+        } catch (error) {
+          updateResult("❌ Error creating services: " + error.message);
+        }
+      }
+
+      async function testRazorpayPayment() {
+        await testPayment("razorpay", "training");
+      }
+
+      async function testPhonePePayment() {
+        await testPayment("phonepe", "training");
+      }
+
+      async function testOnlineServiceRazorpay() {
+        await testPayment("razorpay", "online", "online-2");
+      }
+
+      async function testOnlineServicePhonePe() {
+        await testPayment("phonepe", "online", "online-2");
+      }
+
+      async function testPayment(gateway, serviceType, serviceId = null) {
+        updateResult(
+          `🔄 Testing ${gateway.toUpperCase()} payment for ${serviceType} service...`
+        );
+
+        // Use provided serviceId or get from test services
+        const actualServiceId =
+          serviceId ||
+          (serviceType === "training"
+            ? testServiceIds.trainingServiceId
+            : testServiceIds.onlineServiceId);
+
+        if (!actualServiceId && !serviceId) {
+          updateResult("❌ Please create test services first!");
+          return;
+        }
+
+        try {
+          const paymentData = {
+            serviceId: actualServiceId || serviceId,
+            serviceType: serviceType,
+            customerInfo: {
+              name: "Om Prakash",
+              email: "omprakash24d@gmail.com",
+              phone: "8083005437",
+              address: "",
+            },
+            scheduledDate: serviceType === "training" ? "2025-09-01" : "",
+            notes: `Test ${gateway} payment`,
+            paymentGateway: gateway,
+            metadata: {
+              userAgent: navigator.userAgent,
+              referrer: window.location.href,
+              source: "quick-services",
+            },
+          };
+
+          const response = await fetch("/api/services/payment/create-order", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(paymentData),
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            updateResult(
+              `✅ ${gateway.toUpperCase()} Payment Order Created Successfully!`
+            );
+
+            // Handle different payment gateways
+            if (gateway === "razorpay" && data.data.paymentConfig) {
+              handleRazorpayPayment(data.data);
+            } else if (gateway === "phonepe") {
+              handlePhonePePayment(data.data);
+            }
+
+            // Show response details
+            appendResult(
+              "<h4>📋 Payment Response:</h4><pre>" +
+                JSON.stringify(data, null, 2) +
+                "</pre>"
+            );
+          } else {
+            updateResult(
+              `❌ ${gateway.toUpperCase()} Payment Failed: ` + data.error
+            );
+            appendResult(
+              "<h4>❌ Error Details:</h4><pre>" +
+                JSON.stringify(data, null, 2) +
+                "</pre>"
+            );
+          }
+        } catch (error) {
+          updateResult(
+            `❌ ${gateway.toUpperCase()} Payment Error: ` + error.message
+          );
+        }
+      }
+
+      function handleRazorpayPayment(paymentData) {
+        if (!window.Razorpay) {
+          alert(
+            "Razorpay SDK not loaded. Please refresh the page and try again."
+          );
+          return;
+        }
+
+        const options = {
+          ...paymentData.paymentConfig,
+          handler: function (response) {
+            alert(
+              "Razorpay Payment Successful! Payment ID: " +
+                response.razorpay_payment_id
+            );
+            appendResult(`<h4>✅ Razorpay Payment Successful!</h4>
+              <p><strong>Payment ID:</strong> ${response.razorpay_payment_id}</p>
+              <p><strong>Order ID:</strong> ${response.razorpay_order_id}</p>
+              <p><strong>Signature:</strong> ${response.razorpay_signature}</p>`);
+          },
+          modal: {
+            ondismiss: function () {
+              appendResult("<p>⚠️ Razorpay payment dialog closed by user</p>");
+            },
+          },
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.open();
+      }
+
+      function handlePhonePePayment(paymentData) {
+        if (paymentData.mockPayment) {
+          // Handle mock PhonePe payment
+          appendResult(`
+            <h4>📱 PhonePe Mock Payment</h4>
+            <p>⚠️ PhonePe API is currently unavailable. Showing mock payment interface.</p>
+            <div style="border: 2px solid #6B46C1; padding: 15px; margin: 10px 0; border-radius: 8px; background: #F3F4F6;">
+              <h5 style="color: #6B46C1; margin-top: 0;">PhonePe Payment Simulation</h5>
+              <p><strong>Merchant Transaction ID:</strong> ${
+                paymentData.merchantTransactionId
+              }</p>
+              <p><strong>Amount:</strong> ₹${
+                paymentData.paymentConfig.amount / 100
+              }</p>
+              <p><strong>Service:</strong> ${
+                paymentData.paymentConfig.description
+              }</p>
+              <button onclick="simulatePhonePeSuccess('${
+                paymentData.merchantTransactionId
+              }', '${paymentData.bookingId}')" 
+                      style="background: #6B46C1; color: white; padding: 8px 16px; border: none; border-radius: 4px; margin: 5px; cursor: pointer;">
+                ✅ Simulate Success
+              </button>
+              <button onclick="simulatePhonePeFailure()" 
+                      style="background: #DC2626; color: white; padding: 8px 16px; border: none; border-radius: 4px; margin: 5px; cursor: pointer;">
+                ❌ Simulate Failure
+              </button>
+            </div>
+          `);
+        } else if (paymentData.paymentUrl) {
+          // Handle real PhonePe redirect
+          appendResult(`
+            <h4>📱 PhonePe Payment Redirect</h4>
+            <p>Redirecting to PhonePe payment page...</p>
+            <p><a href="${paymentData.paymentUrl}" target="_blank" style="color: #6B46C1;">Open PhonePe Payment</a></p>
+          `);
+
+          // Auto-redirect after 2 seconds
+          setTimeout(() => {
+            window.open(paymentData.paymentUrl, "_blank");
+          }, 2000);
+        }
+      }
+
+      async function simulatePhonePeSuccess(merchantTransactionId, bookingId) {
+        appendResult(`
+          <h4>🔄 Confirming PhonePe Mock Payment...</h4>
+          <p><strong>Transaction ID:</strong> ${merchantTransactionId}</p>
+          <p><strong>Booking ID:</strong> ${bookingId}</p>
+        `);
+
+        try {
+          // Call the mock payment confirmation API
+          const response = await fetch("/api/payment/phonepe/mock-confirm", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              merchantTransactionId,
+              bookingId,
+              status: "success",
+            }),
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            appendResult(`
+              <h4>✅ PhonePe Payment Confirmed Successfully!</h4>
+              <p><strong>Status:</strong> Payment Successful</p>
+              <p><strong>Transaction ID:</strong> ${merchantTransactionId}</p>
+              <p><strong>Booking ID:</strong> ${bookingId}</p>
+              <p><strong>Amount:</strong> ₹${result.data.amount}</p>
+              <p style="color: green;">✅ Booking confirmed and confirmation email sent!</p>
+              <div style="background: #dcfce7; border: 1px solid #16a34a; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                <strong>📧 Email Status:</strong> ${
+                  result.data.emailSent ? "Sent successfully" : "Failed to send"
+                }
+              </div>
+            `);
+          } else {
+            appendResult(`
+              <h4>❌ PhonePe Payment Confirmation Failed</h4>
+              <p><strong>Error:</strong> ${result.error}</p>
+            `);
+          }
+        } catch (error) {
+          appendResult(`
+            <h4>❌ PhonePe Payment Confirmation Error</h4>
+            <p><strong>Error:</strong> ${error.message}</p>
+          `);
+        }
+      }
+
+      function simulatePhonePeFailure() {
+        appendResult(`
+          <h4>❌ PhonePe Payment Simulation - FAILED</h4>
+          <p><strong>Status:</strong> Payment Failed (Simulated)</p>
+          <p style="color: red;">❌ This simulates a failed PhonePe payment for testing purposes.</p>
+        `);
+      }
+
+      function updateResult(content) {
+        document.getElementById("result").innerHTML = content;
+      }
+
+      function appendResult(content) {
+        document.getElementById("result").innerHTML += content;
+      }
+
+      // Auto-check services on load
+      window.onload = function () {
+        updateResult("🚀 Payment Gateway Testing Ready!");
+      };
+    </script>
+  </body>
+</html>

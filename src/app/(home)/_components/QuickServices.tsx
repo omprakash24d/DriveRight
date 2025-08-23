@@ -45,11 +45,11 @@ export function QuickServices({
               />
 
               {/* Service Cards Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+              <div className="flex flex-wrap justify-center sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 ">
                 {trainingServices.map((service, index) => (
                   <div
                     key={service.id}
-                    className="opacity-100 transform transition-all duration-500 hover:scale-105"
+                    className="opacity-100 transform transition-all duration-500 "
                     style={{
                       animationDelay: `${index * 150}ms`,
                     }}
@@ -94,11 +94,12 @@ export function QuickServices({
               />
 
               {/* Online Service Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+
                 {onlineServices.map((service, index) => (
                   <div
                     key={service.id}
-                    className="opacity-100 transform transition-all duration-500 hover:scale-105"
+                    className="opacity-100 transform transition-all duration-500 group"
                     style={{
                       animationDelay: `${index * 150}ms`,
                     }}

@@ -72,14 +72,7 @@ export async function POST(request: NextRequest) {
   try {
     // Parse and validate request body
     const body = await request.json();
-    console.log('🔍 Payment request received:', {
-      body,
-      headers: Object.fromEntries(request.headers.entries()),
-      url: request.url
-    });
-    
     const validatedData = createServiceOrderSchema.parse(body);
-    console.log('✅ Request validation passed:', validatedData);
 
     const { serviceId, serviceType, customerInfo, scheduledDate, notes, promoCode, paymentGateway, metadata } = validatedData;
 
@@ -87,41 +80,17 @@ export async function POST(request: NextRequest) {
     let service;
     let serviceDetails;
     
-    console.log('🔍 Fetching services for type:', serviceType);
-    
     if (serviceType === 'training') {
       const trainingServices = await EnhancedServicesManager.getTrainingServices();
-      console.log('📚 Training services fetched:', trainingServices.length, 'services');
-      console.log('📚 Training services IDs:', trainingServices.map(s => ({ id: s.id, title: s.title, pricing: s.pricing })));
       service = trainingServices.find(s => s.id === serviceId);
       serviceDetails = service;
     } else {
       const onlineServices = await EnhancedServicesManager.getOnlineServices();
-      console.log('💻 Online services fetched:', onlineServices.length, 'services');
-      console.log('💻 Online services IDs:', onlineServices.map(s => ({ id: s.id, title: s.title, pricing: s.pricing })));
       service = onlineServices.find(s => s.id === serviceId);
       serviceDetails = service;
     }
 
-    console.log('🎯 Service lookup result:', {
-      requestedServiceId: serviceId,
-      serviceFound: !!service,
-      service: service ? {
-        id: service.id,
-        title: service.title,
-        isActive: service.isActive,
-        pricing: service.pricing
-      } : null
-    });
-
     if (!service) {
-      console.error('❌ Service not found:', {
-        serviceId,
-        serviceType,
-        availableServices: serviceType === 'training' 
-          ? await EnhancedServicesManager.getTrainingServices().then(s => s.map(srv => srv.id))
-          : await EnhancedServicesManager.getOnlineServices().then(s => s.map(srv => srv.id))
-      });
       return NextResponse.json(
         { 
           success: false, 
@@ -134,11 +103,6 @@ export async function POST(request: NextRequest) {
 
     // Check if service is active
     if (!service.isActive) {
-      console.error('❌ Service is inactive:', {
-        serviceId: service.id,
-        title: service.title,
-        isActive: service.isActive
-      });
       return NextResponse.json(
         { 
           success: false, 
@@ -150,33 +114,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate service pricing
-    console.log('🔍 Validating service pricing:', {
-      serviceId,
-      hasPricing: !!service.pricing,
-      pricing: service.pricing,
-      finalPrice: service.pricing?.finalPrice,
-      basePrice: service.pricing?.basePrice,
-      currency: service.pricing?.currency
-    });
-    
     if (!service.pricing || !service.pricing.finalPrice || service.pricing.finalPrice <= 0) {
-      console.error('❌ Invalid pricing configuration:', {
-        serviceId,
-        hasPricing: !!service.pricing,
-        pricing: service.pricing,
-        finalPrice: service.pricing?.finalPrice,
-        basePrice: service.pricing?.basePrice
-      });
       return NextResponse.json(
         { 
           success: false, 
           error: 'Invalid service pricing configuration',
-          code: 'INVALID_PRICING',
-          details: {
-            hasPricing: !!service.pricing,
-            finalPrice: service.pricing?.finalPrice,
-            serviceId
-          }
+          code: 'INVALID_PRICING'
         },
         { status: 400 }
       );
@@ -186,25 +129,14 @@ export async function POST(request: NextRequest) {
     let finalAmount = service.pricing.finalPrice;
     let discountApplied = 0;
 
-    console.log('💰 Calculating final amount:', {
-      baseFinalPrice: finalAmount,
-      discountApplied,
-      promoCode
-    });
-
     // Apply promo code if provided
     if (promoCode) {
       // Promo code validation and discount calculation
       // For now, we'll skip promo code logic
-      console.log('🎟️ Promo code provided but not implemented:', promoCode);
     }
 
     // Validate that we have a valid amount
     if (!finalAmount || finalAmount <= 0) {
-      console.error('❌ Invalid final amount:', {
-        finalAmount,
-        servicePricing: service.pricing
-      });
       return NextResponse.json(
         { 
           success: false, 
@@ -214,8 +146,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    console.log('✅ Final amount validated:', finalAmount);
 
     // Create booking record first - only include fields with values to avoid Firestore undefined errors
     const bookingData: any = {
@@ -237,13 +167,7 @@ export async function POST(request: NextRequest) {
       bookingData.notes = notes.trim();
     }
 
-    console.log('📝 Creating booking with data:', {
-      ...bookingData,
-      customerInfo: { ...customerInfo, email: customerInfo.email, phone: customerInfo.phone }
-    });
-
     const bookingId = await EnhancedServicesManager.createServiceBooking(bookingData);
-    console.log('✅ Booking created successfully:', bookingId);
 
     // Generate universal transaction ID
     const timestamp = Date.now().toString().slice(-8);
@@ -251,22 +175,12 @@ export async function POST(request: NextRequest) {
 
     let paymentResponse;
 
-    console.log('🚀 Processing payment with gateway:', paymentGateway);
-
     if (paymentGateway === 'phonepe') {
-      console.log('📱 Initiating PhonePe payment...');
       // Handle PhonePe Payment
       const merchantTransactionId = PhonePeService.generateTransactionId('TXN');
       const baseUrl = process.env.NODE_ENV === 'production' 
         ? `https://${request.headers.get('host')}` 
         : 'http://localhost:9002';
-
-      console.log('🔧 PhonePe configuration:', {
-        merchantTransactionId,
-        baseUrl,
-        amount: finalAmount,
-        merchantUserId: customerInfo.email.replace(/[^a-zA-Z0-9]/g, '_')
-      });
 
       const paymentRequest = {
         amount: Math.round(finalAmount * 100), // Convert to paise
@@ -280,31 +194,14 @@ export async function POST(request: NextRequest) {
         }
       };
 
-      console.log('📤 PhonePe payment request:', paymentRequest);
-
       try {
         const phonePeResponse = await PhonePeService.initiatePayment(paymentRequest);
-        console.log('📥 PhonePe response:', phonePeResponse);
         
         if (!phonePeResponse.success) {
-          console.error('❌ PhonePe payment initiation failed:', phonePeResponse);
           throw new Error(`PhonePe payment initiation failed: ${phonePeResponse.message}`);
         }
 
-        // Record transaction for PhonePe - Filter out undefined values to avoid Firebase errors
-        const additionalInfo: any = {
-          discountApplied,
-          originalAmount: service.pricing.basePrice,
-          merchantTransactionId,
-          source: metadata?.source || 'quick-services',
-          actualGateway: 'phonepe' // Store actual gateway in metadata
-        };
-
-        // Only add taxes if it has a value
-        if (service.pricing.taxes !== undefined && service.pricing.taxes !== null) {
-          additionalInfo.taxes = service.pricing.taxes;
-        }
-
+        // Record transaction for PhonePe
         const transactionData = {
           bookingId,
           serviceId,
@@ -314,19 +211,23 @@ export async function POST(request: NextRequest) {
           amount: finalAmount,
           currency: 'INR' as const,
           status: 'pending' as const,
-          paymentGateway: 'phonepe' as const, // Correctly store PhonePe as the gateway
+          paymentGateway: 'razorpay' as const, // Use compatible gateway type
           gatewayOrderId: merchantTransactionId,
           metadata: {
             customerIP: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
             userAgent: metadata?.userAgent || request.headers.get('user-agent') || 'unknown',
-            additionalInfo
+            additionalInfo: {
+              discountApplied,
+              originalAmount: service.pricing.basePrice,
+              taxes: service.pricing.taxes,
+              merchantTransactionId,
+              source: metadata?.source || 'quick-services',
+              actualGateway: 'phonepe' // Store actual gateway in metadata
+            }
           }
         };
 
-        console.log('💾 Recording PhonePe transaction:', transactionData);
-
         const transactionId = await EnhancedServicesManager.recordTransaction(transactionData);
-        console.log('✅ PhonePe transaction recorded:', transactionId);
 
         paymentResponse = {
           gateway: 'phonepe',
@@ -341,120 +242,15 @@ export async function POST(request: NextRequest) {
           }
         };
 
-        console.log('✅ PhonePe payment response prepared:', {
-          ...paymentResponse,
-          paymentUrl: paymentResponse.paymentUrl ? 'URL_PRESENT' : 'URL_MISSING'
-        });
-
       } catch (error) {
-        console.error('❌ PhonePe payment creation failed:', error);
-        // Only allow mock fallback in non-production to avoid creating fake payments in production
-        if (process.env.NODE_ENV === 'production') {
-          console.error('❌ PhonePe API unavailable in production - aborting payment creation.');
-          return NextResponse.json(
-            {
-              success: false,
-              error: 'Payment gateway unavailable',
-              code: 'PAYMENT_GATEWAY_UNAVAILABLE'
-            },
-            { status: 503 }
-          );
-        }
-
-        console.warn('🔄 PhonePe API unavailable, creating mock payment for testing (development only)...');
-
-        // Create a fallback mock payment response similar to Razorpay
-        // Record transaction for PhonePe fallback - Filter out undefined values
-        const additionalInfo: any = {
-          discountApplied,
-          originalAmount: service.pricing.basePrice,
-          merchantTransactionId,
-          source: metadata?.source || 'quick-services',
-          actualGateway: 'phonepe',
-          fallbackMode: true,
-          fallbackReason: 'PhonePe API unavailable - using mock payment for testing'
-        };
-
-        // Only add taxes if it has a value
-        if (service.pricing.taxes !== undefined && service.pricing.taxes !== null) {
-          additionalInfo.taxes = service.pricing.taxes;
-        }
-
-        const transactionData = {
-          bookingId,
-          serviceId,
-          serviceType,
-          customerId: customerInfo.email,
-          transactionType: 'payment' as const,
-          amount: finalAmount,
-          currency: 'INR' as const,
-          status: 'pending' as const,
-          paymentGateway: 'phonepe' as const, // Correctly store PhonePe as the gateway even for fallback
-          gatewayOrderId: merchantTransactionId,
-          metadata: {
-            customerIP: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
-            userAgent: metadata?.userAgent || request.headers.get('user-agent') || 'unknown',
-            additionalInfo
-          }
-        };
-
-        console.info('💾 Recording PhonePe fallback transaction (masked):', {
-          bookingId: transactionData.bookingId,
-          gatewayOrderId: transactionData.gatewayOrderId,
-          amount: transactionData.amount,
-          currency: transactionData.currency,
-        });
-
-        const transactionId = await EnhancedServicesManager.recordTransaction(transactionData);
-        console.info('✅ PhonePe fallback transaction recorded (id masked):', { transactionId });
-
-        // Create a mock payment config similar to Razorpay for consistency
-        paymentResponse = {
-          gateway: 'phonepe',
-          merchantTransactionId,
-          transactionId,
-          bookingId,
-          mockPayment: true,
-          paymentConfig: {
-            type: 'mock',
-            key: process.env.NEXT_PUBLIC_PHONEPE_MERCHANT_ID,
-            name: "DriveRight Driving School",
-            description: `PhonePe Payment for ${service.title}`,
-            image: `${(process.env.NODE_ENV as string) === 'production' ? 'https://' + (request.headers.get('host') || 'localhost:9002') : 'http://localhost:9002'}/images/logo.jpg`,
-            order_id: merchantTransactionId,
-            amount: Math.round(finalAmount * 100),
-            currency: service.pricing.currency || 'INR',
-            prefill: {
-              name: customerInfo.name,
-              email: customerInfo.email,
-              contact: customerInfo.phone
-            },
-            theme: {
-              color: "#6B46C1" // Purple theme for PhonePe
-            },
-            notes: {
-              gateway: 'phonepe',
-              fallback: true,
-              merchantTransactionId
-            }
-          }
-        };
-
-        console.info('✅ PhonePe fallback payment response prepared (masked):', {
-          gateway: paymentResponse.gateway,
-          merchantTransactionId: paymentResponse.merchantTransactionId,
-          transactionId: paymentResponse.transactionId,
-          bookingId: paymentResponse.bookingId,
-          mockPayment: paymentResponse.mockPayment
-        });
+        console.error('PhonePe payment creation failed:', error);
+        throw new Error('Failed to create PhonePe payment order');
       }
 
     } else {
-      console.log('💳 Initiating Razorpay payment...');
       // Handle Razorpay Payment (existing logic)
       // Check if Razorpay is properly configured
       if (!razorpay) {
-        console.error('❌ Razorpay not configured');
         return NextResponse.json(
           {
             success: false,
@@ -468,13 +264,6 @@ export async function POST(request: NextRequest) {
       const amountInPaise = Math.round(finalAmount * 100);
       const receipt = `BK_${shortBookingId}_${timestamp}`;
       const currency = service.pricing.currency || 'INR';
-      
-      console.log('🔧 Razorpay configuration:', {
-        amountInPaise,
-        receipt,
-        currency,
-        originalAmount: finalAmount
-      });
       
       let razorpayOrder;
       try {
@@ -492,33 +281,15 @@ export async function POST(request: NextRequest) {
           }
         });
 
-        console.log('✅ Razorpay order created:', {
-          id: razorpayOrder.id,
-          amount: razorpayOrder.amount,
-          currency: razorpayOrder.currency,
-          status: razorpayOrder.status
-        });
-
         if (!razorpayOrder || !razorpayOrder.id) {
           throw new Error('Failed to create Razorpay order - invalid response');
         }
       } catch (razorpayError) {
-        console.error('❌ Razorpay order creation failed:', razorpayError);
+        console.error('Razorpay order creation failed:', razorpayError);
         throw razorpayError;
       }
 
-      // Record transaction for Razorpay - Filter out undefined values to avoid Firebase errors
-      const additionalInfo: any = {
-        discountApplied,
-        originalAmount: service.pricing.basePrice,
-        source: metadata?.source || 'quick-services'
-      };
-
-      // Only add taxes if it has a value
-      if (service.pricing.taxes !== undefined && service.pricing.taxes !== null) {
-        additionalInfo.taxes = service.pricing.taxes;
-      }
-
+      // Record transaction for Razorpay
       const transactionData = {
         bookingId,
         serviceId,
@@ -533,14 +304,16 @@ export async function POST(request: NextRequest) {
         metadata: {
           customerIP: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
           userAgent: metadata?.userAgent || request.headers.get('user-agent') || 'unknown',
-          additionalInfo
+          additionalInfo: {
+            discountApplied,
+            originalAmount: service.pricing.basePrice,
+            taxes: service.pricing.taxes,
+            source: metadata?.source || 'quick-services'
+          }
         }
       };
 
-      console.log('💾 Recording Razorpay transaction:', transactionData);
-
       const transactionId = await EnhancedServicesManager.recordTransaction(transactionData);
-      console.log('✅ Razorpay transaction recorded:', transactionId);
 
       paymentResponse = {
         gateway: 'razorpay',
@@ -570,15 +343,9 @@ export async function POST(request: NextRequest) {
           }
         }
       };
-
-      console.log('✅ Razorpay payment response prepared:', {
-        ...paymentResponse,
-        paymentConfig: { ...paymentResponse.paymentConfig, key: 'HIDDEN' }
-      });
     }
 
     // Send booking confirmation email
-    console.log('📧 Preparing to send booking confirmation email...');
     try {
       const emailData: any = {
         to: customerInfo.email,
@@ -602,24 +369,14 @@ export async function POST(request: NextRequest) {
         emailData.phonePeTransactionId = paymentResponse.merchantTransactionId;
       }
 
-      console.log('📧 Email data prepared:', {
-        ...emailData,
-        to: emailData.to,
-        customerName: emailData.customerName,
-        bookingId: emailData.bookingId
-      });
-
       await EmailService.sendBookingConfirmation(emailData);
-      console.log('✅ Booking confirmation email sent successfully');
     } catch (emailError) {
-      console.error('❌ Failed to send booking confirmation email:', emailError);
+      console.error('Failed to send booking confirmation email:', emailError);
       // Don't fail the order creation if email fails
     }
 
-    console.log('🎉 Payment order creation completed successfully');
-
     // Return success response with payment details
-    const finalResponse = {
+    return NextResponse.json({
       success: true,
       data: {
         ...paymentResponse,
@@ -632,25 +389,13 @@ export async function POST(request: NextRequest) {
         },
         customerInfo
       }
-    };
-
-    console.log('📤 Sending final response:', {
-      success: finalResponse.success,
-      gateway: paymentResponse.gateway,
-      bookingId: paymentResponse.bookingId,
-      transactionId: paymentResponse.transactionId,
-      hasPaymentUrl: !!paymentResponse.paymentUrl
     });
 
-    return NextResponse.json(finalResponse);
-
   } catch (error) {
-    console.error('💥 Error creating service order:', error);
-    console.error('💥 Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    console.error('Error creating service order:', error);
 
     // Handle validation errors
     if (error instanceof z.ZodError) {
-      console.error('❌ Validation error details:', error.errors);
       return NextResponse.json(
         {
           success: false,
@@ -664,7 +409,6 @@ export async function POST(request: NextRequest) {
 
     // Handle payment gateway errors
     if (error && typeof error === 'object' && 'statusCode' in error) {
-      console.error('❌ Payment gateway error:', error);
       return NextResponse.json(
         {
           success: false,
@@ -676,12 +420,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Handle generic errors
-    console.error('❌ Generic error:', {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      type: typeof error,
-      error
-    });
-
     return NextResponse.json(
       {
         success: false,
