@@ -154,7 +154,9 @@ export function ScheduleView({ initialLessons }: ScheduleViewProps) {
   const refreshLessons = useCallback(async () => {
     setIsLessonsLoading(true);
     try {
-      const response = await fetch("/api/admin/lessons");
+      const response = await fetch("/api/admin/lessons", {
+        credentials: "include",
+      });
       if (!response.ok) throw new Error("Failed to fetch lessons");
       const data = await response.json();
       const fetchedLessons = data.map((l: any) => ({

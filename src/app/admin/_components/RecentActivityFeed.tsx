@@ -95,8 +95,18 @@ export function RecentActivityFeed() {
       setIsLoading(true);
       try {
         // This function is now fetched from the client, but hits a secure API route
-        // The session cookie is automatically sent by the browser.
-        const response = await fetch("/api/admin/notifications");
+        // The session cookie is automatically sent by the browser. In development,
+        // the middleware can also accept a dev token header if set.
+        const devToken = process.env.NEXT_PUBLIC_DEV_ADMIN_TOKEN;
+        const headers: Record<string, string> = {};
+        if (devToken && process.env.NODE_ENV === "development") {
+          headers["x-dev-admin-token"] = devToken;
+        }
+
+        const response = await fetch("/api/admin/notifications", {
+          credentials: "include",
+          headers,
+        });
         if (!response.ok) {
           if (response.status === 401) {
             // User is not authenticated or session expired, silently fail

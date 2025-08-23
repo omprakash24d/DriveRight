@@ -89,7 +89,9 @@ export function AdminLlInquiriesView({
   const fetchInquiries = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/admin/ll-inquiries");
+      const response = await fetch("/api/admin/ll-inquiries", {
+        credentials: "include",
+      });
       if (!response.ok) throw new Error("Failed to fetch LL inquiries");
       const data = await response.json();
       setInquiries(data);

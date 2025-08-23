@@ -77,13 +77,17 @@ const settingsNav: NavItem[] = [
 async function setSessionCookie(token: string) {
   await fetch("/api/auth/session", {
     method: "POST",
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ idToken: token }),
   });
 }
 
 async function clearSessionCookie() {
-  await fetch("/api/auth/session", { method: "DELETE" });
+  await fetch("/api/auth/session", {
+    method: "DELETE",
+    credentials: "include",
+  });
 }
 
 function LoadingSkeleton() {

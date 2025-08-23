@@ -8,9 +8,14 @@
 // Temporary fallback for deployment
 const suggestRefresherPlan = async (data: any) => ({
   plan: "Standard refresher course recommended based on the request details. This includes 2 weeks of comprehensive training focusing on basic driving skills, traffic rules review, and parking practice.",
-  refresherPlan: "Standard refresher course recommended based on the request details.",
+  refresherPlan:
+    "Standard refresher course recommended based on the request details.",
   duration: "2 weeks",
-  focusAreas: ["Basic driving skills", "Traffic rules review", "Parking practice"]
+  focusAreas: [
+    "Basic driving skills",
+    "Traffic rules review",
+    "Parking practice",
+  ],
 });
 
 type SuggestRefresherPlanOutput = {
@@ -130,7 +135,9 @@ export function AdminRefresherRequestsView({
   const fetchRequests = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/admin/refresher-requests");
+      const response = await fetch("/api/admin/refresher-requests", {
+        credentials: "include",
+      });
       if (!response.ok) throw new Error("Failed to fetch refresher requests");
       const data = await response.json();
       setRequests(data);

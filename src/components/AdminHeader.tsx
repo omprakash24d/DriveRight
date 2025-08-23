@@ -84,7 +84,16 @@ function NotificationBell() {
       try {
         // The session cookie is sent automatically by the browser,
         // and the middleware protects this route.
-        const response = await fetch("/api/admin/notifications");
+        const devToken = process.env.NEXT_PUBLIC_DEV_ADMIN_TOKEN;
+        const headers: Record<string, string> = {};
+        if (devToken && process.env.NODE_ENV === "development") {
+          headers["x-dev-admin-token"] = devToken;
+        }
+
+        const response = await fetch("/api/admin/notifications", {
+          credentials: "include",
+          headers,
+        });
 
         if (!response.ok) {
           if (response.status === 401) {

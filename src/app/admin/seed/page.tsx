@@ -46,7 +46,9 @@ export default function SeedingPage() {
 
   const fetchStatus = async () => {
     try {
-      const response = await fetch("/api/admin/seed?action=check");
+      const response = await fetch("/api/admin/seed?action=check", {
+        credentials: "include",
+      });
       const data = await response.json();
 
       if (data.success) {
@@ -79,6 +81,7 @@ export default function SeedingPage() {
     try {
       const response = await fetch("/api/admin/seed", {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },

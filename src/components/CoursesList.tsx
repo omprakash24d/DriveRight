@@ -90,7 +90,7 @@ export default function CoursesList({
 
       {/* Courses Grid */}
       <div className="pt-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center place-items-start max-w-7xl mx-auto">
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-center items-stretch max-w-7xl mx-auto">
           {courses.map((course) => {
             const priceInfo = getPriceInfo(course.price);
             const IconComponent =
@@ -109,8 +109,9 @@ export default function CoursesList({
                 variant="elevated"
                 badges={priceInfo.isFree ? ["Free Course"] : []}
                 hideDefaultCta={true}
+                className="w-full"
               >
-                <div className="mt-4">
+                <div className="mt-auto">
                   <CourseEnrollButton
                     courseId={course.id}
                     courseTitle={course.title}

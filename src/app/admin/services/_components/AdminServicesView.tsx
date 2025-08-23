@@ -160,12 +160,14 @@ export function AdminServicesView() {
         "/api/admin/services?type=training",
         {
           headers,
+          credentials: "include",
         }
       );
 
       // Load online services
       const onlineResponse = await fetch("/api/admin/services?type=online", {
         headers,
+        credentials: "include",
       });
 
       if (trainingResponse.ok) {
@@ -192,7 +194,10 @@ export function AdminServicesView() {
   const checkSeedingStatus = useCallback(async () => {
     try {
       const headers = await getAuthHeaders();
-      const response = await fetch("/api/admin/seed?action=check", { headers });
+      const response = await fetch("/api/admin/seed?action=check", {
+        headers,
+        credentials: "include",
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -219,6 +224,7 @@ export function AdminServicesView() {
       const response = await fetch("/api/admin/seed", {
         method: "POST",
         headers,
+        credentials: "include",
         body: JSON.stringify({ action, force }),
       });
 
@@ -331,6 +337,7 @@ export function AdminServicesView() {
         const response = await fetch("/api/admin/services", {
           method: "PUT",
           headers,
+          credentials: "include",
           body: JSON.stringify({
             type: serviceType,
             id: editingService.id,
@@ -349,6 +356,7 @@ export function AdminServicesView() {
         const response = await fetch("/api/admin/services", {
           method: "POST",
           headers,
+          credentials: "include",
           body: JSON.stringify({
             type: serviceType,
             service: serviceData,
@@ -390,6 +398,7 @@ export function AdminServicesView() {
         {
           method: "DELETE",
           headers,
+          credentials: "include",
         }
       );
 

@@ -47,14 +47,30 @@ export function useAdminServices() {
   });
   const [isSeedingLoading, setIsSeedingLoading] = useState(false);
 
-  // Auth headers helper
+  // Auth headers helper: only include Authorization when token exists
   const getAuthHeaders = useCallback(async () => {
     const token = await getIdToken();
-    return {
-      Authorization: `Bearer ${token}`,
+    const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    return headers;
   }, [getIdToken]);
+
+  // Add development admin token header in development (client-side only)
+  const addDevAdminHeader = (headers: Record<string, string>) => {
+    try {
+      const devToken = process.env.NEXT_PUBLIC_DEV_ADMIN_TOKEN;
+      if (devToken && process.env.NODE_ENV === "development") {
+        headers["x-dev-admin-token"] = devToken;
+      }
+    } catch (_) {
+      // ignore in non-build environments
+    }
+    return headers;
+  };
 
   // Load services
   const loadServices = useCallback(async () => {
@@ -62,9 +78,10 @@ export function useAdminServices() {
     try {
       const headers = await getAuthHeaders();
 
+      const fetchHeaders = addDevAdminHeader({ ...headers });
       const [trainingResponse, onlineResponse] = await Promise.all([
-        fetch("/api/admin/services?type=training", { headers }),
-        fetch("/api/admin/services?type=online", { headers })
+        fetch("/api/admin/services?type=training", { headers: fetchHeaders, credentials: 'include' }),
+        fetch("/api/admin/services?type=online", { headers: fetchHeaders, credentials: 'include' })
       ]);
 
       if (trainingResponse.ok) {
@@ -95,8 +112,9 @@ export function useAdminServices() {
   // Check seeding status
   const checkSeedingStatus = useCallback(async () => {
     try {
-      const headers = await getAuthHeaders();
-      const response = await fetch("/api/admin/seed?action=check", { headers });
+  const headers = await getAuthHeaders();
+  const fetchHeaders = addDevAdminHeader({ ...headers });
+  const response = await fetch("/api/admin/seed?action=check", { headers: fetchHeaders, credentials: 'include' });
 
       if (response.ok) {
         const data = await response.json();
@@ -115,9 +133,11 @@ export function useAdminServices() {
     setIsSeedingLoading(true);
     try {
       const headers = await getAuthHeaders();
+      const fetchHeaders = addDevAdminHeader({ ...headers });
       const response = await fetch("/api/admin/seed", {
         method: "POST",
-        headers,
+        headers: fetchHeaders,
+        credentials: 'include',
         body: JSON.stringify({ action, force }),
       });
 
@@ -155,9 +175,11 @@ export function useAdminServices() {
   ): Promise<string> => {
     try {
       const headers = await getAuthHeaders();
+      const fetchHeaders = addDevAdminHeader({ ...headers });
       const response = await fetch("/api/admin/services", {
         method: "POST",
-        headers,
+        headers: fetchHeaders,
+        credentials: 'include',
         body: JSON.stringify({ ...serviceData, type }),
       });
 
@@ -190,9 +212,11 @@ export function useAdminServices() {
   ): Promise<void> => {
     try {
       const headers = await getAuthHeaders();
+      const fetchHeaders = addDevAdminHeader({ ...headers });
       const response = await fetch(`/api/admin/services/${id}`, {
         method: "PUT",
-        headers,
+        headers: fetchHeaders,
+        credentials: 'include',
         body: JSON.stringify(serviceData),
       });
 
@@ -221,9 +245,11 @@ export function useAdminServices() {
   const deleteService = useCallback(async (id: string): Promise<void> => {
     try {
       const headers = await getAuthHeaders();
+      const fetchHeaders = addDevAdminHeader({ ...headers });
       const response = await fetch(`/api/admin/services/${id}`, {
         method: "DELETE",
-        headers,
+        headers: fetchHeaders,
+        credentials: 'include',
       });
 
       const data = await response.json();
@@ -259,8 +285,10 @@ export function useAdminServices() {
   const exportServices = useCallback(async (type: 'training' | 'online') => {
     try {
       const headers = await getAuthHeaders();
+      const fetchHeaders = addDevAdminHeader({ ...headers });
       const response = await fetch(`/api/admin/services/export?type=${type}`, {
-        headers,
+        headers: fetchHeaders,
+        credentials: 'include',
       });
 
       if (response.ok) {

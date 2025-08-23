@@ -80,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const idToken = await user.getIdToken();
           await fetch("/api/auth/session", {
             method: "POST",
+            credentials: "include",
             headers: {
               "Content-Type": "application/json",
             },
@@ -93,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           await fetch("/api/auth/session", {
             method: "DELETE",
+            credentials: "include",
           });
         } catch (error) {
           console.error("Failed to clear session cookie:", error);
@@ -140,6 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Create new session cookie with updated claims
         await fetch("/api/auth/session", {
           method: "POST",
+          credentials: "include",
           headers: {
             "Content-Type": "application/json",
           },

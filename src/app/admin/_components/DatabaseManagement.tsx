@@ -26,6 +26,7 @@ export function DatabaseManagement() {
     try {
       const response = await fetch("/api/admin/seed-collections", {
         method: "GET",
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -59,6 +60,7 @@ export function DatabaseManagement() {
     try {
       const response = await fetch("/api/admin/seed-collections", {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
