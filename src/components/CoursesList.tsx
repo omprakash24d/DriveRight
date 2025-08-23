@@ -1,7 +1,7 @@
 "use client";
 
 import { CourseEnrollButton } from "@/app/courses/_components/CourseEnrollButton";
-import { ServiceCard, ServiceGrid } from "@/components/ui/service-card";
+import { ServiceCard } from "@/components/ui/service-card";
 import { getPriceInfo } from "@/lib/priceUtils";
 import {
   Award,
@@ -90,14 +90,11 @@ export default function CoursesList({
 
       {/* Courses Grid */}
       <div className="pt-4">
-        <ServiceGrid columns={3}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center place-items-start max-w-7xl mx-auto">
           {courses.map((course) => {
-            // Use consistent price handling
             const priceInfo = getPriceInfo(course.price);
-
-            // Safely resolve the icon component
             const IconComponent =
-              course.icon && iconMap[course.icon] ? iconMap[course.icon] : Car; // Default to Car icon
+              course.icon && iconMap[course.icon] ? iconMap[course.icon] : Car;
 
             return (
               <ServiceCard
@@ -125,7 +122,7 @@ export default function CoursesList({
               </ServiceCard>
             );
           })}
-        </ServiceGrid>
+        </div>
       </div>
     </div>
   );

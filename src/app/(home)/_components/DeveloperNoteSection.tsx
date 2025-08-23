@@ -41,7 +41,10 @@ export function DeveloperNoteSection({ settings }: DeveloperNoteSectionProps) {
               </blockquote>
               <div className="mt-6">
                 <Button asChild>
-                  <Link href="https://om.indhinditech.com/" target="_blank" rel="noopener noreferrer">
+                  {/* <Link href="https://om.indhinditech.com/" target="_blank" rel="noopener noreferrer">
+                    Know More <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link> */}
+                  <Link href="#" target="_blank" rel="noopener noreferrer">
                     Know More <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>

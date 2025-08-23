@@ -58,7 +58,7 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
     "base-uri 'self'",
     "form-action 'self' https://checkout.razorpay.com",
     "frame-ancestors 'none'",
-    "frame-src 'self' https://checkout.razorpay.com https://api.razorpay.com https://www.google.com",
+  "frame-src 'self' https://checkout.razorpay.com https://api.razorpay.com https://www.google.com https://www.youtube.com https://www.youtube-nocookie.com",
     "connect-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://lumberjack.razorpay.com https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com https://stats.g.doubleclick.net https://www.googletagmanager.com https://*.sentry.io https://vitals.vercel-insights.com https://firestore.googleapis.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com",
     "worker-src 'self' blob:",
     "child-src 'self' blob:",
@@ -72,7 +72,9 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('X-XSS-Protection', '1; mode=block');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self), payment=(self "https://checkout.razorpay.com"), autoplay=(self), fullscreen=(self)');
+  // Allow geolocation for localhost in development for testing
+  const geolocationPolicy = process.env.NODE_ENV === 'development' ? 'geolocation=(self "http://localhost:9002")' : 'geolocation=(self)';
+  response.headers.set('Permissions-Policy', `camera=(), microphone=(), ${geolocationPolicy}, payment=(self "https://checkout.razorpay.com"), autoplay=(self), fullscreen=(self)`);
   
   // HSTS for production
   if (process.env.NODE_ENV === 'production') {

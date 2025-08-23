@@ -1,3 +1,4 @@
+// ...preserve existing configuration below (no wrapping top-level override)
 // @ts-check
 import { config } from "dotenv";
 

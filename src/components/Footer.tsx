@@ -170,7 +170,10 @@ export async function Footer() {
                   </Link>
                 </li>
                 <li className="mb-4">
-                  <Link href="/returns-and-cancellations" className="hover:underline">
+                  <Link
+                    href="/return-and-cancellation"
+                    className="hover:underline"
+                  >
                     Return Policy
                   </Link>
                 </li>

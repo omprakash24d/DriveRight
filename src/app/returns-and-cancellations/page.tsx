@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
 export default function Page() {
-  // Permanent redirect to canonical URL
+  // Redirect legacy/alternate URL to canonical path
   redirect("/return-and-cancellation");
 }
