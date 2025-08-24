@@ -20,7 +20,6 @@ export const ServiceCard = React.memo(function ServiceCard({
   type,
 }: ServiceCardProps) {
   const [showBookingDialog, setShowBookingDialog] = useState(false);
-  const [imageError, setImageError] = useState(false);
   const isTraining = type === "training";
 
   const {
@@ -67,9 +66,7 @@ export const ServiceCard = React.memo(function ServiceCard({
         aria-labelledby={`service-title-${service.id}`}
         aria-describedby={`service-description-${service.id}`}
       >
-
         <CardHeader className="relative z-10 text-center pb-4 ">
-          
           <CardTitle
             id={`service-title-${service.id}`}
             className="text-xl sm:text-2xl font-bold mb-3 bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent"

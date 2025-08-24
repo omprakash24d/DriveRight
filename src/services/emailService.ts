@@ -1,4 +1,3 @@
-// Enhanced Email Service for Service Bookings and Payments
 import nodemailer from 'nodemailer';
 
 interface BookingConfirmationData {
@@ -52,11 +51,17 @@ export class EmailService {
   private static transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: false,
+    secure: parseInt(process.env.SMTP_PORT || '587') === 465, // true for 465, false for other ports
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
+    tls: {
+      rejectUnauthorized: false // Accept self-signed certificates
+    },
+    connectionTimeout: 60000, // 60 seconds
+    greetingTimeout: 30000, // 30 seconds
+    socketTimeout: 60000, // 60 seconds
   });
 
   // Booking confirmation email
@@ -153,7 +158,6 @@ export class EmailService {
 
       return true;
     } catch (error) {
-      console.error('Error sending booking confirmation email:', error);
       return false;
     }
   }
@@ -250,7 +254,6 @@ export class EmailService {
 
       return true;
     } catch (error) {
-      console.error('Error sending payment confirmation email:', error);
       return false;
     }
   }
@@ -333,7 +336,6 @@ export class EmailService {
 
       return true;
     } catch (error) {
-      console.error('Error sending payment failure email:', error);
       return false;
     }
   }
@@ -420,7 +422,6 @@ export class EmailService {
 
       return true;
     } catch (error) {
-      console.error('Error sending service reminder email:', error);
       return false;
     }
   }

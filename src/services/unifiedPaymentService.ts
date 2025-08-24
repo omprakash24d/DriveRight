@@ -1,5 +1,5 @@
 import { paymentConfig } from '@/config/paymentConfig';
-import { PhonePeService } from './phonepeService';
+import { PhonePePaymentRequest, PhonePeService } from './phonepeService';
 
 export interface PaymentInitiationRequest {
   amount: number;
@@ -51,8 +51,6 @@ export class UnifiedPaymentService {
   }
 
   private initializeServices(): void {
-    console.log('🔧 Initializing unified payment service...');
-    
     // Initialize PhonePe if available
     if (paymentConfig.isGatewayAvailable('phonepe')) {
       try {
@@ -66,10 +64,9 @@ export class UnifiedPaymentService {
             saltIndex: phonepeConfig.saltIndex,
             environment: phonepeConfig.environment
           });
-          console.log('✅ PhonePe service initialized');
         }
       } catch (error) {
-        console.error('❌ Failed to initialize PhonePe service:', error);
+        // PhonePe service initialization failed
       }
     }
 
@@ -77,10 +74,7 @@ export class UnifiedPaymentService {
   }
 
   private logServiceStatus(): void {
-    console.log('📊 Payment Services Status:', {
-      phonepe: !!this.phonepeService,
-      isPhonePeAvailable: this.isServiceAvailable()
-    });
+    // Service status logging removed for production
   }
 
   isServiceAvailable(): boolean {
@@ -88,55 +82,37 @@ export class UnifiedPaymentService {
   }
 
   async initiatePayment(request: PaymentInitiationRequest): Promise<PaymentInitiationResponse> {
-    console.log('💳 Initiating payment:', {
-      amount: request.amount,
-      orderId: request.orderId,
-      userPhone: request.userDetails.phone
-    });
-
     if (!this.phonepeService) {
-      return {
-        success: false,
-        error: 'PhonePe payment service not available',
-        gatewayUsed: 'phonepe'
-      };
+      throw new Error('PhonePe service not available');
     }
 
     try {
-      console.log('📱 Using PhonePe payment gateway');
-      const response = await this.phonepeService.initiatePayment({
+      const phonepeRequest: PhonePePaymentRequest = {
         merchantTransactionId: request.orderId,
-        amount: request.amount * 100, // Convert to paise
-        merchantUserId: request.userDetails.phone, // Use phone as user ID
+        merchantUserId: request.userDetails.phone,
+        amount: request.amount,
         redirectUrl: request.redirectUrl,
         redirectMode: 'POST',
-        callbackUrl: request.callbackUrl,
+        callbackUrl: request.callbackUrl || request.redirectUrl,
         paymentInstrument: {
           type: 'PAY_PAGE'
         }
-      });
+      };
 
+      const response = await this.phonepeService.initiatePayment(phonepeRequest);
+      
       return {
         success: response.success,
-        paymentId: response.data?.merchantTransactionId,
-        redirectUrl: response.data?.instrumentResponse?.redirectInfo?.url,
-        error: response.success ? undefined : response.message,
-        gatewayUsed: 'phonepe',
-        rawResponse: response
-      };
-    } catch (error) {
-      console.error('❌ Payment initiation failed for PhonePe:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown payment error',
+        paymentId: response.data?.merchantTransactionId || request.orderId,
+        redirectUrl: response.data?.instrumentResponse?.redirectInfo?.url || '',
         gatewayUsed: 'phonepe'
       };
+    } catch (error) {
+      throw error;
     }
   }
 
   async checkPaymentStatus(transactionId: string): Promise<PaymentStatusResponse> {
-    console.log('🔍 Checking payment status:', { transactionId });
-
     if (!this.phonepeService) {
       return {
         success: false,
@@ -159,7 +135,6 @@ export class UnifiedPaymentService {
         rawResponse: response
       };
     } catch (error) {
-      console.error('❌ Status check failed for PhonePe:', error);
       return {
         success: false,
         status: 'failed',
@@ -186,8 +161,6 @@ export class UnifiedPaymentService {
     payload: any,
     signature: string
   ): Promise<{ success: boolean; event?: any; error?: string }> {
-    console.log('🔗 Processing PhonePe webhook');
-
     try {
       // PhonePe webhook processing would go here
       // Currently not implemented in the service
@@ -196,7 +169,6 @@ export class UnifiedPaymentService {
         error: 'PhonePe webhook processing not implemented'
       };
     } catch (error) {
-      console.error('❌ Webhook processing failed for PhonePe:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Webhook processing failed'

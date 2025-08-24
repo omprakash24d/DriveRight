@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Production Payment System - DriveRight</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #3b82f6 0%, #6b46c1 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .main-content {
+        padding: 40px;
+      }
+
+      .status-panel {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 30px;
+      }
+
+      .status-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+      }
+
+      .status-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        border-left: 4px solid #3b82f6;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .status-card.success {
+        border-left-color: #10b981;
+      }
+
+      .status-card.warning {
+        border-left-color: #f59e0b;
+      }
+
+      .status-card.error {
+        border-left-color: #ef4444;
+      }
+
+      .gateway-section {
+        margin-bottom: 40px;
+      }
+
+      .gateway-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .gateway-logo {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        margin-right: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+      }
+
+      .razorpay-logo {
+        background: #3b82f6;
+      }
+
+      .phonepe-logo {
+        background: #6b46c1;
+      }
+
+      .gateway-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #1f2937;
+      }
+
+      .test-forms {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        margin-top: 30px;
+      }
+
+      .test-form {
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 25px;
+        border: 1px solid #e2e8f0;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-group label {
+        display: block;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+      }
+
+      .form-group input,
+      .form-group select {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.2s;
+      }
+
+      .form-group input:focus,
+      .form-group select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .btn-primary {
+        background: #3b82f6;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #2563eb;
+        transform: translateY(-1px);
+      }
+
+      .btn-secondary {
+        background: #6b46c1;
+        color: white;
+      }
+
+      .btn-secondary:hover {
+        background: #553c9a;
+        transform: translateY(-1px);
+      }
+
+      .btn-success {
+        background: #10b981;
+        color: white;
+      }
+
+      .btn-success:hover {
+        background: #059669;
+        transform: translateY(-1px);
+      }
+
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .result-panel {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 30px;
+      }
+
+      .result-content {
+        background: white;
+        border-radius: 6px;
+        padding: 20px;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+
+      .loading {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #6b7280;
+      }
+
+      .spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #e5e7eb;
+        border-top: 2px solid #3b82f6;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .success-message {
+        color: #10b981;
+        font-weight: 600;
+      }
+
+      .error-message {
+        color: #ef4444;
+        font-weight: 600;
+      }
+
+      .warning-message {
+        color: #f59e0b;
+        font-weight: 600;
+      }
+
+      pre {
+        background: #f3f4f6;
+        padding: 15px;
+        border-radius: 6px;
+        overflow-x: auto;
+        font-size: 12px;
+        margin-top: 10px;
+      }
+
+      .footer {
+        background: #f8fafc;
+        padding: 30px;
+        text-align: center;
+        color: #6b7280;
+        border-top: 1px solid #e2e8f0;
+      }
+
+      @media (max-width: 768px) {
+        .main-content {
+          padding: 20px;
+        }
+
+        .header h1 {
+          font-size: 2rem;
+        }
+
+        .test-forms {
+          grid-template-columns: 1fr;
+        }
+
+        .status-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🚀 Production Payment System</h1>
+        <p>DriveRight Driving School - Payment Gateway Testing Interface</p>
+      </div>
+
+      <div class="main-content">
+        <!-- System Status Panel -->
+        <div class="status-panel">
+          <h3>🔧 System Status</h3>
+          <div class="status-grid" id="statusGrid">
+            <div class="status-card">
+              <div class="loading">
+                <div class="spinner"></div>
+                Loading system status...
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Gateway Testing -->
+        <div class="gateway-section">
+          <div class="gateway-header">
+            <div class="gateway-logo razorpay-logo">R</div>
+            <h2 class="gateway-title">Payment Gateway Testing</h2>
+          </div>
+
+          <div class="test-forms">
+            <!-- Razorpay Test Form -->
+            <div class="test-form">
+              <h4>💳 Razorpay Payment Test</h4>
+              <form id="razorpayForm">
+                <div class="form-group">
+                  <label for="rzp_service">Service Type:</label>
+                  <select id="rzp_service" required>
+                    <option value="">Select Service</option>
+                    <option value="training">Driving Training</option>
+                    <option value="online">Online Course</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="rzp_amount">Amount (₹):</label>
+                  <input
+                    type="number"
+                    id="rzp_amount"
+                    value="1500"
+                    min="1"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="rzp_name">Customer Name:</label>
+                  <input
+                    type="text"
+                    id="rzp_name"
+                    value="Test Customer"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="rzp_email">Email:</label>
+                  <input
+                    type="email"
+                    id="rzp_email"
+                    value="test@example.com"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="rzp_phone">Phone:</label>
+                  <input
+                    type="tel"
+                    id="rzp_phone"
+                    value="9876543210"
+                    required
+                  />
+                </div>
+                <button type="submit" class="btn btn-primary">
+                  Test Razorpay Payment
+                </button>
+              </form>
+            </div>
+
+            <!-- PhonePe Test Form -->
+            <div class="test-form">
+              <h4>📱 PhonePe Payment Test</h4>
+              <form id="phonepeForm">
+                <div class="form-group">
+                  <label for="pp_service">Service Type:</label>
+                  <select id="pp_service" required>
+                    <option value="">Select Service</option>
+                    <option value="training">Driving Training</option>
+                    <option value="online">Online Course</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="pp_amount">Amount (₹):</label>
+                  <input
+                    type="number"
+                    id="pp_amount"
+                    value="1200"
+                    min="1"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="pp_name">Customer Name:</label>
+                  <input
+                    type="text"
+                    id="pp_name"
+                    value="Test Customer"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="pp_email">Email:</label>
+                  <input
+                    type="email"
+                    id="pp_email"
+                    value="test@example.com"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="pp_phone">Phone:</label>
+                  <input type="tel" id="pp_phone" value="9876543210" required />
+                </div>
+                <button type="submit" class="btn btn-secondary">
+                  Test PhonePe Payment
+                </button>
+              </form>
+            </div>
+
+            <!-- Auto-Select Gateway Test -->
+            <div class="test-form">
+              <h4>🎯 Auto-Select Gateway Test</h4>
+              <form id="autoForm">
+                <div class="form-group">
+                  <label for="auto_service">Service Type:</label>
+                  <select id="auto_service" required>
+                    <option value="">Select Service</option>
+                    <option value="training">Driving Training</option>
+                    <option value="online">Online Course</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="auto_amount">Amount (₹):</label>
+                  <input
+                    type="number"
+                    id="auto_amount"
+                    value="2000"
+                    min="1"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="auto_name">Customer Name:</label>
+                  <input
+                    type="text"
+                    id="auto_name"
+                    value="Test Customer"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="auto_email">Email:</label>
+                  <input
+                    type="email"
+                    id="auto_email"
+                    value="test@example.com"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="auto_phone">Phone:</label>
+                  <input
+                    type="tel"
+                    id="auto_phone"
+                    value="9876543210"
+                    required
+                  />
+                </div>
+                <button type="submit" class="btn btn-success">
+                  Test Auto-Selection
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Actions -->
+        <div class="gateway-section">
+          <h3>🔧 System Actions</h3>
+          <div
+            style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 20px"
+          >
+            <button class="btn btn-primary" onclick="checkSystemStatus()">
+              Refresh System Status
+            </button>
+            <button class="btn btn-secondary" onclick="validateConfiguration()">
+              Validate Configuration
+            </button>
+            <button class="btn btn-success" onclick="clearResults()">
+              Clear Results
+            </button>
+          </div>
+        </div>
+
+        <!-- Results Panel -->
+        <div class="result-panel">
+          <h3>📊 Test Results</h3>
+          <div class="result-content" id="results">
+            <p>
+              No tests run yet. Use the forms above to test payment gateways.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>
+          <strong>DriveRight Production Payment System</strong><br />
+          Environment: <span id="environment">Loading...</span> | Version:
+          <span id="version">1.0.0</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Include Razorpay SDK -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+    <script>
+      // Global variables
+      let systemStatus = null;
+      let testServiceIds = {};
+
+      // Initialize the application
+      document.addEventListener("DOMContentLoaded", async () => {
+        await checkSystemStatus();
+        setupEventListeners();
+      });
+
+      // Setup event listeners
+      function setupEventListeners() {
+        document
+          .getElementById("razorpayForm")
+          .addEventListener("submit", handleRazorpayTest);
+        document
+          .getElementById("phonepeForm")
+          .addEventListener("submit", handlePhonePeTest);
+        document
+          .getElementById("autoForm")
+          .addEventListener("submit", handleAutoTest);
+      }
+
+      // Check system status
+      async function checkSystemStatus() {
+        updateResults("🔄 Checking system status...", "loading");
+
+        try {
+          const response = await fetch(
+            "/api/services/payment/create-order?checkConfig=true"
+          );
+          const data = await response.json();
+
+          if (data.success) {
+            systemStatus = data.data;
+            updateSystemStatusDisplay(data.data);
+            updateResults("✅ System status loaded successfully", "success");
+          } else {
+            updateResults(
+              `❌ Failed to load system status: ${data.error}`,
+              "error"
+            );
+          }
+        } catch (error) {
+          updateResults(
+            `❌ Error checking system status: ${error.message}`,
+            "error"
+          );
+        }
+      }
+
+      // Update system status display
+      function updateSystemStatusDisplay(status) {
+        const statusGrid = document.getElementById("statusGrid");
+        const environment = status.validation?.environment || "unknown";
+
+        document.getElementById("environment").textContent = environment;
+
+        statusGrid.innerHTML = `
+          <div class="status-card ${
+            status.validation.isValid ? "success" : "error"
+          }">
+            <h4>Configuration Status</h4>
+            <p><strong>Valid:</strong> ${
+              status.validation.isValid ? "Yes" : "No"
+            }</p>
+            <p><strong>Environment:</strong> ${environment}</p>
+            ${
+              status.validation.errors.length > 0
+                ? `<p><strong>Errors:</strong> ${status.validation.errors.length}</p>`
+                : ""
+            }
+          </div>
+          
+          <div class="status-card ${
+            status.status.razorpay.available ? "success" : "warning"
+          }">
+            <h4>💳 Razorpay</h4>
+            <p><strong>Available:</strong> ${
+              status.status.razorpay.available ? "Yes" : "No"
+            }</p>
+            <p><strong>Production:</strong> ${
+              status.status.razorpay.production ? "Yes" : "No"
+            }</p>
+          </div>
+          
+          <div class="status-card ${
+            status.status.phonepe.available ? "success" : "warning"
+          }">
+            <h4>📱 PhonePe</h4>
+            <p><strong>Available:</strong> ${
+              status.status.phonepe.available ? "Yes" : "No"
+            }</p>
+            <p><strong>Production:</strong> ${
+              status.status.phonepe.production ? "Yes" : "No"
+            }</p>
+          </div>
+          
+          <div class="status-card ${
+            status.status.primary ? "success" : "warning"
+          }">
+            <h4>🎯 Primary Gateway</h4>
+            <p><strong>Selected:</strong> ${status.status.primary || "None"}</p>
+            <p><strong>Recommendation:</strong> ${
+              status.recommendation.recommended || "None available"
+            }</p>
+          </div>
+        `;
+      }
+
+      // Handle Razorpay test
+      async function handleRazorpayTest(event) {
+        event.preventDefault();
+        await testPaymentGateway("razorpay", "razorpayForm");
+      }
+
+      // Handle PhonePe test
+      async function handlePhonePeTest(event) {
+        event.preventDefault();
+        await testPaymentGateway("phonepe", "phonepeForm");
+      }
+
+      // Handle auto-select test
+      async function handleAutoTest(event) {
+        event.preventDefault();
+        await testPaymentGateway("auto", "autoForm");
+      }
+
+      // Test payment gateway
+      async function testPaymentGateway(gateway, formId) {
+        const form = document.getElementById(formId);
+        const formData = new FormData(form);
+
+        const prefix =
+          gateway === "razorpay"
+            ? "rzp_"
+            : gateway === "phonepe"
+            ? "pp_"
+            : "auto_";
+
+        const testData = {
+          serviceId: `test-service-${gateway}`,
+          serviceType: formData.get(prefix + "service") || "training",
+          customerInfo: {
+            name: formData.get(prefix + "name"),
+            email: formData.get(prefix + "email"),
+            phone: formData.get(prefix + "phone"),
+            address: "",
+          },
+          notes: `Production test payment using ${gateway}`,
+          paymentGateway: gateway,
+          metadata: {
+            source: "production-test-interface",
+            userAgent: navigator.userAgent,
+            referrer: window.location.href,
+          },
+        };
+
+        updateResults(`🔄 Testing ${gateway} payment gateway...`, "loading");
+
+        try {
+          // For testing, we'll create a mock service first
+          await createTestService(testData.serviceType);
+          testData.serviceId = testServiceIds[testData.serviceType];
+
+          const response = await fetch("/api/services/payment/create-order", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(testData),
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            updateResults(`✅ ${gateway} test successful!`, "success");
+            appendResults(`<pre>${JSON.stringify(result, null, 2)}</pre>`);
+
+            // Handle different payment flows
+            if (
+              result.data.gateway === "razorpay" &&
+              result.data.paymentConfig
+            ) {
+              handleRazorpayPayment(result.data);
+            } else if (result.data.gateway === "phonepe") {
+              handlePhonePePayment(result.data);
+            }
+          } else {
+            updateResults(
+              `❌ ${gateway} test failed: ${result.error}`,
+              "error"
+            );
+            appendResults(`<pre>${JSON.stringify(result, null, 2)}</pre>`);
+          }
+        } catch (error) {
+          updateResults(`❌ ${gateway} test error: ${error.message}`, "error");
+        }
+      }
+
+      // Create test service
+      async function createTestService(serviceType) {
+        if (testServiceIds[serviceType]) {
+          return; // Already created
+        }
+
+        try {
+          const response = await fetch("/api/test/create-services", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+
+          const data = await response.json();
+          if (data.success) {
+            testServiceIds = data.data;
+          }
+        } catch (error) {
+          console.error("Failed to create test service:", error);
+        }
+      }
+
+      // Handle Razorpay payment
+      function handleRazorpayPayment(paymentData) {
+        if (!window.Razorpay) {
+          appendResults("❌ Razorpay SDK not loaded");
+          return;
+        }
+
+        const options = {
+          ...paymentData.paymentConfig,
+          handler: function (response) {
+            appendResults(`
+              <div class="success-message">
+                ✅ Razorpay Payment Successful!<br>
+                Payment ID: ${response.razorpay_payment_id}<br>
+                Order ID: ${response.razorpay_order_id}
+              </div>
+            `);
+          },
+          modal: {
+            ondismiss: function () {
+              appendResults(
+                '<div class="warning-message">⚠️ Payment dialog closed by user</div>'
+              );
+            },
+          },
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.open();
+      }
+
+      // Handle PhonePe payment
+      function handlePhonePePayment(paymentData) {
+        if (paymentData.mockPayment || paymentData.fallback) {
+          appendResults(`
+            <div class="warning-message">
+              📱 PhonePe Mock Payment<br>
+              Transaction ID: ${paymentData.merchantTransactionId}<br>
+              This is a fallback payment for testing purposes.
+            </div>
+          `);
+        } else if (paymentData.paymentUrl) {
+          appendResults(`
+            <div class="success-message">
+              📱 PhonePe Payment Initiated<br>
+              <a href="${paymentData.paymentUrl}" target="_blank">Open Payment Page</a>
+            </div>
+          `);
+
+          // Auto-open payment page
+          setTimeout(() => {
+            window.open(paymentData.paymentUrl, "_blank");
+          }, 2000);
+        }
+      }
+
+      // Validate configuration
+      async function validateConfiguration() {
+        updateResults("🔄 Validating configuration...", "loading");
+
+        try {
+          const response = await fetch(
+            "/api/services/payment/create-order?checkConfig=true"
+          );
+          const data = await response.json();
+
+          if (data.success) {
+            const validation = data.data.validation;
+
+            if (validation.isValid) {
+              updateResults("✅ Configuration validation passed", "success");
+            } else {
+              updateResults("❌ Configuration validation failed", "error");
+            }
+
+            if (validation.errors.length > 0) {
+              appendResults(
+                `<div class="error-message">Errors: ${validation.errors.join(
+                  ", "
+                )}</div>`
+              );
+            }
+
+            if (validation.warnings.length > 0) {
+              appendResults(
+                `<div class="warning-message">Warnings: ${validation.warnings.join(
+                  ", "
+                )}</div>`
+              );
+            }
+
+            appendResults(`<pre>${JSON.stringify(validation, null, 2)}</pre>`);
+          } else {
+            updateResults(`❌ Validation failed: ${data.error}`, "error");
+          }
+        } catch (error) {
+          updateResults(`❌ Validation error: ${error.message}`, "error");
+        }
+      }
+
+      // Update results
+      function updateResults(content, type = "info") {
+        const results = document.getElementById("results");
+        const className =
+          type === "success"
+            ? "success-message"
+            : type === "error"
+            ? "error-message"
+            : type === "loading"
+            ? "loading"
+            : "";
+
+        if (type === "loading") {
+          results.innerHTML = `
+            <div class="${className}">
+              <div class="spinner"></div>
+              ${content}
+            </div>
+          `;
+        } else {
+          results.innerHTML = `<div class="${className}">${content}</div>`;
+        }
+
+        results.scrollTop = results.scrollHeight;
+      }
+
+      // Append to results
+      function appendResults(content) {
+        const results = document.getElementById("results");
+        results.innerHTML += content;
+        results.scrollTop = results.scrollHeight;
+      }
+
+      // Clear results
+      function clearResults() {
+        document.getElementById("results").innerHTML =
+          "<p>Results cleared. Ready for new tests.</p>";
+      }
+    </script>
+  </body>
+</html>

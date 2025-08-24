@@ -33,7 +33,15 @@ export const createBookingOrder = async (
     }),
   });
 
-  return response.json();
+  const result = await response.json();
+  
+  // Store booking data for confirmation API if payment is successful
+  if (result.success && result.data?.bookingData) {
+    localStorage.setItem("pending_booking_data", JSON.stringify(result.data.bookingData));
+    console.log("📝 Stored booking data for confirmation:", result.data.bookingData);
+  }
+
+  return result;
 };
 
 export const initializePayment = (

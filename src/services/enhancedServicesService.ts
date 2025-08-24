@@ -388,6 +388,48 @@ export class EnhancedServicesManager {
     }
   }
 
+  // Update booking status
+  static async updateBookingStatus(bookingId: string, status: 'pending' | 'confirmed' | 'cancelled' | 'completed', paymentStatus?: 'pending' | 'paid' | 'failed' | 'refunded'): Promise<void> {
+    try {
+      const updateData: any = {
+        status,
+        updatedAt: Timestamp.fromDate(new Date())
+      };
+      
+      if (paymentStatus) {
+        updateData.paymentStatus = paymentStatus;
+      }
+
+      await updateDoc(doc(db, SERVICE_BOOKINGS_COLLECTION, bookingId), updateData);
+
+      await addLog('service_booking_updated', `Booking ${bookingId} status updated to: ${status}${paymentStatus ? `, payment: ${paymentStatus}` : ''}`);
+    } catch (error) {
+      console.error("Error updating booking status:", error);
+      throw error;
+    }
+  }
+
+  // Update transaction status
+  static async updateTransactionStatus(transactionId: string, status: 'pending' | 'completed' | 'failed' | 'cancelled', gatewayPaymentId?: string): Promise<void> {
+    try {
+      const updateData: any = {
+        status,
+        updatedAt: Timestamp.fromDate(new Date())
+      };
+      
+      if (gatewayPaymentId) {
+        updateData.gatewayPaymentId = gatewayPaymentId;
+      }
+
+      await updateDoc(doc(db, TRANSACTIONS_COLLECTION, transactionId), updateData);
+
+      await addLog('transaction_updated', `Transaction ${transactionId} status updated to: ${status}`);
+    } catch (error) {
+      console.error("Error updating transaction status:", error);
+      throw error;
+    }
+  }
+
   // Calculate final price with taxes and discounts
   static calculateFinalPrice(pricing: Omit<ServicePricing, 'finalPrice'>): number {
     if (!pricing || !pricing.basePrice || pricing.basePrice <= 0) {

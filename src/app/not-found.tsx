@@ -35,8 +35,9 @@ export default function NotFound() {
               Route Not Found
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-lg mx-auto">
-              Looks like you&apos;ve taken a wrong turn! The page you&apos;re looking for
-              doesn&apos;t exist, but don&apos;t worry – we&apos;ll help you get back on track.
+              Looks like you&apos;ve taken a wrong turn! The page you&apos;re
+              looking for doesn&apos;t exist, but don&apos;t worry – we&apos;ll
+              help you get back on track.
             </p>
           </div>
 

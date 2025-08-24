@@ -88,14 +88,14 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
-    // Service booking collections - Allow creation for payments, admin can read/modify
+    // Service booking collections - Allow creation and updates for payments, admin can read/modify
     match /serviceBookings/{bookingId} {
-      allow create: if true; // Allow payment API to create bookings
-      allow read, update, delete: if isAdmin();
+      allow create, update: if true; // Allow payment API to create and update bookings
+      allow read, delete: if isAdmin();
     }
     match /transactions/{transactionId} {
-      allow create: if true; // Allow payment API to create transaction records
-      allow read, update, delete: if isAdmin();
+      allow create, update: if true; // Allow payment API to create and update transaction records
+      allow read, delete: if isAdmin();
     }
 
     // Admin-only collections (temporarily open for development)

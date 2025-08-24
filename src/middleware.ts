@@ -128,7 +128,7 @@ function checkRateLimitFallback(request: NextRequest, endpoint: string): { allow
   return { allowed: true, remaining: maxRequests - record.count };
 }
 
-// Simple logging helper (uses ErrorService for structured logs)
+// Simple logging helper (uses ErrorService for structured logs) - reduced verbosity
 async function logSecurityEvent(request: NextRequest, event: string, metadata: any = {}): Promise<void> {
   const ip = getClientIP(request);
   const userAgent = request.headers.get('user-agent') || '';
@@ -137,14 +137,18 @@ async function logSecurityEvent(request: NextRequest, event: string, metadata: a
   else if (event.includes('rate_limit') || event.includes('admin_access_attempt')) severity = 'medium';
   else if (event.includes('critical') || event.includes('breach')) severity = 'critical';
 
-  if (process.env.NODE_ENV === 'development') {
+  // Only log security events, not regular requests
+  if (severity !== 'low' && process.env.NODE_ENV === 'development') {
     console.log(`[SECURITY ${severity.toUpperCase()}] ${event}`, { ip, userAgent, pathname: request.nextUrl.pathname, method: request.method, ...metadata });
   }
 
-  try {
-    ErrorService.logInfo(event, { ip, userAgent, pathname: request.nextUrl.pathname, ...metadata });
-  } catch (e) {
-    // ignore logging errors in middleware
+  // Only log important security events to ErrorService
+  if (severity !== 'low') {
+    try {
+      ErrorService.logInfo(event, { ip, userAgent, pathname: request.nextUrl.pathname, ...metadata });
+    } catch (e) {
+      // ignore logging errors in middleware
+    }
   }
 }
 
@@ -167,8 +171,15 @@ export async function middleware(request: NextRequest) {
   // Apply security headers
   response = applySecurityHeaders(response);
 
-  // Log request
-  await logSecurityEvent(request, 'request_received');
+  // Only log request for non-static assets
+  const isStaticAsset = path.includes('/_next/') || path.includes('/images/') || path.includes('/favicon');
+  if (!isStaticAsset) {
+    // Only log for important routes or when there are issues
+    const isImportantRoute = path.includes('/api/') || path.includes('/admin') || path.includes('/payment');
+    if (isImportantRoute) {
+      await logSecurityEvent(request, 'request_received');
+    }
+  }
 
   // Rate limiting (local fallback)
   const rl = checkRateLimitFallback(request, path);
@@ -230,12 +241,11 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Track successful request
-    try {
-      ErrorService.logInfo('Request served', { component: 'Middleware', metadata: { method, path, statusCode: 200, duration: Date.now() - startTime, ip } });
-    } catch (_) {
-      // ignore logging errors
-    }
+  // Track successful request (only for important routes)
+  const isImportantRoute = path.includes('/api/') || path.includes('/admin') || path.includes('/payment');
+  if (isImportantRoute && process.env.NODE_ENV === 'development') {
+    console.log(`📡 ${method} ${path} - ${Date.now() - startTime}ms`);
+  }
 
   // Add some helpful headers
   response.headers.set('X-Response-Time', `${Date.now() - startTime}ms`);

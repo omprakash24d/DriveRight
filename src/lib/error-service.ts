@@ -49,13 +49,23 @@ export class ErrorService {
   }
 
   /**
-   * Log informational message
+   * Log informational message (reduced verbosity for development)
    */
   static logInfo(message: string, context?: ErrorContext) {
-    console.info('ℹ️ Info:', message, {
-      context,
-      timestamp: new Date().toISOString(),
-    });
+    // Only log info messages for important events or errors
+    const isImportant = message.includes('error') || message.includes('failed') || 
+                       message.includes('unauthorized') || message.includes('suspicious') ||
+                       message.includes('rate_limit') || message.includes('admin');
+    
+    if (process.env.NODE_ENV === 'development' && isImportant) {
+      console.info('ℹ️ Info:', message, {
+        context,
+        timestamp: new Date().toISOString(),
+      });
+    }
+    
+    // In production, you might want to send to external logging service
+    // but avoid console spam
   }
 
   /**
